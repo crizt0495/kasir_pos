@@ -16,6 +16,7 @@ export default function Cashier() {
   const [closeNote, setCloseNote] = useState('');
   const [closing, setClosing] = useState(false);
   const [showClose, setShowClose] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
   const [showAddTx, setShowAddTx] = useState(false);
   const [txForm, setTxForm] = useState({ type: 'IN', amount: '', notes: '' });
   const [addingTx, setAddingTx] = useState(false);
@@ -61,12 +62,22 @@ export default function Cashier() {
     }
   };
 
+  // Validasi lalu tampilkan dialog konfirmasi sebelum sesi benar-benar ditutup
+  const requestClose = () => {
+    if (Math.abs(Number(actualCash || 0) - expected) > 0 && !closeNote.trim()) {
+      toast.error('Ada selisih kas — catatan wajib diisi');
+      return;
+    }
+    setConfirmClose(true);
+  };
+
   const close = async () => {
     setClosing(true);
     try {
       await cashierApi.close(s.id, { actual_cash: Number(actualCash) || 0, note: closeNote || null });
       toast.success('Sesi kas ditutup');
       setShowClose(false);
+      setConfirmClose(false);
       session.reload();
       transactions.reload();
     } catch (error) {
@@ -198,7 +209,7 @@ export default function Cashier() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowClose(false)}>Batal</Button>
-            <Button onClick={close} loading={closing}>Tutup Kas</Button>
+            <Button onClick={requestClose}>Tutup Kas</Button>
           </>
         }
       >
@@ -225,6 +236,16 @@ export default function Cashier() {
           </Field>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={confirmClose}
+        onClose={() => setConfirmClose(false)}
+        onConfirm={close}
+        loading={closing}
+        title="Tutup sesi kas?"
+        message={`Kas diharapkan ${formatRupiah(expected)} · Kas aktual ${formatRupiah(Number(actualCash || 0))} · Selisih ${formatRupiah(Number(actualCash || 0) - expected)}. Setelah ditutup, sesi tidak dapat dibuka kembali.`}
+        confirmText="Ya, tutup kas"
+      />
 
       {/* Modal tambah transaksi */}
       <Modal

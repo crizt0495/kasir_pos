@@ -6,7 +6,7 @@ import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, SearchInput, Select, Button, Modal, Field, Input, Textarea, Badge } from '../components/ui/index.jsx';
+import { DataTable, SearchInput, Select, Button, Modal, Field, Input, Textarea, Badge, ConfirmDialog } from '../components/ui/index.jsx';
 import { formatQty, formatRupiah } from '../utils/format.js';
 
 export default function Inventory() {
@@ -19,6 +19,7 @@ export default function Inventory() {
   const [adjusting, setAdjusting] = useState(null);
   const [form, setForm] = useState({ quantity: 0, reason: '' });
   const [saving, setSaving] = useState(false);
+  const [confirming, setConfirming] = useState(null);
 
   const categories = useApi(() => categoriesApi.list().then((r) => r.data), []);
   const list = useApi(
@@ -31,7 +32,8 @@ export default function Inventory() {
     setForm({ quantity: 0, reason: '' });
   };
 
-  const doAdjust = async () => {
+  // Validasi lalu tampilkan dialog konfirmasi sebelum stok benar-benar diubah
+  const requestAdjust = () => {
     if (!form.quantity) {
       toast.error('Jumlah penyesuaian tidak boleh 0');
       return;
@@ -40,11 +42,20 @@ export default function Inventory() {
       toast.error('Alasan minimal 3 karakter');
       return;
     }
+    setConfirming({
+      product: adjusting,
+      quantity: Number(form.quantity),
+      reason: form.reason.trim(),
+    });
+  };
+
+  const doAdjust = async () => {
     setSaving(true);
     try {
-      await inventoryApi.adjust({ product_id: adjusting.id, quantity: form.quantity, reason: form.reason });
+      await inventoryApi.adjust({ product_id: confirming.product.id, quantity: confirming.quantity, reason: confirming.reason });
       toast.success('Stok berhasil disesuaikan');
       setAdjusting(null);
+      setConfirming(null);
       list.reload();
     } catch (error) {
       toast.error(getErrorMessage(error, 'Gagal menyesuaikan stok'));
@@ -124,7 +135,7 @@ export default function Inventory() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setAdjusting(null)}>Batal</Button>
-            <Button onClick={doAdjust} loading={saving}>Simpan Penyesuaian</Button>
+            <Button onClick={requestAdjust}>Simpan Penyesuaian</Button>
           </>
         }
       >
@@ -143,6 +154,16 @@ export default function Inventory() {
           </Field>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirming}
+        onClose={() => setConfirming(null)}
+        onConfirm={doAdjust}
+        loading={saving}
+        title="Konfirmasi penyesuaian stok?"
+        message={`${confirming?.product?.name}: stok ${formatQty(confirming?.product?.stock)} → ${formatQty(Number(confirming?.product?.stock || 0) + Number(confirming?.quantity || 0))} (${confirming?.quantity > 0 ? '+' : ''}${formatQty(confirming?.quantity)}). Alasan: "${confirming?.reason}". Perubahan tercatat di pergerakan stok.`}
+        confirmText="Ya, sesuaikan stok"
+      />
     </div>
   );
 }
