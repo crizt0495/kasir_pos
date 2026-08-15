@@ -58,8 +58,8 @@ export const createProduct = asyncHandler(async (req, res) => {
   const skuDup = await supabase.from('products').select('id').eq('sku', body.sku).maybeSingle();
   const barcodeDup = body.barcode
     ? await supabase.from('products').select('id').eq('barcode', body.barcode).maybeSingle()
-    : null;
-  if (skuDup.data || barcodeDup.data) throw conflict('SKU atau barcode sudah digunakan', 'PRODUCT_DUPLICATE');
+    : { data: null, error: null };
+  if (skuDup.data || barcodeDup?.data) throw conflict('SKU atau barcode sudah digunakan', 'PRODUCT_DUPLICATE');
 
   const { data: product, error } = await supabase
     .from('products')

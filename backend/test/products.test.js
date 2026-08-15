@@ -53,6 +53,39 @@ describe('Products CRUD + authorization', () => {
     assert.equal(res.status, 422);
   });
 
+  it('membuat produk valid TANPA barcode → 201 (regression: bug barcodeDup null)', async () => {
+    const agent = await loginAgent('admin', ADMIN_PASSWORD);
+    const res = await agent.post('/api/products').send({
+      sku: 'BRG-NOBC',
+      name: 'Produk Tanpa Barcode',
+      purchase_price: 5000,
+      sale_price: 8000,
+      stock: 10,
+      min_stock: 2,
+      status: 'active',
+      image_url: 'https://example.com/foto-produk.png',
+    });
+    assert.equal(res.status, 201);
+    assert.equal(res.body.data.name, 'Produk Tanpa Barcode');
+    assert.equal(res.body.data.image_url, 'https://example.com/foto-produk.png');
+  });
+
+  it('membuat produk valid DENGAN barcode → 201', async () => {
+    const agent = await loginAgent('admin', ADMIN_PASSWORD);
+    const res = await agent.post('/api/products').send({
+      sku: 'BRG-BC1',
+      name: 'Produk Berbarcode',
+      barcode: '899000111222',
+      purchase_price: 5000,
+      sale_price: 8000,
+      stock: 10,
+      min_stock: 2,
+      status: 'active',
+    });
+    assert.equal(res.status, 201);
+    assert.equal(res.body.data.name, 'Produk Berbarcode');
+  });
+
   it('user terbatas tidak boleh membuat produk (tanpa products.create) → 403', async () => {
     const agent = await loginAgent('limited', LIMITED_PASSWORD);
     const res = await agent.post('/api/products').send({ sku: 'BRG-X3', name: 'Test', sale_price: 1000 });
