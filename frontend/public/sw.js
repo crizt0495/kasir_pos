@@ -2,8 +2,11 @@
    - Cache app shell untuk offline & akses cepat
    - API tidak di-cache (selalu jaringan)
    - Push notification + click → buka aplikasi */
-const CACHE = 'pos-shell-v1';
+const CACHE = 'pos-shell-v2';
 const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
+
+/** Hanya tangani request http(s) — abaikan chrome-extension://, data:, dll */
+const isSupported = (url) => url.protocol === 'http:' || url.protocol === 'https:';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -27,7 +30,15 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
-  const url = new URL(req.url);
+  let url;
+  try {
+    url = new URL(req.url);
+  } catch {
+    return; // URL tidak valid — biarkan browser menangani
+  }
+  // Abaikan skema non-http (chrome-extension, data, blob, dll)
+  if (!isSupported(url)) return;
+
   // API selalu lewat jaringan (jangan cache data transaksi)
   if (url.pathname.startsWith('/api')) return;
 
@@ -44,14 +55,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Aset statis: cache-first
+  // Aset statis: cache-first (hanya http/https — sudah difilter di atas)
   event.respondWith(
     caches.match(req).then(
       (cached) =>
         cached ||
         fetch(req).then((res) => {
-          const copy = res.clone();
-          if (res.ok) caches.open(CACHE).then((cache) => cache.put(req, copy));
+          if (res.ok) {
+            const copy = res.clone();
+            caches
+              .open(CACHE)
+              .then((cache) => cache.put(req, copy))
+              .catch(() => {}); // cache gagal tidak boleh mengganggu respons
+          }
           return res;
         })
     )
