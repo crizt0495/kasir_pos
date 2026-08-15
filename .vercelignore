@@ -1,0 +1,17 @@
+# Jangan pernah upload secret lokal
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+
+# Dependensi & cache (di-install ulang oleh Vercel)
+node_modules
+dist
+test-results
+playwright-report
+
+# Tidak dibutuhkan build production
+supabase
+scripts
+*.log

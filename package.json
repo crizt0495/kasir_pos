@@ -1,0 +1,25 @@
+{
+  "name": "pos-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aplikasi POS (Point of Sale) modern, lengkap, aman dan production-ready",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n API,WEB -c blue,green \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "dev:backend": "npm run dev -w backend",
+    "dev:frontend": "npm run dev -w frontend",
+    "build": "npm run build -w frontend",
+    "test": "npm run test -w backend && npm run test -w frontend",
+    "db:setup": "supabase db reset"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

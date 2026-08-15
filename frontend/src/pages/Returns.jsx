@@ -1,0 +1,64 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, RotateCcw } from 'lucide-react';
+import { returnsApi } from '../api/index.js';
+import { useApi } from '../hooks/useApi.js';
+import { useDebounce } from '../hooks/useDebounce.js';
+import { DataTable, SearchInput, StatusBadge } from '../components/ui/index.jsx';
+import { formatRupiah, formatDateTime, paymentMethodLabel } from '../utils/format.js';
+
+export default function Returns() {
+  const navigate = useNavigate();
+  const [search, setSearch] = useState('');
+  const debounced = useDebounce(search, 400);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [page, setPage] = useState(1);
+
+  const list = useApi(
+    () => returnsApi.list({ search: debounced || undefined, from: from || undefined, to: to || undefined, page, pageSize: 20 }).then((r) => r.data),
+    [debounced, from, to, page]
+  );
+
+  const d = list.data;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-xl font-bold text-slate-900">Retur</h1>
+        <p className="text-sm text-slate-500">Riwayat retur penjualan</p>
+      </div>
+
+      <DataTable
+        columns={[
+          { key: 'return_number', header: 'No. Retur', render: (r) => (
+            <span className="flex items-center gap-1.5 font-medium text-red-600">
+              <RotateCcw className="h-3.5 w-3.5" /> {r.return_number}
+            </span>
+          )},
+          { key: 'sale', header: 'No. Penjualan', render: (r) => <span className="text-indigo-600">{r.sale?.invoice_number || '-'}</span> },
+          { key: 'customer', header: 'Pelanggan', render: (r) => r.customer?.name || '-' },
+          { key: 'total_refund', header: 'Refund', render: (r) => <span className="font-semibold text-red-600">-{formatRupiah(r.total_refund)}</span> },
+          { key: 'reason', header: 'Alasan', render: (r) => <span className="line-clamp-1 max-w-48">{r.reason || '-'}</span> },
+          { key: 'created_at', header: 'Tanggal', render: (r) => formatDateTime(r.created_at) },
+          { key: 'created_by_user', header: 'Oleh', render: (r) => r.created_by_user?.profiles?.full_name || r.created_by_user?.username || '-' },
+          { key: 'actions', header: 'Aksi', render: (r) => (
+            <button onClick={() => navigate(`/sales/${r.sale_id}`)} className="rounded-md p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-600">
+              <Eye className="h-4 w-4" />
+            </button>
+          )},
+        ]}
+        data={d?.items || []}
+        loading={list.loading}
+        error={list.error}
+        onRetry={list.reload}
+        page={page}
+        totalPages={d?.totalPages}
+        total={d?.total}
+        pageSize={d?.pageSize}
+        onPageChange={setPage}
+        toolbar={<SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari no. retur / no. penjualan..." className="w-full sm:w-64" />}
+      />
+    </div>
+  );
+}

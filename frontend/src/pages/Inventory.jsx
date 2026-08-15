@@ -1,0 +1,148 @@
+import { useState } from 'react';
+import { SlidersHorizontal, Boxes } from 'lucide-react';
+import { inventoryApi, categoriesApi } from '../api/index.js';
+import { useApi } from '../hooks/useApi.js';
+import { useDebounce } from '../hooks/useDebounce.js';
+import { usePermission } from '../hooks/usePermission.js';
+import { toast } from '../stores/uiStore.js';
+import { getErrorMessage } from '../api/client.js';
+import { DataTable, SearchInput, Select, Button, Modal, Field, Input, Textarea, Badge } from '../components/ui/index.jsx';
+import { formatQty, formatRupiah } from '../utils/format.js';
+
+export default function Inventory() {
+  const { can } = usePermission();
+  const [search, setSearch] = useState('');
+  const debounced = useDebounce(search, 400);
+  const [categoryId, setCategoryId] = useState('');
+  const [filter, setFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [adjusting, setAdjusting] = useState(null);
+  const [form, setForm] = useState({ quantity: 0, reason: '' });
+  const [saving, setSaving] = useState(false);
+
+  const categories = useApi(() => categoriesApi.list().then((r) => r.data), []);
+  const list = useApi(
+    () => inventoryApi.list({ search: debounced || undefined, category_id: categoryId || undefined, filter: filter || undefined, page, pageSize: 20 }).then((r) => r.data),
+    [debounced, categoryId, filter, page]
+  );
+
+  const openAdjust = (p) => {
+    setAdjusting(p);
+    setForm({ quantity: 0, reason: '' });
+  };
+
+  const doAdjust = async () => {
+    if (!form.quantity) {
+      toast.error('Jumlah penyesuaian tidak boleh 0');
+      return;
+    }
+    if (form.reason.trim().length < 3) {
+      toast.error('Alasan minimal 3 karakter');
+      return;
+    }
+    setSaving(true);
+    try {
+      await inventoryApi.adjust({ product_id: adjusting.id, quantity: form.quantity, reason: form.reason });
+      toast.success('Stok berhasil disesuaikan');
+      setAdjusting(null);
+      list.reload();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Gagal menyesuaikan stok'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const d = list.data;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">Stok</h1>
+          <p className="text-sm text-slate-500">Pantau dan kelola stok produk</p>
+        </div>
+      </div>
+
+      <DataTable
+        columns={[
+          { key: 'product', header: 'Produk', render: (r) => (
+            <div>
+              <p className="font-medium text-slate-800">{r.name}</p>
+              <p className="text-xs text-slate-400">{r.sku}</p>
+            </div>
+          )},
+          { key: 'category', header: 'Kategori', render: (r) => r.category?.name || '-' },
+          { key: 'stock', header: 'Stok', render: (r) => (
+            <span className={`font-semibold ${r.is_out ? 'text-red-600' : r.is_low ? 'text-amber-600' : 'text-slate-800'}`}>
+              {formatQty(r.stock)}
+            </span>
+          )},
+          { key: 'min_stock', header: 'Min', render: (r) => formatQty(r.min_stock) },
+          { key: 'status', header: 'Kondisi', render: (r) => r.is_out
+            ? <Badge color="bg-red-100 text-red-700">Habis</Badge>
+            : r.is_low ? <Badge color="bg-amber-100 text-amber-700">Menipis</Badge>
+            : <Badge color="bg-emerald-100 text-emerald-700">Aman</Badge> },
+          { key: 'hpp', header: 'HPP', render: (r) => formatRupiah(r.purchase_price) },
+          { key: 'actions', header: 'Aksi', render: (r) => can('inventory.adjust') && (
+            <Button size="xs" variant="outline" onClick={() => openAdjust(r)}>
+              <SlidersHorizontal className="h-3.5 w-3.5" /> Sesuaikan
+            </Button>
+          )},
+        ]}
+        data={d?.items || []}
+        loading={list.loading}
+        error={list.error}
+        onRetry={list.reload}
+        page={page}
+        totalPages={d?.totalPages}
+        total={d?.total}
+        pageSize={d?.pageSize}
+        onPageChange={setPage}
+        toolbar={
+          <>
+            <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari produk..." className="w-full sm:w-64" />
+            <div className="flex gap-2">
+              <Select value={categoryId} onChange={(e) => { setCategoryId(e.target.value); setPage(1); }} className="w-40">
+                <option value="">Semua Kategori</option>
+                {(categories.data || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </Select>
+              <Select value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1); }} className="w-36">
+                <option value="">Semua Stok</option>
+                <option value="low">Stok Menipis</option>
+                <option value="out">Stok Habis</option>
+              </Select>
+            </div>
+          </>
+        }
+      />
+
+      <Modal
+        open={!!adjusting}
+        onClose={() => setAdjusting(null)}
+        title={`Sesuaikan Stok — ${adjusting?.name}`}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setAdjusting(null)}>Batal</Button>
+            <Button onClick={doAdjust} loading={saving}>Simpan Penyesuaian</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="rounded-lg bg-slate-50 p-3 text-sm">
+            <p className="text-slate-500">Stok saat ini: <b className="text-slate-800">{formatQty(adjusting?.stock)}</b> {adjusting?.unit?.short_name}</p>
+            <p className="mt-1 text-xs text-slate-400">
+              Masukkan angka <b>positif</b> untuk menambah stok, <b>negatif</b> untuk mengurangi. Perubahan tercatat di pergerakan stok.
+            </p>
+          </div>
+          <Field label="Jumlah penyesuaian" required>
+            <Input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} placeholder="cth: 10 atau -5" />
+          </Field>
+          <Field label="Alasan" required>
+            <Textarea rows={2} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="cth: barang rusak / stok fisik berbeda" />
+          </Field>
+        </div>
+      </Modal>
+    </div>
+  );
+}

@@ -1,0 +1,30 @@
+# Supabase CLI configuration.
+# Digunakan untuk development lokal: `supabase start` / `supabase db reset`.
+# Untuk production, jalankan migrasi langsung ke project Supabase Anda.
+
+project_id = "pos-app"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+
+[storage]
+enabled = true
