@@ -9,6 +9,7 @@ import { productSchema } from '../schemas/index.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { Button, Field, Input, Select, Textarea, Card, Skeleton, ErrorState } from '../components/ui/index.jsx';
+import ProductImage from '../components/ProductImage.jsx';
 
 export default function ProductForm() {
   const { id } = useParams();
@@ -23,14 +24,17 @@ export default function ProductForm() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(productSchema),
     defaultValues: {
       sku: '', barcode: '', name: '', category_id: '', unit_id: '', purchase_price: 0,
-      sale_price: 0, stock: 0, min_stock: 0, status: 'active', description: '',
+      sale_price: 0, stock: 0, min_stock: 0, status: 'active', description: '', image_url: '',
     },
   });
+
+  const imageUrl = watch('image_url');
 
   // Muat data produk saat edit
   useEffect(() => {
@@ -58,6 +62,7 @@ export default function ProductForm() {
       unit_id: values.unit_id || null,
       barcode: values.barcode || null,
       description: values.description || null,
+      image_url: values.image_url || null,
     };
     try {
       if (isEdit) {
@@ -134,11 +139,17 @@ export default function ProductForm() {
             <Field label="Stok Minimum" error={errors.min_stock?.message} hint="Peringatan stok menipis">
               <Input type="number" step="0.001" {...register('min_stock')} error={errors.min_stock} />
             </Field>
-            <Field label="Status">
+              <Field label="Status">
               <Select {...register('status')}>
                 <option value="active">Aktif</option>
                 <option value="inactive">Nonaktif</option>
               </Select>
+            </Field>
+            <Field label="Foto Produk (URL)" error={errors.image_url?.message} hint="Tempel link gambar produk (opsional)">
+              <div className="flex items-center gap-3">
+                <Input {...register('image_url')} error={errors.image_url} placeholder="https://contoh.com/foto-produk.jpg" className="flex-1" />
+                <ProductImage src={imageUrl} alt="Preview foto produk" className="h-12 w-12" />
+              </div>
             </Field>
           </div>
 

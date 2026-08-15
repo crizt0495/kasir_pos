@@ -35,6 +35,7 @@ export const productSchema = z.object({
   min_stock: z.coerce.number().min(0, 'Stok min tidak boleh negatif'),
   status: z.enum(['active', 'inactive']),
   description: z.string().trim().max(1000).optional(),
+  image_url: z.string().trim().url('URL gambar tidak valid').optional().or(z.literal('')),
 });
 
 export const categorySchema = z.object({

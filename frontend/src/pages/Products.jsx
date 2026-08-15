@@ -8,6 +8,7 @@ import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { DataTable, SearchInput, Select, Button, StatusBadge, ConfirmDialog, Card } from '../components/ui/index.jsx';
+import ProductImage from '../components/ProductImage.jsx';
 import { formatRupiah, formatQty } from '../utils/format.js';
 
 export default function Products() {
@@ -73,9 +74,12 @@ export default function Products() {
       <DataTable
         columns={[
           { key: 'name', header: 'Produk', sortable: true, render: (r) => (
-            <div>
-              <p className="font-medium text-slate-800">{r.name}</p>
-              <p className="text-xs text-slate-400">SKU: {r.sku} · Barcode: {r.barcode || '-'}</p>
+            <div className="flex items-center gap-3">
+              <ProductImage src={r.image_url} alt={r.name} className="h-10 w-10" />
+              <div className="min-w-0">
+                <p className="truncate font-medium text-slate-800">{r.name}</p>
+                <p className="text-xs text-slate-400">SKU: {r.sku} · Barcode: {r.barcode || '-'}</p>
+              </div>
             </div>
           )},
           { key: 'category', header: 'Kategori', render: (r) => r.category?.name || '-' },

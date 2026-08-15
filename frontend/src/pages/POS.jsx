@@ -15,6 +15,7 @@ import {
   Button, Modal, ConfirmDialog, Input, Select, Field, Textarea, Skeleton, EmptyState, ErrorState, Badge,
 } from '../components/ui/index.jsx';
 import ReceiptModal from '../components/pos/ReceiptModal.jsx';
+import ProductImage from '../components/ProductImage.jsx';
 
 const PAYMENT_METHODS = ['CASH', 'QRIS', 'DEBIT', 'CREDIT', 'TRANSFER', 'E_WALLET'];
 
@@ -212,17 +213,27 @@ export default function POS() {
                 key={p.id}
                 onClick={() => cart.add(p)}
                 disabled={p.status !== 'active'}
-                className="flex flex-col justify-between rounded-xl border border-slate-200 p-3 text-left transition-all hover:border-indigo-400 hover:shadow-md disabled:opacity-50"
+                className="group flex flex-col rounded-xl border border-slate-200 p-2.5 text-left transition-all hover:border-indigo-400 hover:shadow-md disabled:opacity-50"
               >
-                <div>
-                  <p className="line-clamp-2 text-sm font-medium text-slate-800">{p.name}</p>
-                  <p className="text-xs text-slate-400">{p.sku}</p>
+                <div className="mb-2 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg bg-slate-50">
+                  <ProductImage
+                    src={p.image_url}
+                    alt={p.name}
+                    rounded={false}
+                    className="h-full w-full transition-transform duration-300 ease-out group-hover:scale-125"
+                  />
                 </div>
-                <div className="mt-2">
-                  <p className="text-sm font-bold text-indigo-700">{formatRupiah(p.sale_price)}</p>
-                  <p className={`text-xs ${Number(p.stock) <= Number(p.min_stock) ? 'text-red-500' : 'text-slate-400'}`}>
-                    Stok: {formatQty(p.stock)}
-                  </p>
+                <div className="flex flex-1 flex-col justify-between">
+                  <div>
+                    <p className="line-clamp-2 text-sm font-medium text-slate-800 group-hover:text-indigo-700">{p.name}</p>
+                    <p className="text-xs text-slate-400">{p.sku}</p>
+                  </div>
+                  <div className="mt-2">
+                    <p className="text-sm font-bold text-indigo-700">{formatRupiah(p.sale_price)}</p>
+                    <p className={`text-xs ${Number(p.stock) <= Number(p.min_stock) ? 'text-red-500' : 'text-slate-400'}`}>
+                      Stok: {formatQty(p.stock)}
+                    </p>
+                  </div>
                 </div>
               </button>
             ))
@@ -305,11 +316,14 @@ export default function POS() {
                 return (
                   <li key={item.product.id} className="rounded-lg border border-slate-200 p-2.5">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-slate-800">{item.product.name}</p>
-                        <p className="text-xs text-slate-400">
-                          {formatRupiah(item.product.sale_price)} / {item.product.unit?.short_name || 'pcs'}
-                        </p>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <ProductImage src={item.product.image_url} alt={item.product.name} className="h-9 w-9" />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-slate-800">{item.product.name}</p>
+                          <p className="text-xs text-slate-400">
+                            {formatRupiah(item.product.sale_price)} / {item.product.unit?.short_name || 'pcs'}
+                          </p>
+                        </div>
                       </div>
                       <button onClick={() => cart.remove(item.product.id)} className="text-slate-300 hover:text-red-500">
                         <X className="h-4 w-4" />
