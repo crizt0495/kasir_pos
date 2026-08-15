@@ -38,6 +38,8 @@ Thumbs.db
 
 # Vercel
 .vercel
+# Token deploy opsional (jika Anda simpan di file — JANGAN commit)
+.vercel-token
 
 # Misc
 .cache/
