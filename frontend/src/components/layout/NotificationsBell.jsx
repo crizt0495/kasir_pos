@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Bell, BellOff, CheckCheck } from 'lucide-react';
 import { notificationsApi } from '../../api/index.js';
 import { usePermission } from '../../hooks/usePermission.js';
@@ -44,7 +44,8 @@ export function NotificationsBell() {
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
 
-  const load = async () => {
+  // load dengan referensi stabil — tidak memicu useEffect berulang
+  const load = useCallback(async () => {
     try {
       const res = await notificationsApi.list({ limit: 15 });
       setItems(res.data?.items || []);
@@ -52,15 +53,40 @@ export function NotificationsBell() {
     } catch {
       /* abaikan */
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (!can('notifications.view')) return;
+    if (!can('notifications.view')) return undefined;
     subscribePush();
     load();
-    const timer = setInterval(load, 60_000); // poll unread count
-    return () => clearInterval(timer);
-  }, [can]);
+
+    // Polling hanya saat tab VISIBLE (hemat request, hindari rate limit)
+    let timer = null;
+    const startPolling = () => {
+      if (timer) clearInterval(timer);
+      timer = setInterval(load, 60_000);
+    };
+    const stopPolling = () => {
+      if (timer) clearInterval(timer);
+      timer = null;
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        load();
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    if (document.visibilityState === 'visible') startPolling();
+
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [can, load]);
 
   const markAllRead = async () => {
     try {

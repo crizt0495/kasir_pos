@@ -31,9 +31,16 @@ self.addEventListener('fetch', (event) => {
   // API selalu lewat jaringan (jangan cache data transaksi)
   if (url.pathname.startsWith('/api')) return;
 
-  // Navigasi: network-first, fallback ke shell
+  // Navigasi: network-first, fallback ke shell (SPA — semua route → index.html)
   if (req.mode === 'navigate') {
-    event.respondWith(fetch(req).catch(() => caches.match('/index.html')));
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res.ok || res.type === 'opaqueredirect') return res;
+          return caches.match('/index.html').then((cached) => cached || Response.error());
+        })
+        .catch(() => caches.match('/index.html').then((cached) => cached || Response.error()))
+    );
     return;
   }
 

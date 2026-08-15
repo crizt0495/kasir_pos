@@ -25,7 +25,7 @@ export const env = {
   JWT_REMEMBER_EXPIRES_IN: process.env.JWT_REMEMBER_EXPIRES_IN || '7d',
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
   RATE_LIMIT_WINDOW_MS: Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
-  RATE_LIMIT_MAX: Number(process.env.RATE_LIMIT_MAX || 300),
+  RATE_LIMIT_MAX: Number(process.env.RATE_LIMIT_MAX || 1200),
   LOGIN_RATE_LIMIT_MAX: Number(process.env.LOGIN_RATE_LIMIT_MAX || 10),
   // Notifikasi Web Push (PWA) — opsional, jika kosong push dilewati
   VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || '',
