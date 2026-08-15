@@ -41,6 +41,9 @@ Thumbs.db
 # Token deploy opsional (jika Anda simpan di file — JANGAN commit)
 .vercel-token
 
+# Memori proyek untuk pindah perangkat — berisi kredensial, JANGAN commit
+PROJECT_HANDOVER.md
+
 # Misc
 .cache/
 *.local

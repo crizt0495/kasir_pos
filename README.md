@@ -389,6 +389,20 @@ Fungsi transaksional lain: `fn_refund_sale`, `fn_receive_purchase`, `fn_complete
 
 ---
 
+## Pindah ke Perangkat Lain
+
+Kode proyek tersimpan penuh di GitHub (`crizt0495/kasir_pos`), jadi bisa diklone di perangkat mana pun:
+
+```bash
+git clone git@github.com:crizt0495/kasir_pos.git
+npm install
+npm run dev
+```
+
+> ⚠️ Yang **tidak** ikut di git (harus disalin manual dari mesin lama): `backend/.env`, `frontend/.env`, `.vercel-token`. Semua daftar kredensial, status proyek, dan cara melanjutkan ada di file lokal **`PROJECT_HANDOVER.md`** (sengaja di-ignore git karena berisi info sensitif).
+
+---
+
 ## Lisensi
 
 Proyek internal — silakan digunakan untuk bisnis Anda.
