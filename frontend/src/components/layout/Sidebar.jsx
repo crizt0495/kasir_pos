@@ -103,6 +103,11 @@ export function Sidebar({ open, onClose }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Overlay mobile selalu tampil penuh dengan label, apa pun state collapse
+  useEffect(() => {
+    if (open) setCollapsed(false);
+  }, [open]);
+
   const sidebarWidth = collapsed ? 'w-16' : 'w-64';
   const showLabels = !collapsed;
 
