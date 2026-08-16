@@ -129,7 +129,7 @@ export function DataTable({
   return (
     <div className={`rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden ${className}`}>
       {toolbar && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/70 px-4 py-3">
           {toolbar}
         </div>
       )}
@@ -238,11 +238,11 @@ export function DataTable({
   );
 }
 
-export function Card({ title, actions, children, className = '', bodyClassName = '', headerClassName = '' }) {
+export function Card({ title, actions, children, className = '', bodyClassName = '', headerClassName = '', hover = false }) {
   return (
-    <div className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}>
+    <div className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${hover ? 'card-hover' : ''} ${className}`}>
       {(title || actions) && (
-        <div className={`flex items-center justify-between border-b border-slate-200 px-5 py-4 ${headerClassName}`}>
+        <div className={`flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 ${headerClassName}`}>
           {title && <h3 className="text-sm font-semibold text-slate-800">{title}</h3>}
           {actions && <div className="flex items-center gap-2">{actions}</div>}
         </div>

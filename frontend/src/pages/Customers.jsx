@@ -7,7 +7,7 @@ import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, SearchInput, Button, Modal, Field, Input, Textarea, ConfirmDialog } from '../components/ui/index.jsx';
+import { DataTable, SearchInput, Button, Modal, Field, Input, Textarea, ConfirmDialog, PageHeader } from '../components/ui/index.jsx';
 import { formatRupiah, formatNumber } from '../utils/format.js';
 
 const emptyForm = { name: '', phone: '', email: '', address: '', birth_date: '', notes: '' };
@@ -81,13 +81,11 @@ export default function Customers() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Pelanggan</h1>
-          <p className="text-sm text-slate-500">Kelola data pelanggan</p>
-        </div>
-        {can('customers.create') && <Button icon={Plus} onClick={openCreate}>Tambah Pelanggan</Button>}
-      </div>
+      <PageHeader
+        title="Pelanggan"
+        description="Kelola data pelanggan"
+        actions={can('customers.create') && <Button icon={Plus} onClick={openCreate}>Tambah Pelanggan</Button>}
+      />
 
       <DataTable
         columns={[

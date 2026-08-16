@@ -83,13 +83,13 @@ export function Modal({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
       <div
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-fade-in"
         onClick={closeOnOverlayClick ? onClose : undefined}
         aria-hidden="true"
       />
       <FocusTrap>
         <div
-          className={`relative flex max-h-[90vh] w-full flex-col animate-scale-in rounded-2xl bg-white shadow-2xl ${sizeClasses[size]}`}
+          className={`relative flex max-h-[90vh] w-full flex-col animate-scale-in rounded-2xl bg-white shadow-2xl shadow-slate-900/20 ${sizeClasses[size]}`}
           role="dialog"
           aria-modal="true"
           aria-labelledby={title ? 'modal-title' : undefined}

@@ -6,7 +6,7 @@ import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, SearchInput, Button, Modal, Field, Input, Textarea, Select, StatusBadge, ConfirmDialog } from '../components/ui/index.jsx';
+import { DataTable, SearchInput, Button, Modal, Field, Input, Textarea, Select, StatusBadge, ConfirmDialog, PageHeader } from '../components/ui/index.jsx';
 
 const emptyForm = { name: '', contact_person: '', phone: '', email: '', address: '', notes: '', status: 'active' };
 
@@ -78,13 +78,11 @@ export default function Suppliers() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Supplier</h1>
-          <p className="text-sm text-slate-500">Kelola pemasok barang</p>
-        </div>
-        {can('suppliers.create') && <Button icon={Plus} onClick={openCreate}>Tambah Supplier</Button>}
-      </div>
+      <PageHeader
+        title="Supplier"
+        description="Kelola pemasok barang"
+        actions={can('suppliers.create') && <Button icon={Plus} onClick={openCreate}>Tambah Supplier</Button>}
+      />
 
       <DataTable
         columns={[

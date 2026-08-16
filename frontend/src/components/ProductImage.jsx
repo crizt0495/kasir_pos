@@ -18,9 +18,9 @@ export default function ProductImage({ src, alt = '', className = '', imgClassNa
   if (!src || error) {
     return (
       <div
-        className={`flex shrink-0 items-center justify-center bg-slate-100 text-slate-300 ${rounded ? 'rounded-lg' : ''} ${className}`}
+        className={`flex shrink-0 items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-300 ${rounded ? 'rounded-lg' : ''} ${className}`}
       >
-        <Package className="h-1/2 w-1/2 max-h-10 max-w-10" />
+        <Package className="h-1/2 w-1/2 max-h-10 max-w-10" strokeWidth={1.5} />
       </div>
     );
   }

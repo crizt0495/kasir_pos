@@ -6,7 +6,7 @@ import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, SearchInput, Select, Button, Modal, Field, Input, Textarea, Badge, ConfirmDialog } from '../components/ui/index.jsx';
+import { DataTable, SearchInput, Select, Button, Modal, Field, Input, Textarea, Badge, ConfirmDialog, PageHeader } from '../components/ui/index.jsx';
 import { formatQty, formatRupiah } from '../utils/format.js';
 
 export default function Inventory() {
@@ -68,12 +68,7 @@ export default function Inventory() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Stok</h1>
-          <p className="text-sm text-slate-500">Pantau dan kelola stok produk</p>
-        </div>
-      </div>
+      <PageHeader title="Stok" description="Pantau dan kelola stok produk" />
 
       <DataTable
         columns={[

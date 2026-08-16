@@ -4,7 +4,7 @@ import { Eye, RotateCcw } from 'lucide-react';
 import { returnsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
-import { DataTable, SearchInput, StatusBadge } from '../components/ui/index.jsx';
+import { DataTable, SearchInput, StatusBadge, PageHeader } from '../components/ui/index.jsx';
 import { formatRupiah, formatDateTime, paymentMethodLabel } from '../utils/format.js';
 
 export default function Returns() {
@@ -24,10 +24,7 @@ export default function Returns() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-slate-900">Retur</h1>
-        <p className="text-sm text-slate-500">Riwayat retur penjualan</p>
-      </div>
+      <PageHeader title="Retur" description="Riwayat retur penjualan" />
 
       <DataTable
         columns={[

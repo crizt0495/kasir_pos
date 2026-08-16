@@ -8,7 +8,7 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Card, Tabs, Button, Select, Field, Input, Skeleton, ErrorState, EmptyState, Badge } from '../components/ui/index.jsx';
+import { Card, Tabs, Button, Select, Field, Input, Skeleton, ErrorState, EmptyState, Badge, PageHeader } from '../components/ui/index.jsx';
 import { formatRupiah, formatNumber, formatDate, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 
 const PERIODS = [
@@ -64,17 +64,15 @@ export default function Reports() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Laporan</h1>
-          <p className="text-sm text-slate-500">Analisis penjualan, profit, produk, stok, kasir, dan pembelian</p>
-        </div>
-        {can('reports.export') && (
+      <PageHeader
+        title="Laporan"
+        description="Analisis penjualan, profit, produk, stok, kasir, dan pembelian"
+        actions={can('reports.export') && (
           <Button variant="secondary" icon={FileDown} onClick={exportCsv}>
             Export CSV
           </Button>
         )}
-      </div>
+      />
 
       <div className="flex flex-wrap items-center gap-3">
         <Tabs tabs={TABS} active={tab} onChange={setTab} />

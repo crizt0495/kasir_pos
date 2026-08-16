@@ -192,16 +192,19 @@ export function Sidebar({ open, onClose }) {
                         <Link
                           to={item.to}
                           onClick={onClose}
-                          className={`flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-all duration-150 ${
+                          className={`relative flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-all duration-150 ${
                             collapsed ? 'justify-center px-0' : 'px-3'
                           } ${
                             active
-                              ? 'bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-md shadow-primary-600/30'
+                              ? 'bg-gradient-to-r from-primary-600/90 to-primary-500/90 text-white shadow-md shadow-primary-600/30'
                               : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
                           }`}
                           aria-current={active ? 'page' : undefined}
                           title={showLabels ? undefined : item.label}
                         >
+                          {active && !collapsed && (
+                            <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-white/80" aria-hidden="true" />
+                          )}
                           <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                           {showLabels && <span className="truncate">{item.label}</span>}
                         </Link>

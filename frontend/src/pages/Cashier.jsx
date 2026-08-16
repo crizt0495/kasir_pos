@@ -5,7 +5,7 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Card, Button, Field, Input, Modal, ConfirmDialog, StatusBadge, Skeleton, EmptyState, Badge } from '../components/ui/index.jsx';
+import { Card, Button, Field, Input, Modal, ConfirmDialog, StatusBadge, Skeleton, EmptyState, Badge, PageHeader } from '../components/ui/index.jsx';
 import { formatRupiah, formatDateTime, formatNumber } from '../utils/format.js';
 
 export default function Cashier() {
@@ -91,10 +91,7 @@ export default function Cashier() {
   if (!session.loading && !s) {
     return (
       <div className="mx-auto max-w-md space-y-4">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Kasir</h1>
-          <p className="text-sm text-slate-500">Buka sesi kas untuk mulai melayani pembayaran tunai</p>
-        </div>
+        <PageHeader title="Kasir" description="Buka sesi kas untuk mulai melayani pembayaran tunai" />
         <Card bodyClassName="p-6">
           {!can('cashier.open') ? (
             <EmptyState title="Anda tidak memiliki izin membuka kas" />
@@ -125,17 +122,11 @@ export default function Cashier() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Kasir</h1>
-          <p className="text-sm text-slate-500">Sesi kas terbuka · dibuka {s ? formatDateTime(s.opened_at) : ''}</p>
-        </div>
-        {can('cashier.close') && (
-          <Button onClick={() => { setActualCash(''); setCloseNote(''); setShowClose(true); }}>
-            Tutup Kas
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title="Kasir"
+        description={`Sesi kas terbuka · dibuka ${s ? formatDateTime(s.opened_at) : ''}`}
+        actions={can('cashier.close') && <Button onClick={() => { setActualCash(''); setCloseNote(''); setShowClose(true); }}>Tutup Kas</Button>}
+      />
 
       {session.loading ? (
         <Skeleton className="h-24 w-full" />

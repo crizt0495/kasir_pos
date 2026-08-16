@@ -184,8 +184,8 @@ export default function POS() {
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           <button
             onClick={() => setCategoryId('')}
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-              !categoryId ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-all duration-150 ${
+              !categoryId ? 'bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-sm shadow-primary-600/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
             Semua
@@ -194,8 +194,8 @@ export default function POS() {
             <button
               key={c.id}
               onClick={() => setCategoryId(categoryId === c.id ? '' : c.id)}
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                categoryId === c.id ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-all duration-150 ${
+                categoryId === c.id ? 'bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-sm shadow-primary-600/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               {c.name}
@@ -220,26 +220,37 @@ export default function POS() {
                 key={p.id}
                 onClick={() => cart.add(p)}
                 disabled={p.status !== 'active'}
-                className="group flex flex-col rounded-xl border border-slate-200 p-2.5 text-left transition-all hover:border-primary-400 hover:shadow-md disabled:opacity-50"
+                className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 p-2.5 text-left transition-all duration-150 hover:-translate-y-0.5 hover:border-primary-400 hover:shadow-lg hover:shadow-primary-500/10 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
               >
-                <div className="mb-2 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg bg-slate-50">
+                <div className="mb-2 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-100">
                   <ProductImage
                     src={p.image_url}
                     alt={p.name}
                     rounded={false}
                     className="h-full w-full transition-transform duration-300 ease-out group-hover:scale-125"
                   />
+                  <span className="absolute right-2 top-2 hidden h-7 w-7 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg shadow-primary-600/40 transition-all duration-150 group-hover:flex">
+                    <Plus className="h-4 w-4" strokeWidth={2.5} />
+                  </span>
                 </div>
                 <div className="flex flex-1 flex-col justify-between">
                   <div>
                     <p className="line-clamp-2 text-sm font-medium text-slate-800 group-hover:text-primary-700">{p.name}</p>
                     <p className="text-xs text-slate-400">{p.sku}</p>
                   </div>
-                  <div className="mt-2">
+                  <div className="mt-2 flex items-center justify-between gap-1">
                     <p className="text-sm font-bold text-primary-700">{formatRupiah(p.sale_price)}</p>
-                    <p className={`text-xs ${Number(p.stock) <= Number(p.min_stock) ? 'text-red-500' : 'text-slate-400'}`}>
-                      Stok: {formatQty(p.stock)}
-                    </p>
+                    <span
+                      className={`pill ${
+                        Number(p.stock) <= Number(p.min_stock)
+                          ? 'bg-red-50 text-red-600'
+                          : Number(p.stock) <= Number(p.min_stock) * 1.5 && Number(p.min_stock) > 0
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}
+                    >
+                      {formatQty(p.stock)}
+                    </span>
                   </div>
                 </div>
               </button>
@@ -321,7 +332,7 @@ export default function POS() {
               {cart.items.map((item) => {
                 const lineTotal = item.product.sale_price * item.quantity - item.discount;
                 return (
-                  <li key={item.product.id} className="rounded-lg border border-slate-200 p-2.5">
+                  <li key={item.product.id} className="rounded-lg border border-slate-200 p-2.5 transition-colors hover:border-slate-300">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex min-w-0 items-center gap-2">
                         <ProductImage src={item.product.image_url} alt={item.product.name} className="h-9 w-9" />
@@ -332,7 +343,7 @@ export default function POS() {
                           </p>
                         </div>
                       </div>
-                      <button onClick={() => cart.remove(item.product.id)} className="text-slate-300 hover:text-red-500">
+                      <button onClick={() => cart.remove(item.product.id)} className="rounded-md p-1 text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors">
                         <X className="h-4 w-4" />
                       </button>
                     </div>
@@ -341,7 +352,8 @@ export default function POS() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => cart.decrement(item.product.id)}
-                          className="rounded-md border border-slate-300 p-1 hover:bg-slate-50"
+                          className="rounded-md border border-slate-300 p-1 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+                          aria-label="Kurangi jumlah"
                         >
                           <Minus className="h-3.5 w-3.5" />
                         </button>
@@ -349,11 +361,12 @@ export default function POS() {
                           type="number"
                           value={item.quantity}
                           onChange={(e) => cart.setQuantity(item.product.id, e.target.value)}
-                          className="w-14 rounded-md border border-slate-300 py-1 text-center text-sm focus:border-primary-500 focus:outline-none"
+                          className="w-14 rounded-md border border-slate-300 py-1 text-center text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
                         />
                         <button
                           onClick={() => cart.increment(item.product.id)}
-                          className="rounded-md border border-slate-300 p-1 hover:bg-slate-50"
+                          className="rounded-md border border-slate-300 p-1 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+                          aria-label="Tambah jumlah"
                         >
                           <Plus className="h-3.5 w-3.5" />
                         </button>
@@ -365,7 +378,8 @@ export default function POS() {
                           value={item.discount || ''}
                           placeholder="0"
                           onChange={(e) => cart.setItemDiscount(item.product.id, e.target.value)}
-                          className="w-20 rounded-md border border-slate-300 py-1 px-2 text-right text-sm focus:border-primary-500 focus:outline-none"
+                          className="w-20 rounded-md border border-slate-300 py-1 px-2 text-right text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                          aria-label="Diskon item"
                         />
                       </div>
                       <p className="w-24 text-right text-sm font-semibold text-slate-800">{formatRupiah(lineTotal)}</p>

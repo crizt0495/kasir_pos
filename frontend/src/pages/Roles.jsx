@@ -6,7 +6,7 @@ import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
-  DataTable, Button, Modal, Field, Input, Textarea, Badge, ConfirmDialog, Card, Skeleton, ErrorState,
+  DataTable, Button, Modal, Field, Input, Textarea, Badge, ConfirmDialog, Card, Skeleton, ErrorState, PageHeader,
 } from '../components/ui/index.jsx';
 
 export default function Roles() {
@@ -112,13 +112,11 @@ export default function Roles() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Roles</h1>
-          <p className="text-sm text-slate-500">Kelola role dan hak aksesnya</p>
-        </div>
-        {can('roles.create') && <Button icon={Plus} onClick={openCreate}>Tambah Role</Button>}
-      </div>
+      <PageHeader
+        title="Roles"
+        description="Kelola role dan hak aksesnya"
+        actions={can('roles.create') && <Button icon={Plus} onClick={openCreate}>Tambah Role</Button>}
+      />
 
       <Card>
         {roles.loading ? (

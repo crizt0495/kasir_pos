@@ -4,7 +4,7 @@ import { settingsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Card, Tabs, Button, Field, Input, Select, Checkbox } from '../components/ui/index.jsx';
+import { Card, Tabs, Button, Field, Input, Select, Checkbox, PageHeader } from '../components/ui/index.jsx';
 
 const TABS = [
   { key: 'store', label: 'Toko' },
@@ -64,13 +64,11 @@ export default function Settings() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Settings</h1>
-          <p className="text-sm text-slate-500">Konfigurasi toko, POS, pajak, dan sistem</p>
-        </div>
-        <Button onClick={save} loading={saving} icon={Save}>Simpan Pengaturan</Button>
-      </div>
+      <PageHeader
+        title="Settings"
+        description="Konfigurasi toko, POS, pajak, dan sistem"
+        actions={<Button onClick={save} loading={saving} icon={Save}>Simpan Pengaturan</Button>}
+      />
 
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
 

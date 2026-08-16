@@ -90,11 +90,11 @@ export function Topbar({ onMenuClick }) {
           <div className="hidden sm:block">
             <button
               onClick={() => setGlobalSearchOpen(true)}
-              className="flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm text-slate-500 hover:border-primary-400 hover:text-slate-700 hover:bg-white transition-all duration-150"
+              className="group flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50/80 px-3 py-1.5 text-sm text-slate-500 hover:border-primary-400 hover:text-slate-700 hover:bg-white hover:shadow-sm transition-all duration-150"
               aria-label="Pencarian global (Ctrl+K)"
             >
               <span className="flex items-center gap-1">
-                <Search className="h-4 w-4" aria-hidden="true" />
+                <Search className="h-4 w-4 text-slate-400 group-hover:text-primary-500 transition-colors" aria-hidden="true" />
                 <span>Cari produk, pelanggan, transaksi...</span>
                 <kbd className="kbd ml-1">Ctrl K</kbd>
               </span>
@@ -111,7 +111,7 @@ export function Topbar({ onMenuClick }) {
               aria-haspopup="true"
               aria-label="Menu pengguna"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-xs font-bold text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-xs font-bold text-white ring-2 ring-primary-200/70 shadow-sm">
                 {initials(displayName)}
               </div>
               <div className="hidden text-left md:block">

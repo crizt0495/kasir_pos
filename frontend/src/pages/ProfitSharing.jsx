@@ -7,7 +7,7 @@ import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
   Card, Button, StatCard, Select, Input, Field, Textarea, Modal, ConfirmDialog,
-  SkeletonRows, EmptyState, ErrorState, Badge, Spinner,
+  SkeletonRows, EmptyState, ErrorState, Badge, Spinner, PageHeader,
 } from '../components/ui/index.jsx';
 import { formatRupiah, formatDateTime } from '../utils/format.js';
 
@@ -109,40 +109,40 @@ export default function ProfitSharing() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Bagi Hasil Pelanggan 2,5%</h1>
-          <p className="text-sm text-slate-500">
-            Nilai 2,5% dihitung dari <span className="font-medium">total laba pelanggan</span> (bukan omzet), per periode tahunan.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {can('profit.distribute') && (
-            <Button
-              variant="outline"
-              size="sm"
-              icon={Plus}
-              onClick={async () => {
-                const yr = window.prompt('Buat periode tahun (cth: 2027):', String(new Date().getFullYear() + 1));
-                if (!yr) return;
-                try {
-                  await profitApi.createPeriod(Number(yr));
-                  toast.success(`Periode ${yr} dibuat`);
-                  setYear(yr.trim());
-                  setRefreshKey((k) => k + 1);
-                } catch (error) {
-                  toast.error(getErrorMessage(error, 'Gagal membuat periode'));
-                }
-              }}
-            >
-              Periode Baru
+      <PageHeader
+        title="Bagi Hasil Pelanggan 2,5%"
+        description={
+          <>Nilai 2,5% dihitung dari <span className="font-medium">total laba pelanggan</span> (bukan omzet), per periode tahunan.</>
+        }
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {can('profit.distribute') && (
+              <Button
+                variant="outline"
+                size="sm"
+                icon={Plus}
+                onClick={async () => {
+                  const yr = window.prompt('Buat periode tahun (cth: 2027):', String(new Date().getFullYear() + 1));
+                  if (!yr) return;
+                  try {
+                    await profitApi.createPeriod(Number(yr));
+                    toast.success(`Periode ${yr} dibuat`);
+                    setYear(yr.trim());
+                    setRefreshKey((k) => k + 1);
+                  } catch (error) {
+                    toast.error(getErrorMessage(error, 'Gagal membuat periode'));
+                  }
+                }}
+              >
+                Periode Baru
+              </Button>
+            )}
+            <Button variant="secondary" size="sm" icon={RefreshCw} onClick={() => setRefreshKey((k) => k + 1)}>
+              Muat Ulang
             </Button>
-          )}
-          <Button variant="secondary" size="sm" icon={RefreshCw} onClick={() => setRefreshKey((k) => k + 1)}>
-            Muat Ulang
-          </Button>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {periodsLoading ? (
         <SkeletonRows rows={3} cols={4} />

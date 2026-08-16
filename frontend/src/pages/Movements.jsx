@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { inventoryApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
-import { DataTable, SearchInput, Select, Badge, Field, Input } from '../components/ui/index.jsx';
+import { DataTable, SearchInput, Select, Badge, Field, Input, PageHeader } from '../components/ui/index.jsx';
 import { formatQty, formatDateTime, formatNumber } from '../utils/format.js';
 
 const TYPE_BADGES = {
@@ -50,10 +50,7 @@ export default function Movements() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-slate-900">Pergerakan Stok</h1>
-        <p className="text-sm text-slate-500">Riwayat semua perubahan stok produk</p>
-      </div>
+      <PageHeader title="Pergerakan Stok" description="Riwayat semua perubahan stok produk" />
 
       <DataTable
         columns={[

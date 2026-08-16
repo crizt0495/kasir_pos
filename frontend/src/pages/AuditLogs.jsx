@@ -3,7 +3,7 @@ import { ScrollText, ChevronDown } from 'lucide-react';
 import { auditApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
-import { DataTable, SearchInput, Select, Badge, Field, Input, Modal } from '../components/ui/index.jsx';
+import { DataTable, SearchInput, Select, Badge, Field, Input, Modal, PageHeader } from '../components/ui/index.jsx';
 import { formatDateTime } from '../utils/format.js';
 
 const MODULES = ['auth', 'users', 'roles', 'products', 'categories', 'customers', 'suppliers', 'inventory', 'stock_opname', 'sales', 'purchases', 'returns', 'cashier', 'expenses', 'reports', 'settings', 'audit'];
@@ -26,10 +26,7 @@ export default function AuditLogs() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-slate-900">Audit Log</h1>
-        <p className="text-sm text-slate-500">Semua aktivitas penting pengguna</p>
-      </div>
+      <PageHeader title="Audit Log" description="Semua aktivitas penting pengguna" />
 
       <DataTable
         columns={[

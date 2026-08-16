@@ -7,7 +7,7 @@ import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, SearchInput, Select, Button, StatusBadge, ConfirmDialog } from '../components/ui/index.jsx';
+import { DataTable, SearchInput, Select, Button, StatusBadge, ConfirmDialog, PageHeader } from '../components/ui/index.jsx';
 import { formatRupiah, formatDate } from '../utils/format.js';
 
 export default function Purchases() {
@@ -64,13 +64,11 @@ export default function Purchases() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Pembelian</h1>
-          <p className="text-sm text-slate-500">Kelola pembelian dari supplier</p>
-        </div>
-        {can('purchases.create') && <Button icon={Plus} onClick={() => navigate('/purchases/new')}>Tambah Pembelian</Button>}
-      </div>
+      <PageHeader
+        title="Pembelian"
+        description="Kelola pembelian dari supplier"
+        actions={can('purchases.create') && <Button icon={Plus} onClick={() => navigate('/purchases/new')}>Tambah Pembelian</Button>}
+      />
 
       <DataTable
         columns={[

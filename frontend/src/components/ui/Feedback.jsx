@@ -2,7 +2,7 @@ import { CheckCircle2, Info, Inbox, XCircle, AlertTriangle, Loader2 } from 'luci
 import { useUiStore } from '../../stores/uiStore.js';
 import { Button } from './Button.jsx';
 
-export function Badge({ color = 'bg-slate-100 text-slate-700', children, className = '', variant }) {
+export function Badge({ color = 'bg-slate-100 text-slate-700', children, className = '', variant, dot = false }) {
   const variantStyles = {
     default: 'bg-slate-100 text-slate-700',
     primary: 'bg-primary-100 text-primary-700',
@@ -13,7 +13,8 @@ export function Badge({ color = 'bg-slate-100 text-slate-700', children, classNa
   };
 
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${variant ? variantStyles[variant] : color} ${className}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${variant ? variantStyles[variant] : color} ${className}`}>
+      {dot && <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" aria-hidden="true" />}
       {children}
     </span>
   );
@@ -72,7 +73,7 @@ export function Spinner({ className = 'h-5 w-5', color = 'text-primary-600' }) {
 }
 
 export function Skeleton({ className = '' }) {
-  return <div className={`animate-pulse rounded-lg bg-slate-200 ${className}`} aria-hidden="true" />;
+  return <div className={`skeleton-shimmer rounded-lg ${className}`} aria-hidden="true" />;
 }
 
 export function SkeletonRows({ rows = 6, cols = 4 }) {
@@ -92,9 +93,11 @@ export function SkeletonRows({ rows = 6, cols = 4 }) {
 export function EmptyState({ title = 'Belum ada data', description, action, icon: Icon = Inbox, className = '' }) {
   return (
     <div className={`flex flex-col items-center justify-center gap-2 py-12 text-center ${className}`}>
-      <Icon className="h-10 w-10 text-slate-300" aria-hidden="true" />
-      <p className="text-sm font-medium text-slate-600">{title}</p>
-      {description && <p className="text-xs text-slate-400">{description}</p>}
+      <div className="mb-1 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-300">
+        <Icon className="h-7 w-7" aria-hidden="true" />
+      </div>
+      <p className="text-sm font-semibold text-slate-600">{title}</p>
+      {description && <p className="max-w-xs text-xs text-slate-400">{description}</p>}
       {action}
     </div>
   );
@@ -116,11 +119,11 @@ export function ErrorState({ message = 'Terjadi kesalahan, silakan coba lagi', o
 
 export function StatCard({ label, value, icon: Icon, color = 'bg-primary-50 text-primary-600', sub, trend, trendUp = true, className = '' }) {
   return (
-    <div className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md ${className}`}>
+    <div className={`group card-hover rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-xs font-medium text-slate-500 truncate">{label}</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900 truncate">{value}</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900 truncate tracking-tight">{value}</p>
           {sub && <p className="mt-1 text-xs text-slate-400">{sub}</p>}
           {trend && (
             <p className={`mt-1.5 flex items-center gap-1 text-xs font-medium ${trendUp ? 'text-success-600' : 'text-danger-600'}`}>
@@ -136,7 +139,7 @@ export function StatCard({ label, value, icon: Icon, color = 'bg-primary-50 text
           )}
         </div>
         {Icon && (
-          <div className={`flex-shrink-0 rounded-xl p-3 ${color}`}>
+          <div className={`flex-shrink-0 rounded-xl p-3 ${color} transition-transform duration-200 group-hover:scale-110`}>
             <Icon className="h-6 w-6" aria-hidden="true" />
           </div>
         )}
@@ -195,18 +198,39 @@ export function Toaster() {
     ),
   };
 
+  const iconBoxes = {
+    success: 'bg-success-50',
+    error: 'bg-danger-50',
+    info: 'bg-sky-50',
+    warning: 'bg-warning-50',
+  };
+
+  const bars = {
+    success: 'bg-success-500',
+    error: 'bg-danger-500',
+    info: 'bg-sky-500',
+    warning: 'bg-warning-500',
+  };
+
   return (
-    <div className="pointer-events-none fixed right-4 top-4 z-[100] flex w-80 flex-col gap-2 sm:right-6 sm:top-6">
+    <div className="pointer-events-none fixed right-4 top-4 z-[100] flex w-[calc(100vw-2rem)] max-w-sm flex-col gap-2 sm:right-6 sm:top-6">
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="pointer-events-auto flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-lg animate-slide-in"
+          className="pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-xl border border-slate-200 bg-white p-3 pl-4 shadow-xl shadow-slate-900/10 animate-slide-in"
           role="alert"
           aria-live="polite"
         >
-          {icons[t.type]}
-          <p className="flex-1 text-sm text-slate-700">{t.message}</p>
-          <button className="flex-shrink-0 text-slate-400 hover:text-slate-600" onClick={() => remove(t.id)} aria-label="Tutup notifikasi">
+          <span className={`absolute inset-y-0 left-0 w-1 ${bars[t.type]}`} aria-hidden="true" />
+          <span className={`flex-shrink-0 rounded-lg p-1.5 ${iconBoxes[t.type]}`} aria-hidden="true">
+            {icons[t.type]}
+          </span>
+          <p className="flex-1 pt-0.5 text-sm font-medium text-slate-700">{t.message}</p>
+          <button
+            className="flex-shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            onClick={() => remove(t.id)}
+            aria-label="Tutup notifikasi"
+          >
             <XCircle className="h-4 w-4" />
           </button>
         </div>

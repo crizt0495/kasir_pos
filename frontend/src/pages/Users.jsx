@@ -8,7 +8,7 @@ import { usePermission } from '../hooks/usePermission.js';
 import { useAuthStore } from '../stores/authStore.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, SearchInput, Button, Badge, ConfirmDialog, Modal, Field, Input } from '../components/ui/index.jsx';
+import { DataTable, SearchInput, Button, Badge, ConfirmDialog, Modal, Field, Input, PageHeader } from '../components/ui/index.jsx';
 import { initials, formatDateTime } from '../utils/format.js';
 
 export default function Users() {
@@ -58,13 +58,11 @@ export default function Users() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Users</h1>
-          <p className="text-sm text-slate-500">Kelola akun pengguna aplikasi</p>
-        </div>
-        {can('users.create') && <Button icon={Plus} onClick={() => navigate('/users/new')}>Tambah User</Button>}
-      </div>
+      <PageHeader
+        title="Users"
+        description="Kelola akun pengguna aplikasi"
+        actions={can('users.create') && <Button icon={Plus} onClick={() => navigate('/users/new')}>Tambah User</Button>}
+      />
 
       <DataTable
         columns={[

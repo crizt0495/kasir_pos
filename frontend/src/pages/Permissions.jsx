@@ -1,16 +1,13 @@
 import { useApi } from '../hooks/useApi.js';
 import { permissionsApi } from '../api/index.js';
-import { Card, Skeleton, ErrorState, Badge } from '../components/ui/index.jsx';
+import { Card, Skeleton, ErrorState, Badge, PageHeader } from '../components/ui/index.jsx';
 
 export default function Permissions() {
   const permissions = useApi(() => permissionsApi.list().then((r) => r.data), []);
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-slate-900">Permissions</h1>
-        <p className="text-sm text-slate-500">Daftar semua izin (hak akses) granular yang tersedia</p>
-      </div>
+      <PageHeader title="Permissions" description="Daftar semua izin (hak akses) granular yang tersedia" />
 
       {permissions.loading ? (
         <Skeleton className="h-40 w-full" />

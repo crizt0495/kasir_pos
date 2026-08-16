@@ -84,10 +84,10 @@ export default function GlobalSearch() {
   const total = results ? GROUPS.reduce((sum, g) => sum + (results[g.key]?.length || 0), 0) : 0;
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-start justify-center bg-slate-900/50 p-4 pt-24 backdrop-blur-sm" onClick={() => setOpen(false)}>
-      <div className="w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[90] flex items-start justify-center bg-slate-900/50 p-4 pt-24 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(false)}>
+      <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl shadow-slate-950/30 ring-1 ring-white/20 animate-scale-in" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2 border-b border-slate-200 px-4 py-3">
-          <Search className="h-5 w-5 text-slate-400" />
+          <Search className="h-5 w-5 text-primary-500" />
           <input
             ref={inputRef}
             value={query}
@@ -99,7 +99,7 @@ export default function GlobalSearch() {
             placeholder="Cari produk, transaksi, pelanggan, supplier..."
             className="flex-1 text-sm outline-none placeholder:text-slate-400"
           />
-          <kbd className="rounded border border-slate-300 px-1.5 py-0.5 text-[10px] text-slate-400">ESC</kbd>
+          <kbd className="kbd">ESC</kbd>
         </div>
 
         <div className="max-h-96 overflow-y-auto py-2">
@@ -114,7 +114,7 @@ export default function GlobalSearch() {
           {results &&
             GROUPS.filter((g) => results[g.key]?.length).map((g) => (
               <div key={g.key} className="mb-1">
-                <p className="px-4 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{g.label}</p>
+                <p className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{g.label}</p>
                 {results[g.key].map((row) => {
                   const idx = flat.findIndex((f) => f.group.key === g.key && f.row.id === row.id);
                   return (
@@ -122,8 +122,8 @@ export default function GlobalSearch() {
                       key={row.id}
                       onMouseEnter={() => setActiveIndex(idx)}
                       onClick={() => go(flat[idx])}
-                      className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm ${
-                        idx === activeIndex ? 'bg-primary-50' : ''
+                      className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors ${
+                        idx === activeIndex ? 'bg-primary-50/80' : ''
                       }`}
                     >
                       <g.icon className="h-4 w-4 shrink-0 text-slate-400" />

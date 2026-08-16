@@ -6,7 +6,7 @@ import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
-  DataTable, SearchInput, Button, Modal, Field, Input, Textarea, Select, ConfirmDialog, Badge,
+  DataTable, SearchInput, Button, Modal, Field, Input, Textarea, Select, ConfirmDialog, Badge, PageHeader,
 } from '../components/ui/index.jsx';
 import { formatRupiah, formatDate, paymentMethodLabel, paymentMethodColor, todayInput } from '../utils/format.js';
 
@@ -97,13 +97,11 @@ export default function Expenses() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Pengeluaran</h1>
-          <p className="text-sm text-slate-500">Catat semua pengeluaran operasional</p>
-        </div>
-        {can('expenses.create') && <Button icon={Plus} onClick={openCreate}>Tambah Pengeluaran</Button>}
-      </div>
+      <PageHeader
+        title="Pengeluaran"
+        description="Catat semua pengeluaran operasional"
+        actions={can('expenses.create') && <Button icon={Plus} onClick={openCreate}>Tambah Pengeluaran</Button>}
+      />
 
       <DataTable
         columns={[

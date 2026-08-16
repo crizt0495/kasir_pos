@@ -6,7 +6,7 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, Button, StatusBadge, ConfirmDialog } from '../components/ui/index.jsx';
+import { DataTable, Button, StatusBadge, ConfirmDialog, PageHeader } from '../components/ui/index.jsx';
 import { formatDate, formatQty } from '../utils/format.js';
 
 export default function Opnames() {
@@ -70,15 +70,11 @@ export default function Opnames() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Stock Opname</h1>
-          <p className="text-sm text-slate-500">Cocokkan stok sistem dengan stok fisik</p>
-        </div>
-        {can('stock_opname.create') && (
-          <Button icon={Plus} onClick={() => navigate('/inventory/opname/new')}>Buat Opname</Button>
-        )}
-      </div>
+      <PageHeader
+        title="Stock Opname"
+        description="Cocokkan stok sistem dengan stok fisik"
+        actions={can('stock_opname.create') && <Button icon={Plus} onClick={() => navigate('/inventory/opname/new')}>Buat Opname</Button>}
+      />
 
       <DataTable
         columns={[

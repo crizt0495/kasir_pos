@@ -7,7 +7,7 @@ import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
   Card, DataTable, SearchInput, Button, Modal, Field, Input, Textarea, Select,
-  ConfirmDialog, StatusBadge, EmptyState, Skeleton, ErrorState,
+  ConfirmDialog, StatusBadge, EmptyState, Skeleton, ErrorState, PageHeader,
 } from '../components/ui/index.jsx';
 
 export default function Categories() {
@@ -74,15 +74,11 @@ export default function Categories() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Kategori</h1>
-          <p className="text-sm text-slate-500">Kelompokkan produk agar mudah dicari</p>
-        </div>
-        {can('categories.create') && (
-          <Button icon={Plus} onClick={openCreate}>Tambah Kategori</Button>
-        )}
-      </div>
+      <PageHeader
+        title="Kategori"
+        description="Kelompokkan produk agar mudah dicari"
+        actions={can('categories.create') && <Button icon={Plus} onClick={openCreate}>Tambah Kategori</Button>}
+      />
 
       <Card>
         {list.loading ? (

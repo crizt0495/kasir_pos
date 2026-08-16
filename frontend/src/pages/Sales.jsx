@@ -6,7 +6,7 @@ import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
-import { DataTable, SearchInput, Select, Field, Input, StatusBadge } from '../components/ui/index.jsx';
+import { DataTable, SearchInput, Select, Field, Input, StatusBadge, PageHeader } from '../components/ui/index.jsx';
 import { formatRupiah, formatDateTime, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 import ReceiptModal from '../components/pos/ReceiptModal.jsx';
 
@@ -66,10 +66,7 @@ export default function Sales() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-slate-900">Riwayat Penjualan</h1>
-        <p className="text-sm text-slate-500">Semua transaksi penjualan toko</p>
-      </div>
+      <PageHeader title="Riwayat Penjualan" description="Semua transaksi penjualan toko" />
 
       <DataTable
         columns={[

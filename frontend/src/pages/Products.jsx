@@ -7,7 +7,7 @@ import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, SearchInput, Select, Button, StatusBadge, ConfirmDialog, Card } from '../components/ui/index.jsx';
+import { DataTable, SearchInput, Select, Button, StatusBadge, ConfirmDialog, Card, PageHeader } from '../components/ui/index.jsx';
 import ProductImage from '../components/ProductImage.jsx';
 import { formatRupiah, formatQty } from '../utils/format.js';
 
@@ -59,17 +59,15 @@ export default function Products() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Produk</h1>
-          <p className="text-sm text-slate-500">Kelola produk toko</p>
-        </div>
-        {can('products.create') && (
+      <PageHeader
+        title="Produk"
+        description="Kelola produk toko"
+        actions={can('products.create') && (
           <Button icon={Plus} onClick={() => navigate('/products/new')}>
             Tambah Produk
           </Button>
         )}
-      </div>
+      />
 
       <DataTable
         columns={[
