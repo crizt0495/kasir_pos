@@ -1,38 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { Menu, Search, ChevronRight, LogOut, KeyRound, UserCircle2, ChevronDown, Keyboard } from 'lucide-react';
+import { Menu, Search, ChevronRight, LogOut, KeyRound, UserCircle2, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore.js';
 import { useUiStore } from '../../stores/uiStore.js';
 import { authApi } from '../../api/index.js';
 import { toast } from '../../stores/uiStore.js';
 import { initials } from '../../utils/format.js';
+import { resolvePageTitle } from '../../utils/routeMeta.js';
 import { NotificationsBell } from './NotificationsBell.jsx';
 import { Button } from '../ui/Button.jsx';
-
-const TITLES = {
-  '/dashboard': 'Dashboard',
-  '/pos': 'POS / Kasir',
-  '/products': 'Produk',
-  '/categories': 'Kategori',
-  '/customers': 'Pelanggan',
-  '/suppliers': 'Supplier',
-  '/inventory': 'Stok',
-  '/inventory/movements': 'Pergerakan Stok',
-  '/inventory/opname': 'Stock Opname',
-  '/purchases': 'Pembelian',
-  '/sales': 'Penjualan',
-  '/returns': 'Retur',
-  '/cashier': 'Kasir',
-  '/expenses': 'Pengeluaran',
-  '/reports': 'Laporan',
-  '/profit-sharing': 'Bagi Hasil 2,5%',
-  '/users': 'Users',
-  '/roles': 'Roles',
-  '/permissions': 'Permissions',
-  '/audit-logs': 'Audit Log',
-  '/settings': 'Settings',
-  '/change-password': 'Ganti Password',
-};
 
 export function Topbar({ onMenuClick }) {
   const user = useAuthStore((s) => s.user);
@@ -43,8 +19,7 @@ export function Topbar({ onMenuClick }) {
   const location = useLocation();
 
   const path = location.pathname;
-  const base = `/${path.split('/')[1]}`;
-  const title = TITLES[base] || TITLES[path] || 'POS';
+  const title = resolvePageTitle(path);
 
   const handleLogout = async () => {
     try {
@@ -118,11 +93,11 @@ export function Topbar({ onMenuClick }) {
               className="flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm text-slate-500 hover:border-primary-400 hover:text-slate-700 hover:bg-white transition-all duration-150"
               aria-label="Pencarian global (Ctrl+K)"
             >
-              <Search className="h-4 w-4" aria-hidden="true" />
-              <span>Cari produk, pelanggan, transaksi...</span>
-              <kbd className="rounded border border-slate-300 bg-white px-1.5 text-[0.6rem] font-medium text-slate-400">
-                <Keyboard className="h-3 w-3" /> K
-              </kbd>
+              <span className="flex items-center gap-1">
+                <Search className="h-4 w-4" aria-hidden="true" />
+                <span>Cari produk, pelanggan, transaksi...</span>
+                <kbd className="kbd ml-1">Ctrl K</kbd>
+              </span>
             </button>
           </div>
 

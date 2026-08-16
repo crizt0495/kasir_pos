@@ -150,27 +150,34 @@ export default function POS() {
     <div className="flex h-full flex-col gap-4 xl:h-[calc(100vh-6.5rem)] xl:flex-row">
       {/* ================= KIRI: produk ================= */}
       <div className="flex min-w-0 flex-1 flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              ref={searchRef}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari produk (F2)..."
-              className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex flex-1 flex-col gap-2 sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                ref={searchRef}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari produk (F2)..."
+                className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div className="relative">
+              <ScanLine className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                ref={barcodeRef}
+                value={barcode}
+                onChange={(e) => setBarcode(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleBarcode()}
+                placeholder="Scan barcode..."
+                className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:w-52"
+              />
+            </div>
           </div>
-          <div className="relative">
-            <ScanLine className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              ref={barcodeRef}
-              value={barcode}
-              onChange={(e) => setBarcode(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleBarcode()}
-              placeholder="Scan barcode..."
-              className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:w-52"
-            />
+          <div className="hidden shrink-0 items-center gap-3 text-[0.65rem] text-slate-400 lg:flex">
+            <span className="flex items-center gap-1.5"><kbd className="kbd">F2</kbd> Cari</span>
+            <span className="flex items-center gap-1.5"><kbd className="kbd">F4</kbd> Pelanggan</span>
+            <span className="flex items-center gap-1.5"><kbd className="kbd">F8</kbd> Bayar</span>
           </div>
         </div>
 

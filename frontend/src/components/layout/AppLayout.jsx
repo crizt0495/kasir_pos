@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar.jsx';
 import { Topbar } from './Topbar.jsx';
 import { useUiStore } from '../../stores/uiStore.js';
 import { useAuthStore } from '../../stores/authStore.js';
+import { resolvePageTitle } from '../../utils/routeMeta.js';
 import GlobalSearch from '../GlobalSearch.jsx';
 
 export default function AppLayout() {
@@ -15,6 +16,12 @@ export default function AppLayout() {
   // Tutup sidebar saat pindah halaman (mobile)
   useEffect(() => {
     setSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Judul tab browser mengikuti halaman aktif
+  useEffect(() => {
+    const title = resolvePageTitle(location.pathname);
+    document.title = title === 'POS' ? 'POS — Kasir Modern' : `${title} — POS`;
   }, [location.pathname]);
 
   // Keyboard shortcuts global
@@ -51,11 +58,19 @@ export default function AppLayout() {
 
   return (
     <div className="flex h-full">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[60] focus:rounded-lg focus:bg-primary-600 focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-white"
+      >
+        Lewati ke konten utama
+      </a>
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          <Outlet />
+        <main id="main-content" className="app-backdrop flex-1 overflow-y-auto p-4 lg:p-6">
+          <div key={location.pathname} className="page-enter">
+            <Outlet />
+          </div>
         </main>
       </div>
       <GlobalSearch />

@@ -100,14 +100,14 @@ export function Sidebar({ open, onClose }) {
     <>
       {open && <div className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden" onClick={onClose} aria-hidden="true" />}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-full flex-col bg-slate-900 text-slate-300 transition-all duration-200 ease-out lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-full flex-col bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-300 transition-all duration-200 ease-out lg:static lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         } ${sidebarWidth}`}
         aria-label="Navigasi utama"
       >
         <div className="flex items-center justify-between border-b border-slate-800 px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-600 text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-md shadow-primary-600/30 ring-1 ring-primary-400/30">
               <Store className="h-5 w-5" aria-hidden="true" />
             </div>
             {showLabels && (
@@ -153,8 +153,8 @@ export function Sidebar({ open, onClose }) {
                         className={({ isActive }) =>
                           `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
                             isActive
-                              ? 'bg-primary-600 text-white shadow-sm'
-                              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                              ? 'bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-md shadow-primary-600/30'
+                              : 'text-slate-300 hover:bg-slate-800/70 hover:text-white hover:translate-x-0.5'
                           }`
                         }
                         aria-current={item.to === location.pathname ? 'page' : undefined}

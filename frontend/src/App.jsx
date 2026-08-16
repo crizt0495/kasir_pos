@@ -3,8 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore.js';
 import { RequireAuth, RequirePermission } from './components/ProtectedRoute.jsx';
 import AppLayout from './components/layout/AppLayout.jsx';
-import { Toaster } from './components/ui/index.jsx';
-import { Spinner } from './components/ui/index.jsx';
+import { Toaster, Skeleton } from './components/ui/index.jsx';
 
 // Lazy loading + code splitting
 const Login = lazy(() => import('./pages/Login.jsx'));
@@ -41,8 +40,13 @@ const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 
 function PageFallback() {
   return (
-    <div className="flex h-full items-center justify-center py-24">
-      <Spinner className="h-7 w-7" />
+    <div className="space-y-4 p-1" aria-hidden="true">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-24" />
+        ))}
+      </div>
+      <Skeleton className="h-72" />
     </div>
   );
 }
