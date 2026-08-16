@@ -68,7 +68,6 @@ export function IconButton({
   ...props
 }) {
   const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-120 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.95]';
-  const widthStyle = 'w-auto';
 
   const iconSizeMap = {
     xs: 'h-3 w-3 p-1',
@@ -80,7 +79,7 @@ export function IconButton({
 
   return (
     <button
-      className={`${baseStyles} ${variantStyles[variant]} ${iconSizeMap[size]} ${widthStyle} ${className}`}
+      className={`${baseStyles} ${variantStyles[variant]} ${iconSizeMap[size]} ${className}`}
       disabled={disabled || loading}
       aria-label={ariaLabel || children}
       {...props}
