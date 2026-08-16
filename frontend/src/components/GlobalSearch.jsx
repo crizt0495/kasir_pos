@@ -123,7 +123,7 @@ export default function GlobalSearch() {
                       onMouseEnter={() => setActiveIndex(idx)}
                       onClick={() => go(flat[idx])}
                       className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm ${
-                        idx === activeIndex ? 'bg-indigo-50' : ''
+                        idx === activeIndex ? 'bg-primary-50' : ''
                       }`}
                     >
                       <g.icon className="h-4 w-4 shrink-0 text-slate-400" />

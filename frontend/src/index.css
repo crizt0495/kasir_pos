@@ -49,6 +49,17 @@
   --color-danger-800: #991b1b;
   --color-danger-900: #7f1d1d;
 
+  --color-info-50: #f0f9ff;
+  --color-info-100: #e0f2fe;
+  --color-info-200: #bae6fd;
+  --color-info-300: #7dd3fc;
+  --color-info-400: #38bdf8;
+  --color-info-500: #0ea5e9;
+  --color-info-600: #0284c7;
+  --color-info-700: #0369a1;
+  --color-info-800: #075985;
+  --color-info-900: #0c4a6e;
+
   --color-slate-50: #f8fafc;
   --color-slate-100: #f1f5f9;
   --color-slate-200: #e2e8f0;
@@ -283,6 +294,19 @@ input[type="search"]::-webkit-search-cancel-button:hover {
     to {
       opacity: 1;
       transform: scale(1);
+    }
+  }
+  .animate-slide-in {
+    animation: slideIn var(--transition-normal) ease-out;
+  }
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
     }
   }
 }

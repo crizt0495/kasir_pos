@@ -132,7 +132,7 @@ export default function SaleDetail() {
             </Card>
             <Card bodyClassName="p-4">
               <p className="text-xs text-slate-400">Total</p>
-              <p className="mt-1 text-lg font-bold text-indigo-700">{formatRupiah(s.total)}</p>
+              <p className="mt-1 text-lg font-bold text-primary-700">{formatRupiah(s.total)}</p>
             </Card>
           </div>
 
@@ -184,7 +184,7 @@ export default function SaleDetail() {
                 <div className="flex justify-between"><span className="text-slate-500">Biaya Lain</span><span>{formatRupiah(s.additional_cost)}</span></div>
                 <div className="flex justify-between"><span className="text-slate-500">Laba Transaksi</span><span className="font-medium text-emerald-600">{formatRupiah(s.profit)}</span></div>
                 <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-bold">
-                  <span>Total</span><span className="text-indigo-700">{formatRupiah(s.total)}</span>
+                  <span>Total</span><span className="text-primary-700">{formatRupiah(s.total)}</span>
                 </div>
                 {s.payments?.[0]?.cash_received != null && (
                   <>

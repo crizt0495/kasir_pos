@@ -40,13 +40,13 @@ export default function AuditLogs() {
               <p className="text-xs text-slate-400">{r.ip_address || '-'}</p>
             </div>
           )},
-          { key: 'action', header: 'Aksi', render: (r) => <Badge color="bg-indigo-100 text-indigo-700">{r.action}</Badge> },
+          { key: 'action', header: 'Aksi', render: (r) => <Badge color="bg-primary-100 text-primary-700">{r.action}</Badge> },
           { key: 'module', header: 'Modul', render: (r) => <Badge color="bg-slate-100 text-slate-600">{r.module}</Badge> },
           { key: 'record_id', header: 'ID Record', render: (r) => <code className="text-xs text-slate-400">{r.record_id ? r.record_id.slice(0, 8) : '-'}</code> },
           { key: 'details', header: 'Detail', render: (r) => (
             <button
               onClick={() => setSelected(r)}
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-indigo-600 hover:bg-indigo-50"
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-primary-600 hover:bg-primary-50"
             >
               <ChevronDown className="h-3.5 w-3.5" /> Lihat data
             </button>

@@ -41,7 +41,7 @@ export default function Dashboard() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Total Penjualan Hari Ini" value={formatRupiah(s.today_sales)} icon={Banknote} color="bg-emerald-50 text-emerald-600" />
-          <StatCard label="Jumlah Transaksi Hari Ini" value={formatNumber(s.today_transactions)} icon={ReceiptText} color="bg-indigo-50 text-indigo-600" />
+          <StatCard label="Jumlah Transaksi Hari Ini" value={formatNumber(s.today_transactions)} icon={ReceiptText} color="bg-primary-50 text-primary-600" />
           <StatCard label="Profit Hari Ini" value={formatRupiah(s.today_profit)} icon={TrendingUp} color="bg-sky-50 text-sky-600" />
           <StatCard label="Total Produk" value={formatNumber(s.total_products)} icon={Package} color="bg-slate-100 text-slate-600" />
           <StatCard label="Stok Menipis" value={formatNumber(s.low_stock)} icon={AlertTriangle} color="bg-amber-50 text-amber-600" />
@@ -109,7 +109,7 @@ export default function Dashboard() {
                   {charts.data.top_products.map((p, i) => (
                     <li key={i} className="flex items-center justify-between px-4 py-2.5">
                       <div className="flex items-center gap-3">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700">
                           {i + 1}
                         </span>
                         <span className="text-sm text-slate-700">{p.name}</span>

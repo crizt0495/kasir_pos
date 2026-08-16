@@ -36,7 +36,7 @@ export default function Returns() {
               <RotateCcw className="h-3.5 w-3.5" /> {r.return_number}
             </span>
           )},
-          { key: 'sale', header: 'No. Penjualan', render: (r) => <span className="text-indigo-600">{r.sale?.invoice_number || '-'}</span> },
+          { key: 'sale', header: 'No. Penjualan', render: (r) => <span className="text-primary-600">{r.sale?.invoice_number || '-'}</span> },
           { key: 'customer', header: 'Pelanggan', render: (r) => r.customer?.name || '-' },
           { key: 'total_refund', header: 'Refund', render: (r) => <span className="font-semibold text-red-600">-{formatRupiah(r.total_refund)}</span> },
           { key: 'reason', header: 'Alasan', render: (r) => <span className="line-clamp-1 max-w-48">{r.reason || '-'}</span> },

@@ -73,7 +73,7 @@ export default function Sales() {
 
       <DataTable
         columns={[
-          { key: 'invoice_number', header: 'No. Transaksi', sortable: true, render: (r) => <span className="font-medium text-indigo-600">{r.invoice_number}</span> },
+          { key: 'invoice_number', header: 'No. Transaksi', sortable: true, render: (r) => <span className="font-medium text-primary-600">{r.invoice_number}</span> },
           { key: 'created_at', header: 'Tanggal', sortable: true, render: (r) => formatDateTime(r.created_at) },
           { key: 'cashier', header: 'Kasir', render: (r) => r.cashier?.profiles?.full_name || r.cashier?.username || '-' },
           { key: 'customer', header: 'Pelanggan', render: (r) => r.customer?.name || '-' },
@@ -91,7 +91,7 @@ export default function Sales() {
                   <Eye className="h-4 w-4" />
                 </button>
               )}
-              <button onClick={() => printReceipt(r)} title="Cetak ulang struk" className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600">
+              <button onClick={() => printReceipt(r)} title="Cetak ulang struk" className="rounded-md p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600">
                 <Printer className="h-4 w-4" />
               </button>
             </div>

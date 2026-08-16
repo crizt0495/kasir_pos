@@ -106,7 +106,7 @@ export default function Categories() {
               { key: 'actions', header: 'Aksi', render: (r) => (
                 <div className="flex gap-1">
                   {can('categories.update') && (
-                    <button onClick={() => openEdit(r)} className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600">
+                    <button onClick={() => openEdit(r)} className="rounded-md p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600">
                       <Pencil className="h-4 w-4" />
                     </button>
                   )}

@@ -70,13 +70,13 @@ export default function Users() {
         columns={[
           { key: 'user', header: 'User', render: (r) => (
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700">
                 {initials(r.full_name || r.username)}
               </div>
               <div>
                 <p className="font-medium text-slate-800">
                   {r.full_name || r.username}
-                  {r.id === currentUser?.id && <span className="ml-1.5 text-xs text-indigo-500">(Anda)</span>}
+                  {r.id === currentUser?.id && <span className="ml-1.5 text-xs text-primary-500">(Anda)</span>}
                 </p>
                 <p className="text-xs text-slate-400">@{r.username}</p>
               </div>
@@ -85,7 +85,7 @@ export default function Users() {
           { key: 'roles', header: 'Role', render: (r) => (
             <div className="flex flex-wrap gap-1">
               {(r.roles || []).map((role) => (
-                <Badge key={role.id} color={role.code === 'super_admin' ? 'bg-red-100 text-red-700' : 'bg-indigo-100 text-indigo-700'}>
+                <Badge key={role.id} color={role.code === 'super_admin' ? 'bg-red-100 text-red-700' : 'bg-primary-100 text-primary-700'}>
                   {role.name}
                 </Badge>
               ))}
@@ -105,7 +105,7 @@ export default function Users() {
                   <button onClick={() => setResetUser(r)} title="Reset password" className="rounded-md p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600">
                     <KeyRound className="h-4 w-4" />
                   </button>
-                  <button onClick={() => navigate(`/users/${r.id}/edit`)} className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600">
+                  <button onClick={() => navigate(`/users/${r.id}/edit`)} className="rounded-md p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600">
                     <Pencil className="h-4 w-4" />
                   </button>
                 </>

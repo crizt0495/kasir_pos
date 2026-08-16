@@ -155,7 +155,7 @@ export default function Cashier() {
           </Card>
           <Card bodyClassName="p-4">
             <p className="text-xs text-slate-400">Kas Yang Diharapkan</p>
-            <p className="mt-1 text-lg font-bold text-indigo-700">{formatRupiah(expected)}</p>
+            <p className="mt-1 text-lg font-bold text-primary-700">{formatRupiah(expected)}</p>
           </Card>
         </div>
       )}

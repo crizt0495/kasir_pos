@@ -97,7 +97,7 @@ export default function ProfitSharing() {
 
   const summaryCards = useMemo(
     () => [
-      { label: 'Total Pelanggan', value: totals?.customers ?? 0, icon: Users, color: 'bg-indigo-50 text-indigo-600' },
+      { label: 'Total Pelanggan', value: totals?.customers ?? 0, icon: Users, color: 'bg-primary-50 text-primary-600' },
       { label: 'Total Pembelian', value: formatRupiah(totals?.total_purchase), icon: Wallet, color: 'bg-sky-50 text-sky-600' },
       { label: 'Total Laba Pelanggan', value: formatRupiah(totals?.total_profit), icon: PiggyBank, color: 'bg-emerald-50 text-emerald-600' },
       { label: 'Hak 2,5%', value: formatRupiah(totals?.share), icon: HandCoins, color: 'bg-violet-50 text-violet-600' },

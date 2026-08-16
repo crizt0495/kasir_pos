@@ -157,12 +157,12 @@ export default function PurchaseForm() {
             <p className="col-span-full text-sm text-slate-400">Produk tidak ditemukan</p>
           ) : (
             products.data.items.map((p) => (
-              <button key={p.id} onClick={() => addProduct(p)} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:border-indigo-400">
+              <button key={p.id} onClick={() => addProduct(p)} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:border-primary-400">
                 <div>
                   <p className="font-medium text-slate-800">{p.name}</p>
                   <p className="text-xs text-slate-400">{p.sku} · HPP {formatRupiah(p.purchase_price)}</p>
                 </div>
-                <Plus className="h-4 w-4 text-indigo-500" />
+                <Plus className="h-4 w-4 text-primary-500" />
               </button>
             ))
           )}
@@ -212,7 +212,7 @@ export default function PurchaseForm() {
           </div>
           <div className="flex w-full max-w-xs items-center justify-between border-t border-slate-200 pt-2">
             <span className="text-sm font-semibold text-slate-700">Total</span>
-            <span className="text-lg font-bold text-indigo-700">{formatRupiah(total)}</span>
+            <span className="text-lg font-bold text-primary-700">{formatRupiah(total)}</span>
           </div>
         </div>
       </Card>

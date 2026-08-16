@@ -175,13 +175,13 @@ export default function OpnameForm() {
                   key={p.id}
                   onClick={() => addProduct(p)}
                   disabled={items.some((i) => i.product_id === p.id)}
-                  className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:border-indigo-400 disabled:opacity-40"
+                  className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:border-primary-400 disabled:opacity-40"
                 >
                   <div>
                     <p className="font-medium text-slate-800">{p.name}</p>
                     <p className="text-xs text-slate-400">Stok sistem: {formatQty(p.stock)}</p>
                   </div>
-                  <Plus className="h-4 w-4 text-indigo-500" />
+                  <Plus className="h-4 w-4 text-primary-500" />
                 </button>
               ))
             )}

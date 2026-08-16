@@ -158,7 +158,7 @@ export default function POS() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari produk (F2)..."
-              className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
           <div className="relative">
@@ -169,7 +169,7 @@ export default function POS() {
               onChange={(e) => setBarcode(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleBarcode()}
               placeholder="Scan barcode..."
-              className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:w-52"
+              className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:w-52"
             />
           </div>
         </div>
@@ -178,7 +178,7 @@ export default function POS() {
           <button
             onClick={() => setCategoryId('')}
             className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-              !categoryId ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              !categoryId ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
             Semua
@@ -188,7 +188,7 @@ export default function POS() {
               key={c.id}
               onClick={() => setCategoryId(categoryId === c.id ? '' : c.id)}
               className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                categoryId === c.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                categoryId === c.id ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               {c.name}
@@ -213,7 +213,7 @@ export default function POS() {
                 key={p.id}
                 onClick={() => cart.add(p)}
                 disabled={p.status !== 'active'}
-                className="group flex flex-col rounded-xl border border-slate-200 p-2.5 text-left transition-all hover:border-indigo-400 hover:shadow-md disabled:opacity-50"
+                className="group flex flex-col rounded-xl border border-slate-200 p-2.5 text-left transition-all hover:border-primary-400 hover:shadow-md disabled:opacity-50"
               >
                 <div className="mb-2 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg bg-slate-50">
                   <ProductImage
@@ -225,11 +225,11 @@ export default function POS() {
                 </div>
                 <div className="flex flex-1 flex-col justify-between">
                   <div>
-                    <p className="line-clamp-2 text-sm font-medium text-slate-800 group-hover:text-indigo-700">{p.name}</p>
+                    <p className="line-clamp-2 text-sm font-medium text-slate-800 group-hover:text-primary-700">{p.name}</p>
                     <p className="text-xs text-slate-400">{p.sku}</p>
                   </div>
                   <div className="mt-2">
-                    <p className="text-sm font-bold text-indigo-700">{formatRupiah(p.sale_price)}</p>
+                    <p className="text-sm font-bold text-primary-700">{formatRupiah(p.sale_price)}</p>
                     <p className={`text-xs ${Number(p.stock) <= Number(p.min_stock) ? 'text-red-500' : 'text-slate-400'}`}>
                       Stok: {formatQty(p.stock)}
                     </p>
@@ -245,9 +245,9 @@ export default function POS() {
       <div className="flex w-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm xl:w-[400px]">
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-            <ShoppingCart className="h-4 w-4 text-indigo-600" />
+            <ShoppingCart className="h-4 w-4 text-primary-600" />
             Keranjang
-            {itemCount > 0 && <Badge color="bg-indigo-100 text-indigo-700">{formatNumber(itemCount)}</Badge>}
+            {itemCount > 0 && <Badge color="bg-primary-100 text-primary-700">{formatNumber(itemCount)}</Badge>}
           </h3>
           <div className="flex items-center gap-1">
             <button
@@ -257,7 +257,7 @@ export default function POS() {
             >
               <PauseCircle className="h-5 w-5" />
               {cart.heldCarts.length > 0 && (
-                <span className="absolute ml-2 mt-1 h-2 w-2 rounded-full bg-indigo-600" />
+                <span className="absolute ml-2 mt-1 h-2 w-2 rounded-full bg-primary-600" />
               )}
             </button>
             <button
@@ -282,7 +282,7 @@ export default function POS() {
         {/* Customer */}
         <button
           onClick={() => setShowCustomer(true)}
-          className="mx-4 mt-3 flex items-center justify-between rounded-lg border border-dashed border-slate-300 px-3 py-2 text-sm text-slate-500 hover:border-indigo-400 hover:text-indigo-600"
+          className="mx-4 mt-3 flex items-center justify-between rounded-lg border border-dashed border-slate-300 px-3 py-2 text-sm text-slate-500 hover:border-primary-400 hover:text-primary-600"
         >
           <span className="flex items-center gap-2">
             <Users className="h-4 w-4" />
@@ -342,7 +342,7 @@ export default function POS() {
                           type="number"
                           value={item.quantity}
                           onChange={(e) => cart.setQuantity(item.product.id, e.target.value)}
-                          className="w-14 rounded-md border border-slate-300 py-1 text-center text-sm focus:border-indigo-500 focus:outline-none"
+                          className="w-14 rounded-md border border-slate-300 py-1 text-center text-sm focus:border-primary-500 focus:outline-none"
                         />
                         <button
                           onClick={() => cart.increment(item.product.id)}
@@ -358,7 +358,7 @@ export default function POS() {
                           value={item.discount || ''}
                           placeholder="0"
                           onChange={(e) => cart.setItemDiscount(item.product.id, e.target.value)}
-                          className="w-20 rounded-md border border-slate-300 py-1 px-2 text-right text-sm focus:border-indigo-500 focus:outline-none"
+                          className="w-20 rounded-md border border-slate-300 py-1 px-2 text-right text-sm focus:border-primary-500 focus:outline-none"
                         />
                       </div>
                       <p className="w-24 text-right text-sm font-semibold text-slate-800">{formatRupiah(lineTotal)}</p>
@@ -381,7 +381,7 @@ export default function POS() {
                 value={cart.discount || ''}
                 placeholder="0"
                 onChange={(e) => cart.setDiscount(e.target.value)}
-                className="w-28 rounded-md border border-slate-300 py-1 px-2 text-right text-sm focus:border-indigo-500 focus:outline-none"
+                className="w-28 rounded-md border border-slate-300 py-1 px-2 text-right text-sm focus:border-primary-500 focus:outline-none"
               />
             </div>
           </div>
@@ -390,7 +390,7 @@ export default function POS() {
               Pajak
               <button
                 onClick={() => setTaxEnabled((v) => !v)}
-                className={`relative h-5 w-9 rounded-full transition-colors ${taxEnabled ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                className={`relative h-5 w-9 rounded-full transition-colors ${taxEnabled ? 'bg-primary-600' : 'bg-slate-300'}`}
               >
                 <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${taxEnabled ? 'left-4.5' : 'left-0.5'}`} />
               </button>
@@ -527,12 +527,12 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
               type="number"
               value={additionalCost || ''}
               onChange={(e) => setAdditionalCost(Number(e.target.value) || 0)}
-              className="w-28 rounded-md border border-slate-300 py-1 px-2 text-right text-sm focus:border-indigo-500 focus:outline-none"
+              className="w-28 rounded-md border border-slate-300 py-1 px-2 text-right text-sm focus:border-primary-500 focus:outline-none"
             />
           </div>
           <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-bold">
             <span>Grand Total</span>
-            <span className="text-indigo-700">{formatRupiah(totals.total)}</span>
+            <span className="text-primary-700">{formatRupiah(totals.total)}</span>
           </div>
         </div>
 
@@ -543,7 +543,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                 key={m}
                 onClick={() => setMethod(m)}
                 className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                  method === m ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+                  method === m ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
                 }`}
               >
                 {paymentMethodLabel(m)}
@@ -596,7 +596,7 @@ function CustomerModal({ open, onClose, query, setQuery, results, generalCustome
         <div className="max-h-64 space-y-1 overflow-y-auto">
           <button
             onClick={() => onSelect(generalCustomer || null)}
-            className="w-full rounded-lg border border-dashed border-slate-300 px-3 py-2 text-left text-sm text-slate-500 hover:border-indigo-400 hover:text-indigo-600"
+            className="w-full rounded-lg border border-dashed border-slate-300 px-3 py-2 text-left text-sm text-slate-500 hover:border-primary-400 hover:text-primary-600"
           >
             Pelanggan Umum
             <span className="block text-xs text-slate-400">Transaksi umum — tidak masuk bagi hasil 2,5%</span>
@@ -612,7 +612,7 @@ function CustomerModal({ open, onClose, query, setQuery, results, generalCustome
               <button
                 key={c.id}
                 onClick={() => onSelect(c)}
-                className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:border-indigo-400 hover:bg-indigo-50/50"
+                className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:border-primary-400 hover:hover:bg-primary-50/50"
               >
                 <div>
                   <p className="font-medium text-slate-800">{c.name}</p>

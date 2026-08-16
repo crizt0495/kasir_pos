@@ -37,7 +37,7 @@ export default function CustomerDetail() {
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <StatCard label="Total Transaksi" value={c.total_transactions} icon={ReceiptText} color="bg-indigo-50 text-indigo-600" />
+            <StatCard label="Total Transaksi" value={c.total_transactions} icon={ReceiptText} color="bg-primary-50 text-primary-600" />
             <StatCard label="Total Belanja" value={formatRupiah(c.total_spend)} icon={Banknote} color="bg-emerald-50 text-emerald-600" />
             <StatCard label="Status" value={c.address ? 'Alamat tersimpan' : 'Tanpa alamat'} icon={Users} color="bg-slate-100 text-slate-600" />
           </div>
@@ -72,7 +72,7 @@ export default function CustomerDetail() {
                   <tbody className="divide-y divide-slate-100">
                     {transactions.data.items.map((s) => (
                       <tr key={s.id} onClick={() => navigate(`/sales/${s.id}`)} className="cursor-pointer hover:bg-slate-50/60">
-                        <td className="px-4 py-2.5 font-medium text-indigo-600">{s.invoice_number}</td>
+                        <td className="px-4 py-2.5 font-medium text-primary-600">{s.invoice_number}</td>
                         <td className="px-4 py-2.5 text-slate-600">{formatDateTime(s.created_at)}</td>
                         <td className="px-4 py-2.5 text-slate-600">{paymentMethodLabel(s.payment_method)}</td>
                         <td className="px-4 py-2.5"><StatusBadge status={s.status} /></td>

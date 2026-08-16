@@ -154,7 +154,7 @@ export default function PurchaseDetail() {
                 <div className="flex justify-between"><span className="text-slate-500">Subtotal</span><span>{formatRupiah(p.subtotal)}</span></div>
                 <div className="flex justify-between"><span className="text-slate-500">Diskon</span><span>-{formatRupiah(p.discount)}</span></div>
                 <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-bold">
-                  <span>Total</span><span className="text-indigo-700">{formatRupiah(p.total)}</span>
+                  <span>Total</span><span className="text-primary-700">{formatRupiah(p.total)}</span>
                 </div>
               </div>
             </Card>

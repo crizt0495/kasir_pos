@@ -130,7 +130,7 @@ export default function Roles() {
             columns={[
               { key: 'role', header: 'Role', render: (r) => (
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className={`h-4 w-4 ${r.is_system ? 'text-red-400' : 'text-indigo-400'}`} />
+                  <ShieldCheck className={`h-4 w-4 ${r.is_system ? 'text-red-400' : 'text-primary-400'}`} />
                   <div>
                     <p className="font-medium text-slate-800">
                       {r.name}
@@ -141,17 +141,17 @@ export default function Roles() {
                 </div>
               )},
               { key: 'description', header: 'Deskripsi', render: (r) => <span className="line-clamp-1 max-w-72">{r.description || '-'}</span> },
-              { key: 'permission_count', header: 'Permission', render: (r) => <Badge color="bg-indigo-100 text-indigo-700">{r.permission_count}</Badge> },
+              { key: 'permission_count', header: 'Permission', render: (r) => <Badge color="bg-primary-100 text-primary-700">{r.permission_count}</Badge> },
               { key: 'user_count', header: 'User', render: (r) => <Badge color="bg-slate-100 text-slate-700">{r.user_count}</Badge> },
               { key: 'actions', header: 'Aksi', render: (r) => (
                 <div className="flex gap-1">
                   {can('roles.update') && (
-                    <button onClick={() => openPerms(r)} className="rounded-md px-2 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50">
+                    <button onClick={() => openPerms(r)} className="rounded-md px-2 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-50">
                       Atur Permission
                     </button>
                   )}
                   {can('roles.update') && (
-                    <button onClick={() => openEdit(r)} className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600">
+                    <button onClick={() => openEdit(r)} className="rounded-md p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600">
                       <Pencil className="h-4 w-4" />
                     </button>
                   )}
@@ -219,7 +219,7 @@ export default function Roles() {
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{module}</p>
                     <button
                       onClick={() => toggleModule(module, perms)}
-                      className={`text-xs font-medium ${moduleSelected ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                      className={`text-xs font-medium ${moduleSelected ? 'text-primary-600' : 'text-slate-400 hover:text-slate-600'}`}
                     >
                       {moduleSelected ? 'Semua' : 'Pilih semua'}
                     </button>
@@ -231,7 +231,7 @@ export default function Roles() {
                           type="checkbox"
                           checked={selectedPerms.includes(p.code)}
                           onChange={() => togglePerm(p.code)}
-                          className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                         />
                         <span className="flex-1 truncate">{p.name}</span>
                         <code className="text-[10px] text-slate-400">{p.code}</code>

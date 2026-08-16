@@ -149,14 +149,14 @@ export default function UserForm() {
 
           <div>
             <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700">
-              <ShieldCheck className="h-4 w-4 text-indigo-500" /> Role (hak akses)
+              <ShieldCheck className="h-4 w-4 text-primary-500" /> Role (hak akses)
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {(roles.data || []).map((role) => (
                 <label
                   key={role.id}
                   className={`flex cursor-pointer items-center justify-between rounded-lg border px-3 py-2.5 ${
-                    selectedRoles.includes(role.id) ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'
+                    selectedRoles.includes(role.id) ? 'border-primary-500 bg-primary-50' : 'border-slate-200 hover:bg-slate-50'
                   }`}
                 >
                   <div>
@@ -167,7 +167,7 @@ export default function UserForm() {
                     type="checkbox"
                     checked={selectedRoles.includes(role.id)}
                     onChange={() => toggleRole(role.id)}
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                   />
                 </label>
               ))}

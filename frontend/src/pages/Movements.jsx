@@ -8,7 +8,7 @@ import { formatQty, formatDateTime, formatNumber } from '../utils/format.js';
 const TYPE_BADGES = {
   STOCK_IN: 'bg-emerald-100 text-emerald-700',
   STOCK_OUT: 'bg-red-100 text-red-700',
-  SALE: 'bg-indigo-100 text-indigo-700',
+  SALE: 'bg-primary-100 text-primary-700',
   SALE_RETURN: 'bg-sky-100 text-sky-700',
   PURCHASE: 'bg-violet-100 text-violet-700',
   ADJUSTMENT: 'bg-amber-100 text-amber-700',

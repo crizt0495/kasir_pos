@@ -39,10 +39,17 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-full items-center justify-center bg-slate-900 px-4 py-10">
-      <div className="w-full max-w-sm">
+    <div className="relative flex min-h-full items-center justify-center overflow-y-auto bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4 py-10">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 20% 20%, rgb(99 102 241 / 0.5) 0, transparent 40%), radial-gradient(circle at 80% 80%, rgb(14 165 233 / 0.4) 0, transparent 40%)',
+        }}
+        aria-hidden="true"
+      />
+      <div className="relative w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/30">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-600 text-white shadow-lg shadow-primary-600/30">
             <Store className="h-7 w-7" />
           </div>
           <h1 className="text-xl font-bold text-white">POS Kasir</h1>
@@ -67,7 +74,8 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>

@@ -183,9 +183,9 @@ export default function Reports() {
 
 function SummaryCard({ label, value, highlight = false }) {
   return (
-    <div className={`rounded-xl border p-4 shadow-sm ${highlight ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-white'}`}>
+    <div className={`rounded-xl border p-4 shadow-sm ${highlight ? 'border-primary-200 bg-primary-50' : 'border-slate-200 bg-white'}`}>
       <p className="text-xs text-slate-500">{label}</p>
-      <p className={`mt-1 text-lg font-bold ${highlight ? 'text-indigo-700' : 'text-slate-900'}`}>{value}</p>
+      <p className={`mt-1 text-lg font-bold ${highlight ? 'text-primary-700' : 'text-slate-900'}`}>{value}</p>
     </div>
   );
 }
@@ -201,7 +201,7 @@ function SalesTable({ d }) {
             <span className="text-slate-500">{formatNumber(b.transactions)} transaksi</span>
             <span className="w-28 text-right font-semibold">{formatRupiah(b.sales)}</span>
             <span className="w-24 text-right text-red-500">-{formatRupiah(b.refunds)}</span>
-            <span className="w-28 text-right font-bold text-indigo-700">{formatRupiah(b.sales - b.refunds)}</span>
+            <span className="w-28 text-right font-bold text-primary-700">{formatRupiah(b.sales - b.refunds)}</span>
           </div>
         </div>
       ))}
@@ -247,7 +247,7 @@ function ProductsTable({ d }) {
       {d.top?.map((p, i) => (
         <div key={i} className="flex items-center justify-between px-4 py-2.5 text-sm">
           <div className="flex items-center gap-2">
-            <Badge color="bg-indigo-100 text-indigo-700">{i + 1}</Badge>
+            <Badge color="bg-primary-100 text-primary-700">{i + 1}</Badge>
             <span className="font-medium text-slate-700">{p.name}</span>
             <span className="text-xs text-slate-400">{p.sku}</span>
           </div>

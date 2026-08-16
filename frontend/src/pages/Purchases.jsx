@@ -74,7 +74,7 @@ export default function Purchases() {
 
       <DataTable
         columns={[
-          { key: 'purchase_number', header: 'No. Pembelian', render: (r) => <span className="font-medium text-indigo-600">{r.purchase_number}</span> },
+          { key: 'purchase_number', header: 'No. Pembelian', render: (r) => <span className="font-medium text-primary-600">{r.purchase_number}</span> },
           { key: 'supplier', header: 'Supplier', render: (r) => r.supplier?.name || '-' },
           { key: 'purchase_date', header: 'Tanggal', render: (r) => formatDate(r.purchase_date) },
           { key: 'total', header: 'Total', render: (r) => <span className="font-semibold">{formatRupiah(r.total)}</span> },
@@ -90,7 +90,7 @@ export default function Purchases() {
                   <button onClick={() => setToReceive(r)} title="Terima (stok masuk)" className="rounded-md p-1.5 text-emerald-600 hover:bg-emerald-50">
                     <PackageCheck className="h-4 w-4" />
                   </button>
-                  <button onClick={() => navigate(`/purchases/${r.id}/edit`)} className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600">
+                  <button onClick={() => navigate(`/purchases/${r.id}/edit`)} className="rounded-md p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600">
                     <Eye className="h-4 w-4" />
                   </button>
                 </>
