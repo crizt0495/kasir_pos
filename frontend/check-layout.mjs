@@ -16,6 +16,22 @@ const PAGES = [
   '/inventory',
   '/customers',
   '/reports',
+  '/users',
+  '/roles',
+  '/permissions',
+  '/settings',
+  '/expenses',
+  '/cashier',
+  '/purchases',
+  '/returns',
+  '/suppliers',
+  '/categories',
+  '/inventory/movements',
+  '/inventory/opname',
+  '/profit-sharing',
+  '/audit-logs',
+  '/change-password',
+  '/nonexistent-page',
 ];
 
 const problems = [];
@@ -113,6 +129,41 @@ async function main() {
     const bcryptHashes = seed.match(/\$2[aby]\$[^\s'"]+/g);
     console.log('hashes found:', bcryptHashes?.length);
   } else {
+    // Interactive checks: sidebar drawer (mobile), user dropdown, notifications
+    const interactive = await loginCtx.newPage();
+    await interactive.goto('http://localhost:5173/dashboard', { waitUntil: 'networkidle' });
+    await interactive.waitForTimeout(800);
+
+    // Mobile: open sidebar drawer
+    await interactive.setViewportSize({ width: 390, height: 844 });
+    await interactive.waitForTimeout(500);
+    await interactive.click('button[aria-label="Buka menu navigasi"]').catch(() => console.log('menu button not found'));
+    await interactive.waitForTimeout(600);
+    const drawerVisible = await interactive.locator('aside').isVisible();
+    const drawerIssues = await checkPage(interactive, '/drawer', 'mobile');
+    await interactive.screenshot({ path: '/tmp/opencode/shots/mobile-_drawer.png' });
+
+    // Open user dropdown
+    await interactive.click('button[aria-label="Buka menu navigasi"]').catch(() => {});
+    await interactive.waitForTimeout(400);
+    await interactive.locator('button[aria-haspopup="true"]').first().click().catch(() => {});
+    await interactive.waitForTimeout(400);
+    await interactive.screenshot({ path: '/tmp/opencode/shots/mobile-_dropdown.png' });
+
+    // Open notifications panel
+    await interactive.keyboard.press('Escape');
+    await interactive.click('button[title="Notifikasi penjualan"]').catch(() => {});
+    await interactive.waitForTimeout(400);
+    const notifIssues = await checkPage(interactive, '/notifications', 'mobile');
+    await interactive.screenshot({ path: '/tmp/opencode/shots/mobile-_notifications.png' });
+
+    if (!drawerVisible) {
+      problems.push(`mobile drawer: sidebar not visible after click`);
+    }
+    if (drawerIssues.length) problems.push(`mobile /drawer: ${drawerIssues.join(' | ')}`);
+    if (notifIssues.length) problems.push(`mobile /notifications: ${notifIssues.join(' | ')}`);
+    await interactive.close();
+
     for (const vp of VIEWPORTS) {
       const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
       const p = await ctx.newPage();
