@@ -1,105 +1,297 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, AlertTriangle } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from './Button.jsx';
 
 const sizeClasses = {
   sm: 'max-w-md',
-  md: 'max-w-xl',
-  lg: 'max-w-3xl',
-  xl: 'max-w-5xl',
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
+  full: 'max-w-[90vw]',
 };
 
-export function Modal({ open, onClose, title, children, footer, size = 'md' }) {
+function FocusTrap({ children }) {
+  const containerRef = useRef(null);
+
   useEffect(() => {
-    if (!open) return undefined;
-    const handler = (e) => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const focusableElements = container.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    const handleTab = (e) => {
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
+      }
+    };
+
+    container.addEventListener('keydown', handleTab);
+    firstElement?.focus();
+
+    return () => container.removeEventListener('keydown', handleTab);
+  }, []);
+
+  return <div ref={containerRef}>{children}</div>;
+}
+
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+  size = 'md',
+  closeOnOverlayClick = true,
+  showCloseButton = true,
+}) {
+  const previousActiveElement = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    previousActiveElement.current = document.activeElement;
+    document.body.style.overflow = 'hidden';
+
+    const handleEscape = (e) => {
       if (e.key === 'Escape') onClose?.();
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+      previousActiveElement.current?.focus();
+    };
   }, [open, onClose]);
 
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
       <div
-        className={`relative flex max-h-[90vh] w-full flex-col rounded-xl bg-white shadow-2xl ${sizeClasses[size]}`}
-      >
-        {title && (
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-            <h3 className="text-base font-semibold text-slate-900">{title}</h3>
-            <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        )}
-        <div className="overflow-y-auto px-5 py-4">{children}</div>
-        {footer && <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-3">{footer}</div>}
-      </div>
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-fade-in"
+        onClick={closeOnOverlayClick ? onClose : undefined}
+        aria-hidden="true"
+      />
+      <FocusTrap>
+        <div
+          className={`relative flex max-h-[90vh] w-full flex-col animate-scale-in rounded-2xl bg-white shadow-2xl ${sizeClasses[size]}`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={title ? 'modal-title' : undefined}
+        >
+          {(title || showCloseButton) && (
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              {title && (
+                <h3 id="modal-title" className="text-base font-semibold text-slate-900">
+                  {title}
+                </h3>
+              )}
+              {showCloseButton && (
+                <button
+                  onClick={onClose}
+                  className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                  aria-label="Tutup modal"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          )}
+          <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+          {footer && (
+            <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-3">
+              {footer}
+            </div>
+          )}
+        </div>
+      </FocusTrap>
     </div>,
     document.body
   );
 }
 
-export function Drawer({ open, onClose, title, children, footer, side = 'right', width = 'w-[420px]' }) {
+export function Drawer({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+  side = 'right',
+  width = 'w-[420px] sm:max-w-[480px]',
+  closeOnOverlayClick = true,
+}) {
   useEffect(() => {
-    if (!open) return undefined;
-    const handler = (e) => {
+    if (!open) return;
+
+    document.body.style.overflow = 'hidden';
+
+    const handleEscape = (e) => {
       if (e.key === 'Escape') onClose?.();
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
   }, [open, onClose]);
 
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-50 animate-fade-in">
       <div
-        className={`absolute inset-y-0 ${side === 'right' ? 'right-0' : 'left-0'} flex ${width} max-w-full flex-col bg-white shadow-2xl`}
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+        onClick={closeOnOverlayClick ? onClose : undefined}
+        aria-hidden="true"
+      />
+      <div
+        className={`absolute inset-y-0 flex ${side === 'right' ? 'right-0' : 'left-0'} ${width} max-w-full flex-col animate-slide-in bg-white shadow-2xl`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? 'drawer-title' : undefined}
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-          <h3 className="text-base font-semibold text-slate-900">{title}</h3>
-          <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          {title && (
+            <h3 id="drawer-title" className="text-base font-semibold text-slate-900">
+              {title}
+            </h3>
+          )}
+          <button
+            onClick={onClose}
+            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            aria-label="Tutup panel"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
-        {footer && <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-3">{footer}</div>}
+        {footer && (
+          <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-3">
+            {footer}
+          </div>
+        )}
       </div>
     </div>,
     document.body
   );
 }
 
-export function ConfirmDialog({ open, onClose, onConfirm, title = 'Apakah Anda yakin?', message, confirmText = 'Ya, lanjutkan', danger = true, loading = false }) {
+export function ConfirmDialog({
+  open,
+  onClose,
+  onConfirm,
+  title = 'Apakah Anda yakin?',
+  message,
+  confirmText = 'Ya, lanjutkan',
+  cancelText = 'Batal',
+  danger = true,
+  loading = false,
+  size = 'sm',
+}) {
   return (
     <Modal
       open={open}
       onClose={onClose}
-      size="sm"
+      size={size}
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>
-            Batal
+          <Button variant="secondary" onClick={onClose} disabled={loading}>
+            {cancelText}
           </Button>
           <Button variant={danger ? 'danger' : 'primary'} onClick={onConfirm} loading={loading}>
             {confirmText}
           </Button>
         </>
       }
+      title={title}
     >
       <div className="flex items-start gap-3">
-        <div className={`rounded-full p-2 ${danger ? 'bg-red-100 text-red-600' : 'bg-indigo-100 text-indigo-600'}`}>
-          <AlertTriangle className="h-5 w-5" />
+        <div className={`flex-shrink-0 rounded-lg p-2 ${danger ? 'bg-danger-100 text-danger-600' : 'bg-primary-100 text-primary-600'}`}>
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="font-medium text-slate-900">{title}</p>
-          {message && <p className="mt-1 text-sm text-slate-500">{message}</p>}
+          {message && <p className="mt-1.5 text-sm text-slate-500">{message}</p>}
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+export function AlertDialog({
+  open,
+  onClose,
+  title,
+  message,
+  confirmText = 'OK',
+  variant = 'info',
+}) {
+  const variantStyles = {
+    info: 'bg-primary-100 text-primary-600',
+    success: 'bg-success-100 text-success-600',
+    warning: 'bg-warning-100 text-warning-600',
+    danger: 'bg-danger-100 text-danger-600',
+  };
+
+  const variantIcons = {
+    info: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    success: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    warning: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    ),
+    danger: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="sm"
+      footer={
+        <Button variant="primary" onClick={onClose} className="w-full sm:w-auto">
+          {confirmText}
+        </Button>
+      }
+      title={title}
+    >
+      <div className="flex items-start gap-3">
+        <div className={`flex-shrink-0 rounded-lg p-2 ${variantStyles[variant]}`}>
+          {variantIcons[variant]}
+        </div>
+        <div className="flex-1 min-w-0">
+          {message && <p className="text-sm text-slate-600">{message}</p>}
         </div>
       </div>
     </Modal>
