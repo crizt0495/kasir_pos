@@ -107,8 +107,12 @@ export default function POS() {
     if (!code) return;
     try {
       const res = await productsApi.byBarcode(code);
-      cart.add(res.data);
-      toast.success(`${res.data.name} ditambahkan`);
+      if (Number(res.data.stock) <= 0) {
+        toast.error(`${res.data.name} stok habis`);
+      } else {
+        cart.add(res.data);
+        toast.success(`${res.data.name} ditambahkan`);
+      }
     } catch {
       toast.error('Produk tidak ditemukan');
     }
@@ -215,12 +219,22 @@ export default function POS() {
               <EmptyState title="Produk tidak ditemukan" />
             </div>
           ) : (
-            products.data.items.map((p) => (
+            products.data.items.map((p) => {
+              const outOfStock = Number(p.stock) <= 0;
+              const inactive = p.status !== 'active';
+              const disabled = inactive || outOfStock;
+              return (
               <button
                 key={p.id}
-                onClick={() => cart.add(p)}
-                disabled={p.status !== 'active'}
-                className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/12 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                onClick={() => {
+                  if (outOfStock) {
+                    toast.error(`${p.name} stok habis`);
+                    return;
+                  }
+                  cart.add(p);
+                }}
+                disabled={disabled}
+                className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/12 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
               >
                 <div className="mb-2 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/80">
                   <ProductImage
@@ -229,9 +243,16 @@ export default function POS() {
                     rounded={false}
                     className="h-full w-full transition-transform duration-300 ease-out group-hover:scale-110"
                   />
-                  <span className="absolute right-2 top-2 hidden h-7 w-7 items-center justify-center rounded-full bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-600/40 transition-all duration-150 group-hover:flex">
-                    <Plus className="h-4 w-4" strokeWidth={2.5} />
-                  </span>
+                  {!outOfStock && (
+                    <span className="absolute right-2 top-2 hidden h-7 w-7 items-center justify-center rounded-full bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-600/40 transition-all duration-150 group-hover:flex">
+                      <Plus className="h-4 w-4" strokeWidth={2.5} />
+                    </span>
+                  )}
+                  {outOfStock && (
+                    <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-slate-900/40">
+                      <span className="rounded-full bg-danger-600 px-2.5 py-1 text-xs font-bold text-white shadow-lg">Stok Habis</span>
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-1 flex-col justify-between">
                   <div>
@@ -242,7 +263,9 @@ export default function POS() {
                     <p className="text-sm font-bold text-primary-700">{formatRupiah(p.sale_price)}</p>
                     <span
                       className={`pill ${
-                        Number(p.stock) <= Number(p.min_stock)
+                        outOfStock
+                          ? 'bg-danger-50 text-danger-600 ring-1 ring-danger-200/50'
+                          : Number(p.stock) <= Number(p.min_stock)
                           ? 'bg-danger-50 text-danger-600 ring-1 ring-danger-200/50'
                           : Number(p.stock) <= Number(p.min_stock) * 1.5 && Number(p.min_stock) > 0
                           ? 'bg-warning-50 text-warning-700 ring-1 ring-warning-200/50'
@@ -254,7 +277,8 @@ export default function POS() {
                   </div>
                 </div>
               </button>
-            ))
+              );
+            })
           )}
         </div>
       </div>

@@ -11,21 +11,28 @@ export const useCartStore = create(
       heldCarts: [], // [{ id, items, discount, customer, heldAt }]
 
       add: (product, quantity = 1) => {
+        if (Number(product.stock) <= 0) return false;
         const items = [...get().items];
         const existing = items.find((i) => i.product.id === product.id);
         if (existing) {
+          if (existing.quantity + quantity > Number(product.stock)) return false;
           existing.quantity += quantity;
         } else {
+          if (quantity > Number(product.stock)) return false;
           items.push({ product, quantity, discount: 0 });
         }
         set({ items });
+        return true;
       },
 
       increment: (productId) => {
+        const item = get().items.find((i) => i.product.id === productId);
+        if (item && item.quantity + 1 > Number(item.product.stock)) return false;
         const items = get().items.map((i) =>
           i.product.id === productId ? { ...i, quantity: i.quantity + 1 } : i
         );
         set({ items });
+        return true;
       },
 
       decrement: (productId) => {
