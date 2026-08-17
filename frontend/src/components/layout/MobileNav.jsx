@@ -123,10 +123,14 @@ export function MobileNav() {
       </div>
 
       {moreOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex flex-col">
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setMoreOpen(false)} aria-hidden="true" />
-          <div className="absolute inset-x-0 bottom-0 max-h-[85vh] animate-slide-up rounded-t-2xl bg-white shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between border-b border-slate-200/80 px-4 py-3">
+        <div className="lg:hidden fixed inset-0 z-50">
+          <div
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
+            onClick={() => setMoreOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-x-0 bottom-0 z-10 max-h-[80vh] rounded-t-2xl bg-white shadow-2xl flex flex-col animate-slide-up" role="dialog" aria-label="Menu tambahan">
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-200/80 px-4 py-3">
               <h2 className="text-sm font-semibold text-slate-800">Menu Lainnya</h2>
               <button
                 onClick={() => setMoreOpen(false)}
@@ -161,7 +165,7 @@ export function MobileNav() {
                           >
                             <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                             <span className="flex-1">{item.label}</span>
-                            <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden="true" />
+                            <span className="text-slate-300">&rsaquo;</span>
                           </Link>
                         );
                       })}
