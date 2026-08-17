@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Package } from 'lucide-react';
-import { productsApi, categoriesApi } from '../api/index.js';
+import { Plus, Pencil, Trash2, Tags, Layers } from 'lucide-react';
+import { productsApi, categoriesApi, unitsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, SearchInput, Select, Button, StatusBadge, ConfirmDialog, Card, PageHeader } from '../components/ui/index.jsx';
+import { DataTable, SearchInput, Select, Button, StatusBadge, ConfirmDialog, Modal, Field, Input, Card, PageHeader } from '../components/ui/index.jsx';
 import ProductImage from '../components/ProductImage.jsx';
 import { formatRupiah, formatQty } from '../utils/format.js';
 
@@ -22,6 +22,14 @@ export default function Products() {
   const [sort, setSort] = useState({ key: 'name', order: 'asc' });
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [catModal, setCatModal] = useState(false);
+  const [catForm, setCatForm] = useState({ name: '', description: '' });
+  const [catSaving, setCatSaving] = useState(false);
+
+  const [unitModal, setUnitModal] = useState(false);
+  const [unitForm, setUnitForm] = useState({ name: '', short_name: '' });
+  const [unitSaving, setUnitSaving] = useState(false);
 
   const handleSort = (key) => {
     setSort((prev) => (prev.key === key ? { key, order: prev.order === 'asc' ? 'desc' : 'asc' } : { key, order: 'asc' }));
@@ -40,6 +48,7 @@ export default function Products() {
 
   const products = useApi(() => productsApi.list(params).then((r) => r.data), [debounced, categoryId, status, page, sort]);
   const categories = useApi(() => categoriesApi.list().then((r) => r.data), []);
+  const units = useApi(() => unitsApi.list().then((r) => r.data), []);
 
   const confirmDelete = async () => {
     setDeleting(true);
@@ -52,6 +61,44 @@ export default function Products() {
       toast.error(getErrorMessage(error, 'Gagal menghapus produk'));
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const saveCategory = async () => {
+    if (!catForm.name.trim()) {
+      toast.error('Nama kategori wajib diisi');
+      return;
+    }
+    setCatSaving(true);
+    try {
+      await categoriesApi.create(catForm);
+      toast.success('Kategori berhasil dibuat');
+      setCatModal(false);
+      setCatForm({ name: '', description: '' });
+      categories.reload();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Gagal membuat kategori'));
+    } finally {
+      setCatSaving(false);
+    }
+  };
+
+  const saveUnit = async () => {
+    if (!unitForm.name.trim() || !unitForm.short_name.trim()) {
+      toast.error('Nama dan singkatan satuan wajib diisi');
+      return;
+    }
+    setUnitSaving(true);
+    try {
+      await unitsApi.create(unitForm);
+      toast.success('Satuan berhasil dibuat');
+      setUnitModal(false);
+      setUnitForm({ name: '', short_name: '' });
+      units.reload();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Gagal membuat satuan'));
+    } finally {
+      setUnitSaving(false);
     }
   };
 
@@ -151,16 +198,30 @@ export default function Products() {
         toolbar={
           <>
             <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari nama, SKU, barcode..." className="w-full sm:w-72" />
-            <div className="flex flex-wrap gap-2">
-              <Select value={categoryId} onChange={(e) => { setCategoryId(e.target.value); setPage(1); }} className="w-full sm:w-44">
-                <option value="">Semua Kategori</option>
-                {(categories.data || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </Select>
-              <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="w-full sm:w-36">
-                <option value="">Semua Status</option>
-                <option value="active">Aktif</option>
-                <option value="inactive">Nonaktif</option>
-              </Select>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1">
+                <Select value={categoryId} onChange={(e) => { setCategoryId(e.target.value); setPage(1); }} className="w-full sm:w-44">
+                  <option value="">Semua Kategori</option>
+                  {(categories.data || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </Select>
+                {can('categories.create') && (
+                  <button onClick={() => setCatModal(true)} title="Tambah kategori" className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
+                    <Tags className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="w-full sm:w-36">
+                  <option value="">Semua Status</option>
+                  <option value="active">Aktif</option>
+                  <option value="inactive">Nonaktif</option>
+                </Select>
+              </div>
+              {can('products.create') && (
+                <button onClick={() => setUnitModal(true)} title="Tambah satuan" className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
+                  <Layers className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </>
         }
@@ -175,6 +236,48 @@ export default function Products() {
         message={`"${toDelete?.name}" akan dihapus permanen.`}
         confirmText="Ya, hapus"
       />
+
+      <Modal
+        open={catModal}
+        onClose={() => setCatModal(false)}
+        title="Tambah Kategori"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCatModal(false)}>Batal</Button>
+            <Button onClick={saveCategory} loading={catSaving}>Simpan</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Field label="Nama Kategori" required>
+            <Input value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} placeholder="cth: Makanan" autoFocus />
+          </Field>
+          <Field label="Deskripsi">
+            <Input value={catForm.description} onChange={(e) => setCatForm({ ...catForm, description: e.target.value })} placeholder="Deskripsi singkat (opsional)" />
+          </Field>
+        </div>
+      </Modal>
+
+      <Modal
+        open={unitModal}
+        onClose={() => setUnitModal(false)}
+        title="Tambah Satuan"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setUnitModal(false)}>Batal</Button>
+            <Button onClick={saveUnit} loading={unitSaving}>Simpan</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Field label="Nama Satuan" required>
+            <Input value={unitForm.name} onChange={(e) => setUnitForm({ ...unitForm, name: e.target.value })} placeholder="cth: Kilogram" autoFocus />
+          </Field>
+          <Field label="Singkatan" required hint="Singkatan yang ditampilkan di tabel">
+            <Input value={unitForm.short_name} onChange={(e) => setUnitForm({ ...unitForm, short_name: e.target.value })} placeholder="cth: Kg" />
+          </Field>
+        </div>
+      </Modal>
     </div>
   );
 }

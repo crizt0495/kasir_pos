@@ -33,6 +33,7 @@ export const categoriesApi = {
 
 export const unitsApi = {
   list: () => api.get('/units').then((r) => r.data),
+  create: (payload) => api.post('/units', payload).then((r) => r.data),
 };
 
 // ---------- CUSTOMERS & SUPPLIERS ----------

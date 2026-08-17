@@ -144,6 +144,21 @@ export const listUnits = asyncHandler(async (req, res) => {
   return ok(res, data || []);
 });
 
+export const createUnit = asyncHandler(async (req, res) => {
+  const { data: dup } = await supabase.from('product_units').select('id').eq('name', req.body.name).maybeSingle();
+  if (dup) throw conflict('Nama satuan sudah ada', 'UNIT_TAKEN');
+
+  const { data: unit, error } = await supabase
+    .from('product_units')
+    .insert({ name: req.body.name, short_name: req.body.short_name })
+    .select('*')
+    .single();
+  if (error) throw error;
+
+  await writeAudit({ user: req.user, action: 'UNIT_CREATED', module: 'products', recordId: unit.id, newData: { name: unit.name }, req });
+  return created(res, unit, 'Satuan berhasil dibuat');
+});
+
 // ============================================================
 // CATEGORIES
 // ============================================================

@@ -3,7 +3,7 @@ import * as product from '../controllers/product.controller.js';
 import * as customer from '../controllers/customer.controller.js';
 import { requireAuth, requirePermission } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import { productSchema, categorySchema, customerSchema, supplierSchema } from '../validators/masterData.js';
+import { productSchema, categorySchema, unitSchema, customerSchema, supplierSchema } from '../validators/masterData.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -19,6 +19,7 @@ router.delete('/products/:id', requirePermission('products.delete'), asyncHandle
 
 // Units (satuan produk)
 router.get('/units', requirePermission('products.view'), asyncHandler(product.listUnits));
+router.post('/units', requirePermission('products.create'), validate(unitSchema), asyncHandler(product.createUnit));
 
 // Categories
 router.get('/categories', requirePermission('categories.view'), asyncHandler(product.listCategories));
