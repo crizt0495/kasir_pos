@@ -140,15 +140,15 @@ export function Sidebar({ open, onClose }) {
           </button>
         )}
 
-        <div className={`flex shrink-0 items-center border-b border-slate-800 py-4 ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
+        <div className={`flex shrink-0 items-center border-b border-slate-800/80 py-4 ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
           <div className={`flex min-w-0 items-center gap-3 ${collapsed ? 'justify-center' : 'flex-1'}`}>
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-md shadow-primary-600/30 ring-1 ring-primary-400/30">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-600/40 ring-1 ring-primary-400/20">
               <Store className="h-5 w-5" aria-hidden="true" />
             </div>
             {showLabels && (
               <div className="overflow-hidden">
-                <p className="truncate text-sm font-bold text-white">POS Kasir</p>
-                <p className="truncate text-[0.65rem] text-slate-400">Point of Sale</p>
+                <p className="truncate text-sm font-bold text-white tracking-tight">POS Kasir</p>
+                <p className="truncate text-[0.65rem] text-slate-400/80">Point of Sale</p>
               </div>
             )}
           </div>
@@ -180,7 +180,7 @@ export function Sidebar({ open, onClose }) {
             return (
               <div key={gi} className="mb-3">
                 {group.section && showLabels && (
-                  <p className="mb-1.5 px-3 text-[0.6rem] font-semibold uppercase tracking-widest text-slate-500">
+                  <p className="mb-1.5 px-3 text-[0.6rem] font-semibold uppercase tracking-widest text-slate-500/80">
                     {group.section}
                   </p>
                 )}
@@ -192,18 +192,18 @@ export function Sidebar({ open, onClose }) {
                         <Link
                           to={item.to}
                           onClick={onClose}
-                          className={`relative flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-all duration-150 ${
+                          className={`relative flex items-center gap-3 rounded-xl py-2.5 text-sm font-medium transition-all duration-150 ${
                             collapsed ? 'justify-center px-0' : 'px-3'
                           } ${
                             active
-                              ? 'bg-gradient-to-r from-primary-600/90 to-primary-500/90 text-white shadow-md shadow-primary-600/30'
-                              : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+                              ? 'bg-gradient-to-r from-primary-500/90 to-primary-600/90 text-white shadow-lg shadow-primary-600/35'
+                              : 'text-slate-300/90 hover:bg-slate-800/60 hover:text-white hover:shadow-sm'
                           }`}
                           aria-current={active ? 'page' : undefined}
                           title={showLabels ? undefined : item.label}
                         >
                           {active && !collapsed && (
-                            <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-white/80" aria-hidden="true" />
+                            <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-white/90 shadow-sm" aria-hidden="true" />
                           )}
                           <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                           {showLabels && <span className="truncate">{item.label}</span>}
@@ -217,12 +217,12 @@ export function Sidebar({ open, onClose }) {
           })}
         </nav>
 
-        <div className="shrink-0 border-t border-slate-800 p-4">
+        <div className="shrink-0 border-t border-slate-800/80 p-4">
           {showLabels ? (
-            <p className="text-center text-xs text-slate-500">POS App v1.0</p>
+            <p className="text-center text-[0.65rem] text-slate-500/70">POS App v1.0</p>
           ) : (
-            <div className="mx-auto flex h-6 w-6 items-center justify-center rounded-lg bg-slate-800" title="POS App v1.0">
-              <Store className="h-3.5 w-3.5 text-slate-400" />
+            <div className="mx-auto flex h-6 w-6 items-center justify-center rounded-lg bg-slate-800/80" title="POS App v1.0">
+              <Store className="h-3.5 w-3.5 text-slate-400/70" />
             </div>
           )}
         </div>

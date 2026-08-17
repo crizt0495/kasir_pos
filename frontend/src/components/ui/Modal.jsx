@@ -83,13 +83,13 @@ export function Modal({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
       <div
-        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-fade-in"
         onClick={closeOnOverlayClick ? onClose : undefined}
         aria-hidden="true"
       />
       <FocusTrap>
         <div
-          className={`relative flex max-h-[90vh] w-full flex-col animate-scale-in rounded-2xl bg-white shadow-2xl shadow-slate-900/20 ${sizeClasses[size]}`}
+          className={`relative flex max-h-[90vh] w-full flex-col animate-scale-in rounded-2xl bg-white shadow-2xl shadow-slate-900/25 ring-1 ring-slate-200/50 ${sizeClasses[size]}`}
           role="dialog"
           aria-modal="true"
           aria-labelledby={title ? 'modal-title' : undefined}
@@ -156,12 +156,12 @@ export function Drawer({
   return createPortal(
     <div className="fixed inset-0 z-50 animate-fade-in">
       <div
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-900/50 backdrop-blur-md"
         onClick={closeOnOverlayClick ? onClose : undefined}
         aria-hidden="true"
       />
       <div
-        className={`absolute inset-y-0 flex ${side === 'right' ? 'right-0' : 'left-0'} ${width} max-w-full flex-col animate-slide-in bg-white shadow-2xl`}
+        className={`absolute inset-y-0 flex ${side === 'right' ? 'right-0' : 'left-0'} ${width} max-w-full flex-col animate-slide-in bg-white shadow-2xl shadow-slate-900/20 ring-1 ring-slate-200/50`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'drawer-title' : undefined}

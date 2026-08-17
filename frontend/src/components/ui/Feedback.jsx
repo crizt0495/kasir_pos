@@ -5,16 +5,16 @@ import { Button } from './Button.jsx';
 export function Badge({ color = 'bg-slate-100 text-slate-700', children, className = '', variant, dot = false }) {
   const variantStyles = {
     default: 'bg-slate-100 text-slate-700',
-    primary: 'bg-primary-100 text-primary-700',
-    success: 'bg-success-100 text-success-700',
-    warning: 'bg-warning-100 text-warning-700',
-    danger: 'bg-danger-100 text-danger-700',
-    info: 'bg-sky-100 text-sky-700',
+    primary: 'bg-primary-50 text-primary-700 ring-1 ring-primary-200/50',
+    success: 'bg-success-50 text-success-700 ring-1 ring-success-200/50',
+    warning: 'bg-warning-50 text-warning-700 ring-1 ring-warning-200/50',
+    danger: 'bg-danger-50 text-danger-700 ring-1 ring-danger-200/50',
+    info: 'bg-info-50 text-info-700 ring-1 ring-info-200/50',
   };
 
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${variant ? variantStyles[variant] : color} ${className}`}>
-      {dot && <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" aria-hidden="true" />}
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${variant ? variantStyles[variant] : color} ${className}`}>
+      {dot && <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80 pulse-dot" aria-hidden="true" />}
       {children}
     </span>
   );
@@ -119,14 +119,14 @@ export function ErrorState({ message = 'Terjadi kesalahan, silakan coba lagi', o
 
 export function StatCard({ label, value, icon: Icon, color = 'bg-primary-50 text-primary-600', sub, trend, trendUp = true, className = '' }) {
   return (
-    <div className={`group card-hover rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}>
+    <div className={`group card-hover rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm ${className}`}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-xs font-medium text-slate-500 truncate">{label}</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900 truncate tracking-tight">{value}</p>
+          <p className="mt-1.5 text-2xl font-bold text-slate-900 truncate tracking-tight">{value}</p>
           {sub && <p className="mt-1 text-xs text-slate-400">{sub}</p>}
           {trend && (
-            <p className={`mt-1.5 flex items-center gap-1 text-xs font-medium ${trendUp ? 'text-success-600' : 'text-danger-600'}`}>
+            <p className={`mt-2 flex items-center gap-1 text-xs font-medium ${trendUp ? 'text-success-600' : 'text-danger-600'}`}>
               <span className="h-3.5 w-3.5" aria-hidden="true">
                 {trendUp ? (
                   <svg viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06Z" /></svg>
@@ -139,7 +139,7 @@ export function StatCard({ label, value, icon: Icon, color = 'bg-primary-50 text
           )}
         </div>
         {Icon && (
-          <div className={`flex-shrink-0 rounded-xl p-3 ${color} transition-transform duration-200 group-hover:scale-110`}>
+          <div className={`flex-shrink-0 rounded-xl p-3 ${color} transition-all duration-200 group-hover:scale-110 group-hover:shadow-lg`}>
             <Icon className="h-6 w-6" aria-hidden="true" />
           </div>
         )}
@@ -217,7 +217,7 @@ export function Toaster() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-xl border border-slate-200 bg-white p-3 pl-4 shadow-xl shadow-slate-900/10 animate-slide-in"
+          className="pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white p-3 pl-4 shadow-xl shadow-slate-900/10 animate-slide-in"
           role="alert"
           aria-live="polite"
         >

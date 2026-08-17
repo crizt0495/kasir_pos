@@ -11,7 +11,7 @@ export function SearchInput({ value, onChange, placeholder = 'Cari...', classNam
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-slate-400 transition-all duration-120 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-slate-400 transition-all duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
         aria-label={ariaLabel || placeholder}
       />
     </label>
@@ -127,16 +127,16 @@ export function DataTable({
   hoverable = true,
 }) {
   return (
-    <div className={`rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden ${className}`}>
+    <div className={`rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden ${className}`}>
       {toolbar && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/70 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 bg-slate-50/50 px-4 py-3">
           {toolbar}
         </div>
       )}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-left text-sm" role="grid">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+            <tr className="border-b border-slate-200/80 bg-slate-50/80 text-xs uppercase tracking-wider text-slate-500">
               {columns.map((c) => {
                 const sortable = Boolean(c.sortable && onSortChange);
                 const sortKey = c.sortKey || c.key;
@@ -240,9 +240,9 @@ export function DataTable({
 
 export function Card({ title, actions, children, className = '', bodyClassName = '', headerClassName = '', hover = false }) {
   return (
-    <div className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${hover ? 'card-hover' : ''} ${className}`}>
+    <div className={`rounded-2xl border border-slate-200/80 bg-white shadow-sm ${hover ? 'card-hover' : ''} ${className}`}>
       {(title || actions) && (
-        <div className={`flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 ${headerClassName}`}>
+        <div className={`flex items-center justify-between gap-3 border-b border-slate-200/80 px-5 py-4 ${headerClassName}`}>
           {title && <h3 className="text-sm font-semibold text-slate-800">{title}</h3>}
           {actions && <div className="flex items-center gap-2">{actions}</div>}
         </div>
@@ -266,8 +266,8 @@ export function CardHeader({ title, description, actions, className = '' }) {
 
 export function Tabs({ tabs, active, onChange, className = '', variant = 'default' }) {
   const variants = {
-    default: 'flex gap-1 overflow-x-auto rounded-lg border border-slate-200 bg-white p-1',
-    underline: 'flex gap-4 border-b border-slate-200 pb-1',
+    default: 'flex gap-1 overflow-x-auto rounded-xl border border-slate-200/80 bg-white p-1',
+    underline: 'flex gap-4 border-b border-slate-200/80 pb-1',
     pill: 'flex gap-2',
   };
 
@@ -282,14 +282,14 @@ export function Tabs({ tabs, active, onChange, className = '', variant = 'defaul
           aria-controls={`${t.key}-panel`}
           id={`${t.key}-tab`}
           className={(() => {
-            const base = 'whitespace-nowrap text-sm font-medium transition-all duration-120';
+            const base = 'whitespace-nowrap text-sm font-medium transition-all duration-150';
             if (variant === 'default') {
-              return `${base} rounded-md px-3 py-1.5 ${active === t.key ? 'bg-primary-100 text-primary-700' : 'text-slate-600 hover:bg-slate-100'}`;
+              return `${base} rounded-lg px-3 py-1.5 ${active === t.key ? 'bg-primary-50 text-primary-700 shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'}`;
             }
             if (variant === 'underline') {
-              return `${base} pb-2 border-b-2 ${active === t.key ? 'border-primary-600 text-primary-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`;
+              return `${base} pb-2 border-b-2 ${active === t.key ? 'border-primary-600 text-primary-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`;
             }
-            return `${base} rounded-lg px-4 py-2 ${active === t.key ? 'bg-primary-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`;
+            return `${base} rounded-lg px-4 py-2 ${active === t.key ? 'bg-primary-600 text-white shadow-md shadow-primary-600/25' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'}`;
           })()}
         >
           {t.icon && <t.icon className="inline h-4 w-4 shrink-0" aria-hidden="true" />}
@@ -361,7 +361,7 @@ export function Dropdown({ trigger, items, align = 'right', className = '' }) {
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div
             ref={dropdownRef}
-            className={`absolute z-20 mt-1.5 min-w-[180px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg animate-scale-in ${align === 'right' ? 'right-0' : 'left-0'}`}
+            className={`absolute z-20 mt-1.5 min-w-[180px] rounded-xl border border-slate-200/80 bg-white py-1 shadow-xl shadow-slate-900/10 animate-scale-in ${align === 'right' ? 'right-0' : 'left-0'}`}
             role="menu"
           >
             {items.map((item, index) => (

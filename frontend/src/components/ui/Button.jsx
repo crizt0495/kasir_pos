@@ -1,13 +1,13 @@
 import { Loader2 } from 'lucide-react';
 
 const variantStyles = {
-  primary: 'bg-gradient-to-b from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 active:from-primary-700 active:to-primary-800 focus-visible:ring-primary-500 shadow-sm shadow-primary-600/20',
-  success: 'bg-success-600 text-white hover:bg-success-700 active:bg-success-800 focus-visible:ring-success-500 shadow-sm shadow-success-600/20',
-  danger: 'bg-danger-600 text-white hover:bg-danger-700 active:bg-danger-800 focus-visible:ring-danger-500 shadow-sm shadow-danger-600/20',
-  secondary: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 hover:border-slate-400 active:bg-slate-100 focus-visible:ring-slate-400 shadow-sm shadow-slate-200/50',
-  outline: 'border border-primary-200 bg-primary-50 text-primary-700 hover:bg-primary-100 active:bg-primary-200 focus-visible:ring-primary-400',
-  ghost: 'text-slate-600 hover:bg-slate-100 active:bg-slate-200 focus-visible:ring-slate-400',
-  subtle: 'bg-slate-100 text-slate-700 hover:bg-slate-200 active:bg-slate-300 focus-visible:ring-slate-400',
+  primary: 'bg-gradient-to-b from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 active:from-primary-700 active:to-primary-800 focus-visible:ring-primary-500 shadow-md shadow-primary-600/25 hover:shadow-lg hover:shadow-primary-600/30',
+  success: 'bg-gradient-to-b from-success-500 to-success-600 text-white hover:from-success-600 hover:to-success-700 active:from-success-700 active:to-success-800 focus-visible:ring-success-500 shadow-md shadow-success-600/25 hover:shadow-lg hover:shadow-success-600/30',
+  danger: 'bg-gradient-to-b from-danger-500 to-danger-600 text-white hover:from-danger-600 hover:to-danger-700 active:from-danger-700 active:to-danger-800 focus-visible:ring-danger-500 shadow-md shadow-danger-600/25 hover:shadow-lg hover:shadow-danger-600/30',
+  secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100 focus-visible:ring-slate-400 shadow-sm shadow-slate-200/60',
+  outline: 'border border-primary-200 bg-primary-50/50 text-primary-700 hover:bg-primary-100 hover:border-primary-300 active:bg-primary-200 focus-visible:ring-primary-400',
+  ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-800 active:bg-slate-200 focus-visible:ring-slate-400',
+  subtle: 'bg-slate-100 text-slate-700 hover:bg-slate-150 active:bg-slate-200 focus-visible:ring-slate-400',
 };
 
 const sizeStyles = {
@@ -37,7 +37,7 @@ export function Button({
   fullWidth = false,
   ...props
 }) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-120 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]';
+  const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]';
   const widthStyle = fullWidth ? 'w-full' : '';
 
   return (
@@ -67,7 +67,7 @@ export function IconButton({
   'aria-label': ariaLabel,
   ...props
 }) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-120 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.95]';
+  const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.94]';
 
   const iconSizeMap = {
     xs: 'h-3 w-3 p-1',
@@ -95,7 +95,7 @@ export function IconButton({
 
 export function ButtonGroup({ children, className = '', ...props }) {
   return (
-    <div className={`inline-flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden ${className}`} {...props}>
+    <div className={`inline-flex items-center rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm ${className}`} {...props}>
       {children}
     </div>
   );

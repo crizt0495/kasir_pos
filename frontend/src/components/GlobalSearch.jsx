@@ -84,9 +84,9 @@ export default function GlobalSearch() {
   const total = results ? GROUPS.reduce((sum, g) => sum + (results[g.key]?.length || 0), 0) : 0;
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-start justify-center bg-slate-900/50 p-4 pt-24 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(false)}>
-      <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl shadow-slate-950/30 ring-1 ring-white/20 animate-scale-in" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-2 border-b border-slate-200 px-4 py-3">
+    <div className="fixed inset-0 z-[90] flex items-start justify-center bg-slate-900/60 p-4 pt-24 backdrop-blur-md animate-fade-in" onClick={() => setOpen(false)}>
+      <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl shadow-slate-950/25 ring-1 ring-slate-200/50 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2 border-b border-slate-200/80 px-4 py-3">
           <Search className="h-5 w-5 text-primary-500" />
           <input
             ref={inputRef}
@@ -122,7 +122,7 @@ export default function GlobalSearch() {
                       key={row.id}
                       onMouseEnter={() => setActiveIndex(idx)}
                       onClick={() => go(flat[idx])}
-                      className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors ${
+                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
                         idx === activeIndex ? 'bg-primary-50/80' : ''
                       }`}
                     >
@@ -131,7 +131,7 @@ export default function GlobalSearch() {
                         {g.key === 'products' && (
                           <>
                             <p className="truncate font-medium text-slate-800">{row.name}</p>
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-slate-400/80">
                               {row.sku} · Stok {row.stock} · {formatRupiah(row.sale_price)}
                             </p>
                           </>
@@ -139,7 +139,7 @@ export default function GlobalSearch() {
                         {g.key === 'sales' && (
                           <>
                             <p className="font-medium text-slate-800">{row.invoice_number}</p>
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-slate-400/80">
                               {formatRupiah(row.total)} · {formatDateTime(row.created_at)}
                             </p>
                           </>
@@ -147,7 +147,7 @@ export default function GlobalSearch() {
                         {(g.key === 'customers' || g.key === 'suppliers') && (
                           <>
                             <p className="font-medium text-slate-800">{row.name}</p>
-                            <p className="text-xs text-slate-400">{row.phone || '-'}</p>
+                            <p className="text-xs text-slate-400/80">{row.phone || '-'}</p>
                           </>
                         )}
                       </div>

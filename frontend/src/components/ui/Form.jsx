@@ -1,13 +1,13 @@
 import { forwardRef } from 'react';
 
 const baseInputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 ' +
+  'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 ' +
   'placeholder:text-slate-400 ' +
-  'transition-all duration-120 ease-out ' +
-  'hover:border-slate-400 ' +
-  'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:hover:border-primary-500 ' +
+  'transition-all duration-150 ease-out ' +
+  'hover:border-slate-300 ' +
+  'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:hover:border-primary-500 ' +
   'disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 ' +
-  'aria-invalid:border-danger-400 aria-invalid:hover:border-danger-400 aria-invalid:focus:ring-danger-500 aria-invalid:focus:border-danger-500';
+  'aria-invalid:border-danger-400 aria-invalid:hover:border-danger-400 aria-invalid:focus:ring-danger-500/20 aria-invalid:focus:border-danger-500';
 
 const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
 const hintClass = 'mt-1.5 text-xs text-slate-400';
@@ -144,7 +144,7 @@ export const Switch = forwardRef(function Switch({ label, id, className = '', ..
 export function InputGroup({ children, className = '', error, 'aria-describedby': ariaDescribedBy }) {
   const groupId = `input-group-${Math.random().toString(36).slice(2, 9)}`;
   return (
-    <div className={`flex rounded-lg border border-slate-300 bg-white overflow-hidden transition-all duration-120 ${error ? 'border-danger-400 focus-within:ring-2 focus-within:ring-danger-500 focus-within:border-danger-500' : 'focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500'} ${className}`}>
+    <div className={`flex rounded-xl border border-slate-200 bg-white overflow-hidden transition-all duration-150 ${error ? 'border-danger-400 focus-within:ring-2 focus-within:ring-danger-500/20 focus-within:border-danger-500' : 'focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-500'} ${className}`}>
       <div className="flex items-stretch" role="group" aria-labelledby={ariaDescribedBy}>
         {children}
       </div>

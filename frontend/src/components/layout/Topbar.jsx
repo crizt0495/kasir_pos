@@ -67,7 +67,7 @@ export function Topbar({ onMenuClick }) {
   }, [clear]);
 
   return (
-    <header className="sticky top-0 z-30 h-14 border-b border-slate-200 bg-white/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-30 h-14 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-3">
           <button
@@ -90,10 +90,10 @@ export function Topbar({ onMenuClick }) {
           <div className="hidden sm:block">
             <button
               onClick={() => setGlobalSearchOpen(true)}
-              className="group flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50/80 px-3 py-1.5 text-sm text-slate-500 hover:border-primary-400 hover:text-slate-700 hover:bg-white hover:shadow-sm transition-all duration-150"
+              className="group flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-1.5 text-sm text-slate-500 hover:border-primary-300 hover:text-slate-700 hover:bg-white hover:shadow-sm transition-all duration-150"
               aria-label="Pencarian global (Ctrl+K)"
             >
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1.5">
                 <Search className="h-4 w-4 text-slate-400 group-hover:text-primary-500 transition-colors" aria-hidden="true" />
                 <span>Cari produk, pelanggan, transaksi...</span>
                 <kbd className="kbd ml-1">Ctrl K</kbd>
@@ -111,7 +111,7 @@ export function Topbar({ onMenuClick }) {
               aria-haspopup="true"
               aria-label="Menu pengguna"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-xs font-bold text-white ring-2 ring-primary-200/70 shadow-sm">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-xs font-bold text-white ring-2 ring-primary-200/60 shadow-md shadow-primary-500/20">
                 {initials(displayName)}
               </div>
               <div className="hidden text-left md:block">
@@ -124,7 +124,7 @@ export function Topbar({ onMenuClick }) {
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} aria-hidden="true" />
-                <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-slate-200 bg-white py-1.5 shadow-lg animate-scale-in">
+                <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-slate-200/80 bg-white py-1.5 shadow-xl shadow-slate-900/10 animate-scale-in">
                   <div className="border-b border-slate-100 px-4 py-3">
                     <p className="text-sm font-medium text-slate-800 truncate">{displayName}</p>
                     <p className="text-xs text-slate-400 truncate">@{user?.username} · {roleName}</p>

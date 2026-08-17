@@ -149,7 +149,7 @@ export default function POS() {
   return (
     <div className="flex h-full flex-col gap-4 xl:h-[calc(100vh-6.5rem)] xl:flex-row">
       {/* ================= KIRI: produk ================= */}
-      <div className="flex min-w-0 flex-1 flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="flex min-w-0 flex-1 flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="flex flex-1 flex-col gap-2 sm:flex-row">
             <div className="relative flex-1">
@@ -159,7 +159,7 @@ export default function POS() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari produk (F2)..."
-                className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
               />
             </div>
             <div className="relative">
@@ -170,7 +170,7 @@ export default function POS() {
                 onChange={(e) => setBarcode(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleBarcode()}
                 placeholder="Scan barcode..."
-                className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:w-52"
+                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150 sm:w-52"
               />
             </div>
           </div>
@@ -184,8 +184,8 @@ export default function POS() {
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           <button
             onClick={() => setCategoryId('')}
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-all duration-150 ${
-              !categoryId ? 'bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-sm shadow-primary-600/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 ${
+              !categoryId ? 'bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-md shadow-primary-600/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800'
             }`}
           >
             Semua
@@ -194,8 +194,8 @@ export default function POS() {
             <button
               key={c.id}
               onClick={() => setCategoryId(categoryId === c.id ? '' : c.id)}
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-all duration-150 ${
-                categoryId === c.id ? 'bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-sm shadow-primary-600/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 ${
+                categoryId === c.id ? 'bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-md shadow-primary-600/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800'
               }`}
             >
               {c.name}
@@ -220,33 +220,33 @@ export default function POS() {
                 key={p.id}
                 onClick={() => cart.add(p)}
                 disabled={p.status !== 'active'}
-                className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 p-2.5 text-left transition-all duration-150 hover:-translate-y-0.5 hover:border-primary-400 hover:shadow-lg hover:shadow-primary-500/10 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/12 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
               >
-                <div className="mb-2 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-100">
+                <div className="mb-2 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/80">
                   <ProductImage
                     src={p.image_url}
                     alt={p.name}
                     rounded={false}
-                    className="h-full w-full transition-transform duration-300 ease-out group-hover:scale-125"
+                    className="h-full w-full transition-transform duration-300 ease-out group-hover:scale-110"
                   />
-                  <span className="absolute right-2 top-2 hidden h-7 w-7 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg shadow-primary-600/40 transition-all duration-150 group-hover:flex">
+                  <span className="absolute right-2 top-2 hidden h-7 w-7 items-center justify-center rounded-full bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-600/40 transition-all duration-150 group-hover:flex">
                     <Plus className="h-4 w-4" strokeWidth={2.5} />
                   </span>
                 </div>
                 <div className="flex flex-1 flex-col justify-between">
                   <div>
-                    <p className="line-clamp-2 text-sm font-medium text-slate-800 group-hover:text-primary-700">{p.name}</p>
-                    <p className="text-xs text-slate-400">{p.sku}</p>
+                    <p className="line-clamp-2 text-sm font-medium text-slate-800 group-hover:text-primary-700 transition-colors">{p.name}</p>
+                    <p className="text-xs text-slate-400/80">{p.sku}</p>
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-1">
                     <p className="text-sm font-bold text-primary-700">{formatRupiah(p.sale_price)}</p>
                     <span
                       className={`pill ${
                         Number(p.stock) <= Number(p.min_stock)
-                          ? 'bg-red-50 text-red-600'
+                          ? 'bg-danger-50 text-danger-600 ring-1 ring-danger-200/50'
                           : Number(p.stock) <= Number(p.min_stock) * 1.5 && Number(p.min_stock) > 0
-                          ? 'bg-amber-50 text-amber-700'
-                          : 'bg-slate-100 text-slate-500'
+                          ? 'bg-warning-50 text-warning-700 ring-1 ring-warning-200/50'
+                          : 'bg-slate-100/80 text-slate-500'
                       }`}
                     >
                       {formatQty(p.stock)}
@@ -260,7 +260,7 @@ export default function POS() {
       </div>
 
       {/* ================= KANAN: keranjang ================= */}
-      <div className="flex w-full flex-col rounded-xl border border-slate-200 bg-white shadow-sm xl:w-[400px]">
+      <div className="flex w-full flex-col rounded-2xl border border-slate-200/80 bg-white shadow-sm xl:w-[400px]">
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
             <ShoppingCart className="h-4 w-4 text-primary-600" />
@@ -332,27 +332,27 @@ export default function POS() {
               {cart.items.map((item) => {
                 const lineTotal = item.product.sale_price * item.quantity - item.discount;
                 return (
-                  <li key={item.product.id} className="rounded-lg border border-slate-200 p-2.5 transition-colors hover:border-slate-300">
+                  <li key={item.product.id} className="rounded-xl border border-slate-200/80 p-2.5 transition-all duration-150 hover:border-slate-300/80 hover:shadow-sm">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <ProductImage src={item.product.image_url} alt={item.product.name} className="h-9 w-9" />
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <ProductImage src={item.product.image_url} alt={item.product.name} className="h-9 w-9 rounded-lg" />
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium text-slate-800">{item.product.name}</p>
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-slate-400/80">
                             {formatRupiah(item.product.sale_price)} / {item.product.unit?.short_name || 'pcs'}
                           </p>
                         </div>
                       </div>
-                      <button onClick={() => cart.remove(item.product.id)} className="rounded-md p-1 text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors">
+                      <button onClick={() => cart.remove(item.product.id)} className="rounded-lg p-1 text-slate-300 hover:bg-danger-50 hover:text-danger-500 transition-colors">
                         <X className="h-4 w-4" />
                       </button>
                     </div>
 
-                    <div className="mt-2 flex items-center justify-between gap-2">
+                    <div className="mt-2.5 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => cart.decrement(item.product.id)}
-                          className="rounded-md border border-slate-300 p-1 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+                          className="rounded-lg border border-slate-200 p-1 hover:bg-slate-50 active:bg-slate-100 transition-colors"
                           aria-label="Kurangi jumlah"
                         >
                           <Minus className="h-3.5 w-3.5" />
@@ -361,11 +361,11 @@ export default function POS() {
                           type="number"
                           value={item.quantity}
                           onChange={(e) => cart.setQuantity(item.product.id, e.target.value)}
-                          className="w-14 rounded-md border border-slate-300 py-1 text-center text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                          className="w-14 rounded-lg border border-slate-200 py-1 text-center text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
                         />
                         <button
                           onClick={() => cart.increment(item.product.id)}
-                          className="rounded-md border border-slate-300 p-1 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+                          className="rounded-lg border border-slate-200 p-1 hover:bg-slate-50 active:bg-slate-100 transition-colors"
                           aria-label="Tambah jumlah"
                         >
                           <Plus className="h-3.5 w-3.5" />
@@ -378,11 +378,11 @@ export default function POS() {
                           value={item.discount || ''}
                           placeholder="0"
                           onChange={(e) => cart.setItemDiscount(item.product.id, e.target.value)}
-                          className="w-20 rounded-md border border-slate-300 py-1 px-2 text-right text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                          className="w-20 rounded-lg border border-slate-200 py-1 px-2 text-right text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
                           aria-label="Diskon item"
                         />
                       </div>
-                      <p className="w-24 text-right text-sm font-semibold text-slate-800">{formatRupiah(lineTotal)}</p>
+                      <p className="w-24 text-right text-sm font-bold text-slate-800">{formatRupiah(lineTotal)}</p>
                     </div>
                   </li>
                 );
@@ -538,22 +538,22 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
       }
     >
       <div className="space-y-4">
-        <div className="space-y-1.5 rounded-lg bg-slate-50 p-4 text-sm">
-          <div className="flex justify-between"><span className="text-slate-500">Subtotal</span><span>{formatRupiah(totals.subtotal)}</span></div>
-          {totals.discount > 0 && <div className="flex justify-between"><span className="text-slate-500">Diskon</span><span>-{formatRupiah(totals.discount)}</span></div>}
-          {taxEnabled && <div className="flex justify-between"><span className="text-slate-500">Pajak ({taxRate}%)</span><span>{formatRupiah(taxAmount)}</span></div>}
+        <div className="space-y-1.5 rounded-xl bg-slate-50/80 p-4 text-sm">
+          <div className="flex justify-between"><span className="text-slate-500">Subtotal</span><span className="font-medium">{formatRupiah(totals.subtotal)}</span></div>
+          {totals.discount > 0 && <div className="flex justify-between"><span className="text-slate-500">Diskon</span><span className="font-medium text-danger-600">-{formatRupiah(totals.discount)}</span></div>}
+          {taxEnabled && <div className="flex justify-between"><span className="text-slate-500">Pajak ({taxRate}%)</span><span className="font-medium">{formatRupiah(taxAmount)}</span></div>}
           <div className="flex items-center justify-between">
             <span className="text-slate-500">Biaya tambahan</span>
             <input
               type="number"
               value={additionalCost || ''}
               onChange={(e) => setAdditionalCost(Number(e.target.value) || 0)}
-              className="w-28 rounded-md border border-slate-300 py-1 px-2 text-right text-sm focus:border-primary-500 focus:outline-none"
+              className="w-28 rounded-lg border border-slate-200 py-1 px-2 text-right text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
             />
           </div>
-          <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-bold">
+          <div className="flex justify-between border-t border-slate-200/80 pt-2 text-base font-bold">
             <span>Grand Total</span>
-            <span className="text-primary-700">{formatRupiah(totals.total)}</span>
+            <span className="text-gradient">{formatRupiah(totals.total)}</span>
           </div>
         </div>
 
@@ -563,8 +563,8 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
               <button
                 key={m}
                 onClick={() => setMethod(m)}
-                className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                  method === m ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+                className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all duration-150 ${
+                  method === m ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm shadow-primary-500/10' : 'border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                 }`}
               >
                 {paymentMethodLabel(m)}
@@ -617,7 +617,7 @@ function CustomerModal({ open, onClose, query, setQuery, results, generalCustome
         <div className="max-h-64 space-y-1 overflow-y-auto">
           <button
             onClick={() => onSelect(generalCustomer || null)}
-            className="w-full rounded-lg border border-dashed border-slate-300 px-3 py-2 text-left text-sm text-slate-500 hover:border-primary-400 hover:text-primary-600"
+            className="w-full rounded-xl border border-dashed border-slate-200 px-3 py-2.5 text-left text-sm text-slate-500 hover:border-primary-300 hover:text-primary-600 transition-all duration-150"
           >
             Pelanggan Umum
             <span className="block text-xs text-slate-400">Transaksi umum — tidak masuk bagi hasil 2,5%</span>
@@ -633,7 +633,7 @@ function CustomerModal({ open, onClose, query, setQuery, results, generalCustome
               <button
                 key={c.id}
                 onClick={() => onSelect(c)}
-                className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:border-primary-400 hover:hover:bg-primary-50/50"
+                className="flex w-full items-center justify-between rounded-xl border border-slate-200/80 px-3 py-2.5 text-left text-sm hover:border-primary-300 hover:bg-primary-50/50 transition-all duration-150"
               >
                 <div>
                   <p className="font-medium text-slate-800">{c.name}</p>
@@ -660,18 +660,18 @@ function HeldCartsModal({ open, onClose, heldCarts, onResume, onRemove }) {
       ) : (
         <div className="space-y-2">
           {heldCarts.map((h) => (
-            <div key={h.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5">
+            <div key={h.id} className="flex items-center justify-between rounded-xl border border-slate-200/80 px-3 py-2.5 hover:border-slate-300/80 hover:shadow-sm transition-all duration-150">
               <div>
                 <p className="text-sm font-medium text-slate-800">
                   {h.items.length} item · {formatQty(h.items.reduce((s, i) => s + i.quantity, 0))} pcs
                 </p>
-                <p className="text-xs text-slate-400">{new Date(h.heldAt).toLocaleString('id-ID')}</p>
+                <p className="text-xs text-slate-400/80">{new Date(h.heldAt).toLocaleString('id-ID')}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => onResume(h.id)}>
                   <PlayCircle className="h-3.5 w-3.5" /> Lanjutkan
                 </Button>
-                <button onClick={() => onRemove(h.id)} className="rounded-md p-1.5 text-red-400 hover:bg-red-50">
+                <button onClick={() => onRemove(h.id)} className="rounded-lg p-1.5 text-danger-400 hover:bg-danger-50 hover:text-danger-500 transition-colors">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>

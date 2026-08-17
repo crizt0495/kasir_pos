@@ -9,7 +9,7 @@ import {
 import { StatCard, Card, Skeleton, ErrorState, EmptyState, Badge } from '../components/ui/index.jsx';
 import { formatRupiah, formatNumber, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 
-const PIE_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#0ea5e9', '#f43f5e', '#8b5cf6', '#14b8a6', '#f97316'];
+const PIE_COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#0ea5e9', '#f43f5e', '#8b5cf6', '#14b8a6', '#f97316'];
 
 function SummarySkeleton() {
   return (
@@ -24,8 +24,8 @@ function SummarySkeleton() {
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-lg">
-      {label && <p className="mb-1 font-semibold text-slate-700">{label}</p>}
+    <div className="rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs shadow-xl shadow-slate-900/10">
+      {label && <p className="mb-1.5 font-semibold text-slate-800">{label}</p>}
       {payload.map((p, i) => (
         <p key={i} className="font-medium text-slate-600">
           <span className="mr-1.5 inline-block h-2 w-2 rounded-full" style={{ background: p.color || p.fill }} />
@@ -131,26 +131,26 @@ export default function Dashboard() {
 
             <Card title="Produk Terlaris (30 hari)" bodyClassName="p-0">
               {charts.data.top_products.length ? (
-                <ul className="divide-y divide-slate-100">
+                <ul className="divide-y divide-slate-100/80">
                   {charts.data.top_products.map((p, i) => (
-                    <li key={i} className="flex items-center justify-between px-4 py-2.5 transition-colors hover:bg-slate-50/70">
+                    <li key={i} className="flex items-center justify-between px-4 py-2.5 transition-colors hover:bg-slate-50/60">
                       <div className="flex items-center gap-3">
                         <span
                           className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                             i === 0
-                              ? 'bg-gradient-to-br from-amber-300 to-amber-500 text-white shadow-sm shadow-amber-400/40'
+                              ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-md shadow-amber-400/40'
                               : i === 1
-                              ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-white'
+                              ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-white shadow-sm'
                               : i === 2
-                              ? 'bg-gradient-to-br from-orange-300 to-orange-500 text-white'
+                              ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-white shadow-sm'
                               : 'bg-slate-100 text-slate-500'
                           }`}
                         >
                           {i + 1}
                         </span>
-                        <span className="text-sm text-slate-700">{p.name}</span>
+                        <span className="text-sm font-medium text-slate-700">{p.name}</span>
                       </div>
-                      <span className="text-sm font-medium text-slate-500">{formatNumber(p.quantity)} terjual</span>
+                      <span className="text-xs font-medium text-slate-500">{formatNumber(p.quantity)} terjual</span>
                     </li>
                   ))}
                 </ul>
@@ -161,13 +161,13 @@ export default function Dashboard() {
 
             <Card title="Ringkasan Pembayaran Hari Ini" bodyClassName="p-4">
               {Object.keys(charts.data.payment_methods).length ? (
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {Object.entries(charts.data.payment_methods).map(([method, total]) => (
-                    <div key={method} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 transition-colors hover:bg-slate-50/70">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${paymentMethodColor(method)}`}>
+                    <div key={method} className="flex items-center justify-between rounded-xl border border-slate-100/80 px-3 py-2.5 transition-colors hover:bg-slate-50/60 hover:border-slate-200/80">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${paymentMethodColor(method)}`}>
                         {paymentMethodLabel(method)}
                       </span>
-                      <span className="text-sm font-semibold text-slate-800">{formatRupiah(total)}</span>
+                      <span className="text-sm font-bold text-slate-800">{formatRupiah(total)}</span>
                     </div>
                   ))}
                 </div>
