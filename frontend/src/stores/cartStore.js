@@ -45,7 +45,11 @@ export const useCartStore = create(
       setQuantity: (productId, quantity) => {
         const qty = Math.max(1, Number(quantity) || 1);
         set({
-          items: get().items.map((i) => (i.product.id === productId ? { ...i, quantity: qty } : i)),
+          items: get().items.map((i) => {
+            if (i.product.id !== productId) return i;
+            const maxQty = Number(i.product.stock) || 0;
+            return { ...i, quantity: maxQty > 0 ? Math.min(qty, maxQty) : 1 };
+          }),
         });
       },
 

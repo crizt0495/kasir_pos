@@ -227,14 +227,15 @@ export default function POS() {
               <button
                 key={p.id}
                 onClick={() => {
-                  if (outOfStock) {
-                    toast.error(`${p.name} stok habis`);
+                  if (disabled) {
+                    if (outOfStock) toast.error(`${p.name} stok habis`);
                     return;
                   }
                   cart.add(p);
                 }}
                 disabled={disabled}
-                className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/12 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                aria-disabled={disabled}
+                className={`group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 p-2.5 text-left transition-all duration-200 ${disabled ? 'pointer-events-none opacity-50 cursor-not-allowed' : 'hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/12'}`}
               >
                 <div className="mb-2 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/80">
                   <ProductImage
