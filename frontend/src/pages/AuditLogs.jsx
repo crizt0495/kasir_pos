@@ -58,16 +58,39 @@ export default function AuditLogs() {
         total={d?.total}
         pageSize={d?.pageSize}
         onPageChange={setPage}
+        renderCard={(r) => (
+          <div className="space-y-2">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-medium text-slate-800">{r.username || r.user?.username || 'Sistem'}</p>
+                <p className="text-xs text-slate-400">{formatDateTime(r.created_at)}</p>
+              </div>
+              <div className="flex gap-1">
+                <Badge color="bg-primary-100 text-primary-700">{r.action}</Badge>
+                <Badge color="bg-slate-100 text-slate-600">{r.module}</Badge>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>IP: {r.ip_address || '-'}</span>
+              <button
+                onClick={(e) => { e.stopPropagation(); setSelected(r); }}
+                className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors"
+              >
+                Lihat Detail
+              </button>
+            </div>
+          </div>
+        )}
         toolbar={
           <>
             <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari user / aksi..." className="w-full sm:w-56" />
             <div className="flex flex-wrap items-center gap-2">
-              <Select value={module} onChange={(e) => { setModule(e.target.value); setPage(1); }} className="w-40">
+              <Select value={module} onChange={(e) => { setModule(e.target.value); setPage(1); }} className="w-full sm:w-40">
                 <option value="">Semua Modul</option>
                 {MODULES.map((m) => <option key={m} value={m}>{m}</option>)}
               </Select>
-              <Field className="w-36"><Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} /></Field>
-              <Field className="w-36"><Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} /></Field>
+              <Field className="w-full sm:w-36"><Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} /></Field>
+              <Field className="w-full sm:w-36"><Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} /></Field>
             </div>
           </>
         }

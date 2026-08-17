@@ -163,6 +163,39 @@ export default function Roles() {
             ]}
             data={roles.data || []}
             loading={false}
+            renderCard={(r) => (
+              <div className="space-y-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className={`h-4 w-4 ${r.is_system ? 'text-red-400' : 'text-primary-400'}`} />
+                    <div>
+                      <p className="font-medium text-slate-800">
+                        {r.name}
+                        {r.is_system && <span className="ml-1.5 text-xs text-red-400">sistem</span>}
+                      </p>
+                      <p className="text-xs text-slate-400">{r.code}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Badge color="bg-primary-100 text-primary-700">{r.permission_count} perm</Badge>
+                    <Badge color="bg-slate-100 text-slate-700">{r.user_count} user</Badge>
+                  </div>
+                </div>
+                {r.description && <p className="text-xs text-slate-500 line-clamp-1">{r.description}</p>}
+                <div className="flex justify-end gap-1">
+                  {can('roles.update') && (
+                    <>
+                      <button onClick={(e) => { e.stopPropagation(); openPerms(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                        Permission
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                        Edit
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           />
         )}
       </Card>

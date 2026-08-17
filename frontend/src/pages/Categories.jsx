@@ -116,6 +116,33 @@ export default function Categories() {
             ]}
             data={data}
             loading={false}
+            renderCard={(r) => (
+              <div className="space-y-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tags className="h-4 w-4 text-slate-300" />
+                    <span className="font-medium text-slate-800">{r.name}</span>
+                  </div>
+                  <StatusBadge status={r.status} />
+                </div>
+                {r.description && <p className="text-xs text-slate-500 line-clamp-2">{r.description}</p>}
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span>{new Date(r.created_at).toLocaleDateString('id-ID')}</span>
+                  <div className="flex gap-1">
+                    {can('categories.update') && (
+                      <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                        Edit
+                      </button>
+                    )}
+                    {can('categories.delete') && (
+                      <button onClick={(e) => { e.stopPropagation(); setToDelete(r); }} className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors">
+                        Hapus
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           />
         )}
       </Card>

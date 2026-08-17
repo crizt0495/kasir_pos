@@ -110,15 +110,39 @@ export default function Purchases() {
         total={d?.total}
         pageSize={d?.pageSize}
         onPageChange={setPage}
+        renderCard={(r) => (
+          <div className="space-y-2.5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-medium text-primary-600">{r.purchase_number}</p>
+                <p className="text-xs text-slate-400">{r.supplier?.name || '-'} · {formatDate(r.purchase_date)}</p>
+              </div>
+              <StatusBadge status={r.status} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-sm">{formatRupiah(r.total)}</span>
+              <div className="flex gap-1">
+                <button onClick={(e) => { e.stopPropagation(); navigate(`/purchases/${r.id}`); }} className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
+                  Detail
+                </button>
+                {r.status === 'draft' && can('purchases.update') && (
+                  <button onClick={(e) => { e.stopPropagation(); setToReceive(r); }} className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-100 transition-colors">
+                    Terima
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         toolbar={
           <>
             <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari no. pembelian / invoice..." className="w-full sm:w-64" />
-            <div className="flex gap-2">
-              <Select value={supplierId} onChange={(e) => { setSupplierId(e.target.value); setPage(1); }} className="w-44">
+            <div className="flex flex-wrap gap-2">
+              <Select value={supplierId} onChange={(e) => { setSupplierId(e.target.value); setPage(1); }} className="w-full sm:w-44">
                 <option value="">Semua Supplier</option>
                 {(suppliers.data?.items || []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </Select>
-              <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="w-36">
+              <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="w-full sm:w-36">
                 <option value="">Semua Status</option>
                 <option value="draft">Draft</option>
                 <option value="received">Diterima</option>

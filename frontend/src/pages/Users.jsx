@@ -125,6 +125,44 @@ export default function Users() {
         total={d?.total}
         pageSize={d?.pageSize}
         onPageChange={setPage}
+        renderCard={(r) => (
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700">
+                {initials(r.full_name || r.username)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-slate-800 truncate">
+                  {r.full_name || r.username}
+                  {r.id === currentUser?.id && <span className="ml-1.5 text-xs text-primary-500">(Anda)</span>}
+                </p>
+                <p className="text-xs text-slate-400">@{r.username}</p>
+              </div>
+              <Badge color={r.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}>
+                {r.is_active ? 'Aktif' : 'Nonaktif'}
+              </Badge>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {(r.roles || []).map((role) => (
+                <Badge key={role.id} color={role.code === 'super_admin' ? 'bg-red-100 text-red-700' : 'bg-primary-100 text-primary-700'}>
+                  {role.name}
+                </Badge>
+              ))}
+            </div>
+            <div className="flex justify-end gap-1">
+              {can('users.update') && (
+                <>
+                  <button onClick={(e) => { e.stopPropagation(); setResetUser(r); }} className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-100 transition-colors">
+                    Reset
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); navigate(`/users/${r.id}/edit`); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                    Edit
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
         toolbar={<SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari username, nama, email..." className="w-full sm:w-72" />}
       />
 

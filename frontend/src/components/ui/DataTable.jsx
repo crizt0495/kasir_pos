@@ -35,9 +35,12 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange }) 
   }
 
   return (
-    <nav className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm text-slate-600" aria-label="Pagination">
-      <span className="flex items-center">
+    <nav className="flex flex-wrap items-center justify-between gap-2 px-3 py-3 text-sm text-slate-600 sm:px-4" aria-label="Pagination">
+      <span className="hidden text-xs text-slate-500 sm:inline">
         Menampilkan <b>{(page - 1) * pageSize + 1}</b>–<b>{Math.min(page * pageSize, total)}</b> dari <b>{total}</b> data
+      </span>
+      <span className="text-xs text-slate-500 sm:hidden">
+        {page}/{totalPages} · {total} data
       </span>
       <div className="flex items-center gap-1">
         <Button
@@ -47,6 +50,7 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange }) 
           onClick={() => onPageChange(1)}
           disabled={page <= 1}
           aria-label="Halaman pertama"
+          className="hidden sm:inline-flex"
         />
         <Button
           variant="ghost"
@@ -56,34 +60,39 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange }) 
           disabled={page <= 1}
           aria-label="Halaman sebelumnya"
         />
-        {start > 1 && (
-          <>
-            <Button variant="ghost" size="sm" onClick={() => onPageChange(1)} aria-label="Halaman 1">
-              1
+        <div className="hidden sm:flex items-center gap-1">
+          {start > 1 && (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => onPageChange(1)} aria-label="Halaman 1">
+                1
+              </Button>
+              {start > 2 && <span className="px-1 text-slate-400">…</span>}
+            </>
+          )}
+          {pages.map((p) => (
+            <Button
+              key={p}
+              variant={p === page ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => onPageChange(p)}
+              aria-label={`Halaman ${p}`}
+              aria-current={p === page ? 'page' : undefined}
+            >
+              {p}
             </Button>
-            {start > 2 && <span className="px-1 text-slate-400">…</span>}
-          </>
-        )}
-        {pages.map((p) => (
-          <Button
-            key={p}
-            variant={p === page ? 'primary' : 'ghost'}
-            size="sm"
-            onClick={() => onPageChange(p)}
-            aria-label={`Halaman ${p}`}
-            aria-current={p === page ? 'page' : undefined}
-          >
-            {p}
-          </Button>
-        ))}
-        {end < totalPages && (
-          <>
-            {end < totalPages - 1 && <span className="px-1 text-slate-400">…</span>}
-            <Button variant="ghost" size="sm" onClick={() => onPageChange(totalPages)} aria-label={`Halaman ${totalPages}`}>
-              {totalPages}
-            </Button>
-          </>
-        )}
+          ))}
+          {end < totalPages && (
+            <>
+              {end < totalPages - 1 && <span className="px-1 text-slate-400">…</span>}
+              <Button variant="ghost" size="sm" onClick={() => onPageChange(totalPages)} aria-label={`Halaman ${totalPages}`}>
+                {totalPages}
+              </Button>
+            </>
+          )}
+        </div>
+        <span className="hidden sm:inline text-xs text-slate-400 px-1">
+          {page}/{totalPages}
+        </span>
         <Button
           variant="ghost"
           size="sm"
@@ -99,6 +108,7 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange }) 
           onClick={() => onPageChange(totalPages)}
           disabled={page >= totalPages}
           aria-label="Halaman terakhir"
+          className="hidden sm:inline-flex"
         />
       </div>
     </nav>
@@ -125,15 +135,65 @@ export function DataTable({
   onSortChange,
   striped = true,
   hoverable = true,
+  renderCard,
 }) {
+  const hasCards = Boolean(renderCard);
+
   return (
     <div className={`rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden ${className}`}>
       {toolbar && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 bg-slate-50/50 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 bg-slate-50/50 px-3 py-3 sm:px-4">
           {toolbar}
         </div>
       )}
-      <div className="overflow-x-auto">
+
+      {hasCards && (
+        <div className="md:hidden">
+          {loading ? (
+            <div className="p-3 space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="rounded-xl border border-slate-100 p-4 space-y-3">
+                  <div className="flex gap-3">
+                    <Skeleton className="h-10 w-10 rounded-lg shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-3 w-full" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <ErrorState message="Terjadi kesalahan, silakan coba lagi" onRetry={onRetry} />
+          ) : data.length === 0 ? (
+            <EmptyState title={emptyText} />
+          ) : (
+            <div className="p-3 space-y-2">
+              {data.map((row, idx) => (
+                <div
+                  key={row[rowKey] ?? idx}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  className={`rounded-xl border border-slate-100 bg-white p-3 shadow-sm transition-all ${
+                    onRowClick ? 'cursor-pointer active:scale-[0.99] hover:border-primary-200 hover:shadow-md' : ''
+                  }`}
+                  role={onRowClick ? 'button' : undefined}
+                  tabIndex={onRowClick ? 0 : undefined}
+                  onKeyDown={onRowClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(row); }} : undefined}
+                >
+                  {renderCard(row, columns)}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className={`${hasCards ? 'hidden md:block' : ''} overflow-x-auto`}>
         <table className="w-full min-w-[640px] text-left text-sm" role="grid">
           <thead>
             <tr className="border-b border-slate-200/80 bg-slate-50/80 text-xs uppercase tracking-wider text-slate-500">

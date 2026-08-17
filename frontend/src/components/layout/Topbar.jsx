@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { Menu, Search, ChevronRight, LogOut, KeyRound, UserCircle2, ChevronDown } from 'lucide-react';
+import { Search, ChevronRight, LogOut, KeyRound, UserCircle2, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore.js';
 import { useUiStore } from '../../stores/uiStore.js';
 import { authApi } from '../../api/index.js';
@@ -70,13 +70,6 @@ export function Topbar({ onMenuClick }) {
     <header className="sticky top-0 z-30 h-14 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-3">
-          <button
-            onClick={onMenuClick}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 transition-colors lg:hidden"
-            aria-label="Buka menu navigasi"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
           <nav className="flex items-center gap-1 text-sm" aria-label="Breadcrumb">
             <Link to="/dashboard" className="text-slate-400 hover:text-slate-600 transition-colors">
               Beranda

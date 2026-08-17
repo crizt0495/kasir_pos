@@ -123,6 +123,34 @@ export default function Suppliers() {
         total={d?.total}
         pageSize={d?.pageSize}
         onPageChange={setPage}
+        renderCard={(r) => (
+          <div className="space-y-2.5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-medium text-slate-800">{r.name}</p>
+                {r.contact_person && <p className="text-xs text-slate-400">{r.contact_person}</p>}
+              </div>
+              <StatusBadge status={r.status} />
+            </div>
+            <div className="space-y-0.5 text-xs text-slate-500">
+              {r.phone && <p>Telepon: {r.phone}</p>}
+              {r.email && <p>Email: {r.email}</p>}
+              {r.address && <p className="truncate">Alamat: {r.address}</p>}
+            </div>
+            <div className="flex justify-end gap-1">
+              {can('suppliers.update') && (
+                <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                  Edit
+                </button>
+              )}
+              {can('suppliers.delete') && (
+                <button onClick={(e) => { e.stopPropagation(); setToDelete(r); }} className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors">
+                  Hapus
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         toolbar={<SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari nama, telepon..." className="w-full sm:w-72" />}
       />
 

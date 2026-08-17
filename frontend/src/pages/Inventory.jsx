@@ -105,15 +105,41 @@ export default function Inventory() {
         total={d?.total}
         pageSize={d?.pageSize}
         onPageChange={setPage}
+        renderCard={(r) => (
+          <div className="space-y-2.5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-medium text-slate-800">{r.name}</p>
+                <p className="text-xs text-slate-400">{r.sku} · {r.category?.name || '-'}</p>
+              </div>
+              {r.is_out
+                ? <Badge color="bg-red-100 text-red-700">Habis</Badge>
+                : r.is_low ? <Badge color="bg-amber-100 text-amber-700">Menipis</Badge>
+                : <Badge color="bg-emerald-100 text-emerald-700">Aman</Badge>}
+            </div>
+            <div className="flex items-center gap-4 text-xs text-slate-500">
+              <span>Stok: <b className={r.is_out ? 'text-red-600' : r.is_low ? 'text-amber-600' : 'text-slate-800'}>{formatQty(r.stock)}</b></span>
+              <span>Min: {formatQty(r.min_stock)}</span>
+              <span>HPP: {formatRupiah(r.purchase_price)}</span>
+            </div>
+            {can('inventory.adjust') && (
+              <div className="flex justify-end">
+                <button onClick={(e) => { e.stopPropagation(); openAdjust(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                  Sesuaikan Stok
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         toolbar={
           <>
             <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari produk..." className="w-full sm:w-64" />
-            <div className="flex gap-2">
-              <Select value={categoryId} onChange={(e) => { setCategoryId(e.target.value); setPage(1); }} className="w-40">
+            <div className="flex flex-wrap gap-2">
+              <Select value={categoryId} onChange={(e) => { setCategoryId(e.target.value); setPage(1); }} className="w-full sm:w-40">
                 <option value="">Semua Kategori</option>
                 {(categories.data || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
-              <Select value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1); }} className="w-36">
+              <Select value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1); }} className="w-full sm:w-36">
                 <option value="">Semua Stok</option>
                 <option value="low">Stok Menipis</option>
                 <option value="out">Stok Habis</option>

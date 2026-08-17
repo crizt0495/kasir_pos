@@ -54,6 +54,29 @@ export default function Returns() {
         total={d?.total}
         pageSize={d?.pageSize}
         onPageChange={setPage}
+        renderCard={(r) => (
+          <div className="space-y-2.5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="flex items-center gap-1.5 font-medium text-red-600">
+                  <RotateCcw className="h-3.5 w-3.5" /> {r.return_number}
+                </p>
+                <p className="text-xs text-slate-400">{formatDateTime(r.created_at)}</p>
+              </div>
+              <span className="font-semibold text-sm text-red-600">-{formatRupiah(r.total_refund)}</span>
+            </div>
+            <div className="text-xs text-slate-500">
+              <span>Penjualan: <b className="text-primary-600">{r.sale?.invoice_number || '-'}</b></span>
+              {r.customer?.name && <span> · {r.customer.name}</span>}
+            </div>
+            {r.reason && <p className="text-xs text-slate-400 line-clamp-2">Alasan: {r.reason}</p>}
+            <div className="flex justify-end">
+              <button onClick={(e) => { e.stopPropagation(); navigate(`/sales/${r.sale_id}`); }} className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
+                Lihat Penjualan
+              </button>
+            </div>
+          </div>
+        )}
         toolbar={<SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari no. retur / no. penjualan..." className="w-full sm:w-64" />}
       />
     </div>

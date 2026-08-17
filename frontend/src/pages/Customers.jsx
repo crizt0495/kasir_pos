@@ -121,6 +121,31 @@ export default function Customers() {
         total={d?.total}
         pageSize={d?.pageSize}
         onPageChange={setPage}
+        renderCard={(r) => (
+          <div className="space-y-2.5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-medium text-slate-800">{r.name}</p>
+                {r.phone && <p className="text-xs text-slate-400">{r.phone}</p>}
+                {r.email && <p className="text-xs text-slate-400">{r.email}</p>}
+              </div>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-slate-500">
+              <span>Transaksi: <b>{formatNumber(r.total_transactions)}</b></span>
+              <span>Total: <b className="text-slate-800">{formatRupiah(r.total_spend)}</b></span>
+            </div>
+            <div className="flex justify-end gap-1">
+              <button onClick={(e) => { e.stopPropagation(); navigate(`/customers/${r.id}`); }} className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
+                Detail
+              </button>
+              {can('customers.update') && (
+                <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                  Edit
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         toolbar={<SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari nama, HP, email..." className="w-full sm:w-72" />}
       />
 

@@ -137,16 +137,43 @@ export default function Expenses() {
         total={d?.total}
         pageSize={d?.pageSize}
         onPageChange={setPage}
+        renderCard={(r) => (
+          <div className="space-y-2">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs text-slate-400">{formatDate(r.expense_date)}</p>
+                <Badge color="bg-slate-100 text-slate-700">{r.category}</Badge>
+              </div>
+              <span className="font-semibold text-sm text-red-600">-{formatRupiah(r.amount)}</span>
+            </div>
+            {r.description && <p className="text-xs text-slate-500 line-clamp-2">{r.description}</p>}
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${paymentMethodColor(r.payment_method)}`}>{paymentMethodLabel(r.payment_method)}</span>
+              <div className="flex gap-1">
+                {can('expenses.update') && (
+                  <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                    Edit
+                  </button>
+                )}
+                {can('expenses.delete') && (
+                  <button onClick={(e) => { e.stopPropagation(); setToDelete(r); }} className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors">
+                    Hapus
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         toolbar={
           <>
             <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari deskripsi..." className="w-full sm:w-56" />
-            <div className="flex gap-2">
-              <Select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} className="w-40">
+            <div className="flex flex-wrap gap-2">
+              <Select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} className="w-full sm:w-40">
                 <option value="">Semua Kategori</option>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </Select>
-              <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} className="w-36" />
-              <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} className="w-36" />
+              <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} className="w-full sm:w-36" />
+              <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} className="w-full sm:w-36" />
             </div>
           </>
         }

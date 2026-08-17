@@ -105,27 +105,58 @@ export default function Sales() {
         onPageChange={setPage}
         sort={sort}
         onSortChange={handleSort}
+        renderCard={(r) => (
+          <div className="space-y-2.5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-medium text-primary-600">{r.invoice_number}</p>
+                <p className="text-xs text-slate-400">{formatDateTime(r.created_at)}</p>
+              </div>
+              <StatusBadge status={r.status} />
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+              {r.cashier?.profiles?.full_name && <span>Kasir: {r.cashier.profiles.full_name}</span>}
+              {r.customer?.name && <span>Pelanggan: {r.customer.name}</span>}
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${paymentMethodColor(r.payment_method)}`}>
+                {paymentMethodLabel(r.payment_method)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-sm">{formatRupiah(r.total)}</span>
+              <div className="flex gap-1">
+                {can('sales.view') && (
+                  <button onClick={(e) => { e.stopPropagation(); navigate(`/sales/${r.id}`); }} className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
+                    Detail
+                  </button>
+                )}
+                <button onClick={(e) => { e.stopPropagation(); printReceipt(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                  Struk
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         toolbar={
           <>
             <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari no. transaksi..." className="w-full sm:w-56" />
             <div className="flex flex-wrap items-center gap-2">
-              <Select value={cashierId} onChange={(e) => { setCashierId(e.target.value); setPage(1); }} className="w-40">
+              <Select value={cashierId} onChange={(e) => { setCashierId(e.target.value); setPage(1); }} className="w-full sm:w-40">
                 <option value="">Semua Kasir</option>
                 {(users.data?.items || []).map((u) => <option key={u.id} value={u.id}>{u.full_name || u.username}</option>)}
               </Select>
-              <Select value={method} onChange={(e) => { setMethod(e.target.value); setPage(1); }} className="w-36">
+              <Select value={method} onChange={(e) => { setMethod(e.target.value); setPage(1); }} className="w-full sm:w-36">
                 <option value="">Semua Metode</option>
                 {['CASH', 'QRIS', 'DEBIT', 'CREDIT', 'TRANSFER', 'E_WALLET'].map((m) => <option key={m} value={m}>{paymentMethodLabel(m)}</option>)}
               </Select>
-              <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="w-40">
+              <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="w-full sm:w-40">
                 <option value="">Semua Status</option>
                 <option value="completed">Selesai</option>
                 <option value="partially_refunded">Retur Sebagian</option>
                 <option value="refunded">Diretur</option>
                 <option value="cancelled">Dibatalkan</option>
               </Select>
-              <Field className="w-36"><Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} /></Field>
-              <Field className="w-36"><Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} /></Field>
+              <Field className="w-full sm:w-36"><Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} /></Field>
+              <Field className="w-full sm:w-36"><Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} /></Field>
             </div>
           </>
         }
