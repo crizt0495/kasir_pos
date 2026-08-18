@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Pencil, Trash2, Tags } from 'lucide-react';
 import { categoriesApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
+import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
@@ -13,6 +14,8 @@ import {
 export default function Categories() {
   const { can } = usePermission();
   const [search, setSearch] = useState('');
+  const debounced = useDebounce(search, 400);
+  const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [toDelete, setToDelete] = useState(null);
@@ -20,7 +23,7 @@ export default function Categories() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
-  const list = useApi(() => categoriesApi.list({ search }).then((r) => r.data), [search]);
+  const list = useApi(() => categoriesApi.list({ page, pageSize: 20, search: debounced || undefined }).then((r) => r.data), [page, debounced]);
 
   const openCreate = () => {
     setEditing(null);
@@ -70,7 +73,7 @@ export default function Categories() {
     }
   };
 
-  const data = list.data || [];
+  const d = list.data;
 
   return (
     <div className="space-y-4">
@@ -85,8 +88,6 @@ export default function Categories() {
           <div className="p-4"><Skeleton className="h-10 w-full" /></div>
         ) : list.error ? (
           <ErrorState onRetry={list.reload} />
-        ) : data.length === 0 ? (
-          <EmptyState title="Belum ada kategori" />
         ) : (
           <DataTable
             columns={[
@@ -114,8 +115,15 @@ export default function Categories() {
                 </div>
               )},
             ]}
-            data={data}
+            data={d?.items || []}
             loading={false}
+            emptyText="Belum ada kategori"
+            page={page}
+            totalPages={d?.totalPages}
+            total={d?.total}
+            pageSize={d?.pageSize}
+            onPageChange={setPage}
+            toolbar={<SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari kategori..." />}
             renderCard={(r) => (
               <div className="space-y-2">
                 <div className="flex items-start justify-between">

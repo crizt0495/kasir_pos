@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js';
+import { getPagination, buildPage } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, AppError, extractPgMessage } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -88,13 +89,14 @@ export const updatePeriod = asyncHandler(async (req, res) => {
 });
 
 export const listShares = asyncHandler(async (req, res) => {
+  const { page, pageSize } = getPagination(req.query, 20);
   const year = Number(req.query.year);
   let periodId = req.query.period_id;
 
   if (!periodId) {
     if (!Number.isInteger(year)) throw new AppError('Parameter year wajib diisi', { code: 'VALIDATION_ERROR', status: 400 });
     const { data: period } = await supabase.from('profit_periods').select('id').eq('year', year).maybeSingle();
-    if (!period) return ok(res, { year, period_id: null, items: [], totals: null });
+    if (!period) return ok(res, { year, period_id: null, items: [], totals: null, total: 0, page, pageSize, totalPages: 1 });
     periodId = period.id;
   }
 
@@ -106,7 +108,6 @@ export const listShares = asyncHandler(async (req, res) => {
   const { data, error } = await query.order('total_profit', { ascending: false });
   if (error) throw error;
 
-  // Distribusi dihitung terpisah (tidak ada relasi FK untuk embed)
   const { data: distributions } = await supabase
     .from('profit_distributions')
     .select('customer_id, amount')
@@ -116,7 +117,7 @@ export const listShares = asyncHandler(async (req, res) => {
     distByCustomer[d.customer_id] = (distByCustomer[d.customer_id] || 0) + Number(d.amount || 0);
   });
 
-  const items = (data || []).map((s) => {
+  const allItems = (data || []).map((s) => {
     const distributed = round2(distByCustomer[s.customer_id] || 0);
     return {
       ...s,
@@ -124,22 +125,29 @@ export const listShares = asyncHandler(async (req, res) => {
       remaining: round2(Number(s.share_amount) - distributed),
     };
   });
+
   const totals = {
-    customers: items.length,
-    total_purchase: Math.round(items.reduce((a, s) => a + Number(s.total_purchase), 0) * 100) / 100,
-    total_profit: Math.round(items.reduce((a, s) => a + Number(s.total_profit), 0) * 100) / 100,
-    share: Math.round(items.reduce((a, s) => a + Number(s.share_amount), 0) * 100) / 100,
-    distributed: Math.round(items.reduce((a, s) => a + s.distributed, 0) * 100) / 100,
-    remaining: Math.round(items.reduce((a, s) => a + s.remaining, 0) * 100) / 100,
+    customers: allItems.length,
+    total_purchase: Math.round(allItems.reduce((a, s) => a + Number(s.total_purchase), 0) * 100) / 100,
+    total_profit: Math.round(allItems.reduce((a, s) => a + Number(s.total_profit), 0) * 100) / 100,
+    share: Math.round(allItems.reduce((a, s) => a + Number(s.share_amount), 0) * 100) / 100,
+    distributed: Math.round(allItems.reduce((a, s) => a + s.distributed, 0) * 100) / 100,
+    remaining: Math.round(allItems.reduce((a, s) => a + s.remaining, 0) * 100) / 100,
   };
 
-  return ok(res, { year: year || null, period_id: periodId, items, totals });
+  const total = allItems.length;
+  const from = (page - 1) * pageSize;
+  const items = allItems.slice(from, from + pageSize);
+
+  return ok(res, { year: year || null, period_id: periodId, items, totals, total, page, pageSize, totalPages: Math.ceil(total / pageSize) || 1 });
 });
 
 export const listDistributions = asyncHandler(async (req, res) => {
+  const { page, pageSize, from: rangeFrom, to: rangeTo } = getPagination(req.query, 20);
+
   let query = supabase
     .from('profit_distributions')
-    .select('*, period:profit_periods(year), customer:customers(id, name), distributor:users(id, username, profiles(full_name))')
+    .select('*, period:profit_periods(year), customer:customers(id, name), distributor:users(id, username, profiles(full_name))', { count: 'exact' })
     .order('distributed_at', { ascending: false });
 
   if (req.query.year) {
@@ -149,9 +157,9 @@ export const listDistributions = asyncHandler(async (req, res) => {
     query = query.eq('period_id', req.query.period_id);
   }
 
-  const { data, error } = await query.limit(200);
+  const { data, count, error } = await query.range(rangeFrom, rangeTo);
   if (error) throw error;
-  return ok(res, data || []);
+  return ok(res, buildPage(data || [], count || 0, page, pageSize));
 });
 
 export const distributeProfit = asyncHandler(async (req, res) => {

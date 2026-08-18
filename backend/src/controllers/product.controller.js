@@ -164,16 +164,17 @@ export const createUnit = asyncHandler(async (req, res) => {
 // ============================================================
 
 export const listCategories = asyncHandler(async (req, res) => {
+  const { page, pageSize, from, to } = getPagination(req.query, 20);
   const q = (req.query.search || '').trim();
   const { status } = req.query;
 
-  let query = supabase.from('categories').select('*').order('name');
+  let query = supabase.from('categories').select('*', { count: 'exact' }).order('name');
   if (q) query = query.ilike('name', `%${q}%`);
   if (status) query = query.eq('status', status);
 
-  const { data, error } = await query;
+  const { data, count, error } = await query.range(from, to);
   if (error) throw error;
-  return ok(res, data || []);
+  return ok(res, buildPage(data || [], count || 0, page, pageSize));
 });
 
 export const createCategory = asyncHandler(async (req, res) => {

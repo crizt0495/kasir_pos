@@ -21,7 +21,7 @@ export default function Inventory() {
   const [saving, setSaving] = useState(false);
   const [confirming, setConfirming] = useState(null);
 
-  const categories = useApi(() => categoriesApi.list().then((r) => r.data), []);
+  const categories = useApi(() => categoriesApi.list({ pageSize: 1000 }).then((r) => r.data?.items || []), []);
   const list = useApi(
     () => inventoryApi.list({ search: debounced || undefined, category_id: categoryId || undefined, filter: filter || undefined, page, pageSize: 20 }).then((r) => r.data),
     [debounced, categoryId, filter, page]

@@ -7,7 +7,7 @@ import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
   Card, Button, StatCard, Select, Input, Field, Textarea, Modal, ConfirmDialog,
-  SkeletonRows, EmptyState, ErrorState, Badge, Spinner, PageHeader,
+  SkeletonRows, EmptyState, ErrorState, Badge, Spinner, PageHeader, Pagination,
 } from '../components/ui/index.jsx';
 import { formatRupiah, formatDateTime } from '../utils/format.js';
 
@@ -23,6 +23,8 @@ export default function ProfitSharing() {
   const [submitting, setSubmitting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [periodsLoading, setPeriodsLoading] = useState(true);
+  const [sharesPage, setSharesPage] = useState(1);
+  const [distributionsPage, setDistributionsPage] = useState(1);
 
   const loadPeriods = async () => {
     setPeriodsLoading(true);
@@ -51,8 +53,8 @@ export default function ProfitSharing() {
   );
 
   const distributions = useApi(
-    () => profitApi.distributions({ year: year || undefined }).then((r) => r.data),
-    [year, refreshKey]
+    () => profitApi.distributions({ year: year || undefined, page: distributionsPage, pageSize: 20 }).then((r) => r.data),
+    [year, refreshKey, distributionsPage]
   );
 
   const currentPeriod = periods.find((p) => String(p.year) === year);
@@ -152,7 +154,7 @@ export default function ProfitSharing() {
         <>
           <div className="flex flex-wrap items-center gap-3">
             <div className="w-44">
-              <Select value={year} onChange={(e) => setYear(e.target.value)}>
+              <Select value={year} onChange={(e) => { setYear(e.target.value); setSharesPage(1); setDistributionsPage(1); }}>
                 {periods.map((p) => (
                   <option key={p.id} value={String(p.year)}>
                     Tahun {p.year} ({p.start_date?.slice(0, 4)} — {p.status})
@@ -161,7 +163,7 @@ export default function ProfitSharing() {
               </Select>
             </div>
             <div className="w-44">
-              <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <Select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setSharesPage(1); }}>
                 <option value="">Semua status</option>
                 <option value="unpaid">Belum Dibagikan</option>
                 <option value="paid">Sudah Dibagikan</option>
@@ -187,23 +189,30 @@ export default function ProfitSharing() {
               <ErrorState onRetry={shares.reload} />
             ) : !shares.data?.items?.length ? (
               <EmptyState title="Belum ada data" description="Penjualan ke pelanggan terdaftar akan otomatis masuk di sini" />
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
-                      <th className="px-4 py-2.5 font-semibold">Pelanggan</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Total Pembelian</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Total Laba</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Hak 2,5%</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Dibagikan</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Sisa</th>
-                      <th className="px-4 py-2.5 text-center font-semibold">Status</th>
-                      {can('profit.distribute') && <th className="px-4 py-2.5 text-right font-semibold">Aksi</th>}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {shares.data.items.map((s) => (
+            ) : (() => {
+              const allItems = shares.data.items;
+              const sharesPageSize = 20;
+              const sharesTotalPages = Math.ceil(allItems.length / sharesPageSize) || 1;
+              const sharesFrom = (sharesPage - 1) * sharesPageSize;
+              const pageItems = allItems.slice(sharesFrom, sharesFrom + sharesPageSize);
+              return (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[760px] text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+                          <th className="px-4 py-2.5 font-semibold">Pelanggan</th>
+                          <th className="px-4 py-2.5 text-right font-semibold">Total Pembelian</th>
+                          <th className="px-4 py-2.5 text-right font-semibold">Total Laba</th>
+                          <th className="px-4 py-2.5 text-right font-semibold">Hak 2,5%</th>
+                          <th className="px-4 py-2.5 text-right font-semibold">Dibagikan</th>
+                          <th className="px-4 py-2.5 text-right font-semibold">Sisa</th>
+                          <th className="px-4 py-2.5 text-center font-semibold">Status</th>
+                          {can('profit.distribute') && <th className="px-4 py-2.5 text-right font-semibold">Aksi</th>}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {pageItems.map((s) => (
                       <tr key={s.id} className="hover:bg-slate-50/50">
                         <td className="px-4 py-3">
                           <p className="font-medium text-slate-800">{s.customer?.name || '-'}</p>
@@ -239,7 +248,14 @@ export default function ProfitSharing() {
                   </tbody>
                 </table>
               </div>
-            )}
+              {sharesTotalPages > 1 && (
+                <div className="border-t border-slate-200">
+                  <Pagination page={sharesPage} totalPages={sharesTotalPages} total={allItems.length} pageSize={sharesPageSize} onPageChange={setSharesPage} />
+                </div>
+              )}
+                </>
+              );
+            })()}
           </Card>
 
           <Card title="Riwayat Pembagian" bodyClassName="p-0">
@@ -247,35 +263,44 @@ export default function ProfitSharing() {
               <SkeletonRows rows={3} cols={4} />
             ) : distributions.error ? (
               <ErrorState onRetry={distributions.reload} />
-            ) : !distributions.data?.length ? (
-              <EmptyState title="Belum ada pembagian" />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
-                      <th className="px-4 py-2.5 font-semibold">Tanggal</th>
-                      <th className="px-4 py-2.5 font-semibold">Pelanggan</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Jumlah</th>
-                      <th className="px-4 py-2.5 font-semibold">Diproses Oleh</th>
-                      <th className="px-4 py-2.5 font-semibold">Catatan</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {distributions.data.map((d) => (
-                      <tr key={d.id} className="hover:bg-slate-50/50">
-                        <td className="px-4 py-3">{formatDateTime(d.distributed_at)}</td>
-                        <td className="px-4 py-3 font-medium text-slate-800">{d.customer?.name || '-'}</td>
-                        <td className="px-4 py-3 text-right font-semibold text-emerald-600">{formatRupiah(d.amount)}</td>
-                        <td className="px-4 py-3">
-                          {d.distributor?.profiles?.full_name || d.distributor?.username || '-'}
-                        </td>
-                        <td className="px-4 py-3 text-slate-500">{d.note || '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                {!distributions.data?.items?.length ? (
+                  <EmptyState title="Belum ada pembagian" />
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[640px] text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+                          <th className="px-4 py-2.5 font-semibold">Tanggal</th>
+                          <th className="px-4 py-2.5 font-semibold">Pelanggan</th>
+                          <th className="px-4 py-2.5 text-right font-semibold">Jumlah</th>
+                          <th className="px-4 py-2.5 font-semibold">Diproses Oleh</th>
+                          <th className="px-4 py-2.5 font-semibold">Catatan</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {distributions.data.items.map((d) => (
+                          <tr key={d.id} className="hover:bg-slate-50/50">
+                            <td className="px-4 py-3">{formatDateTime(d.distributed_at)}</td>
+                            <td className="px-4 py-3 font-medium text-slate-800">{d.customer?.name || '-'}</td>
+                            <td className="px-4 py-3 text-right font-semibold text-emerald-600">{formatRupiah(d.amount)}</td>
+                            <td className="px-4 py-3">
+                              {d.distributor?.profiles?.full_name || d.distributor?.username || '-'}
+                            </td>
+                            <td className="px-4 py-3 text-slate-500">{d.note || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                {distributions.data?.totalPages > 1 && (
+                  <div className="border-t border-slate-200">
+                    <Pagination page={distributionsPage} totalPages={distributions.data.totalPages} total={distributions.data.total} pageSize={distributions.data.pageSize} onPageChange={setDistributionsPage} />
+                  </div>
+                )}
+              </>
             )}
           </Card>
         </>

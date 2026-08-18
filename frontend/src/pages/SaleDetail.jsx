@@ -7,7 +7,7 @@ import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
-  Card, Button, StatusBadge, Skeleton, ErrorState, EmptyState, Modal, Field, Textarea, Input, ConfirmDialog,
+  Card, Button, StatusBadge, Skeleton, ErrorState, EmptyState, Modal, Field, Textarea, Input, ConfirmDialog, Pagination,
 } from '../components/ui/index.jsx';
 import { formatRupiah, formatDateTime, formatQty, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 import ReceiptModal from '../components/pos/ReceiptModal.jsx';
@@ -19,10 +19,11 @@ export default function SaleDetail() {
   const [showRefund, setShowRefund] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [settings, setSettings] = useState({});
-  const [refundItems, setRefundItems] = useState({}); // sale_item_id -> qty
+  const [refundItems, setRefundItems] = useState({});
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [confirmRefund, setConfirmRefund] = useState(false);
+  const [itemsPage, setItemsPage] = useState(1);
 
   const detail = useApi(() => salesApi.get(id).then((r) => r.data), [id]);
   const s = detail.data;
@@ -139,40 +140,55 @@ export default function SaleDetail() {
           <Card title="Item Transaksi" bodyClassName="p-0">
             {!s.items?.length ? (
               <EmptyState title="Tidak ada item" />
-            ) : (
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
-                    <th className="px-4 py-2.5 font-semibold">Produk</th>
-                    <th className="px-4 py-2.5 font-semibold">Qty</th>
-                    <th className="px-4 py-2.5 font-semibold">Harga</th>
-                    <th className="px-4 py-2.5 font-semibold">Harga Beli</th>
-                    <th className="px-4 py-2.5 font-semibold">Diskon</th>
-                    <th className="px-4 py-2.5 text-right font-semibold">Subtotal</th>
-                    <th className="px-4 py-2.5 text-right font-semibold">Laba</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {s.items.map((i) => {
-                    const rem = remaining(i);
-                    return (
-                      <tr key={i.id}>
-                        <td className="px-4 py-2.5">
-                          <p className="font-medium text-slate-800">{i.product?.name || '-'}</p>
-                          {rem < Number(i.quantity) && <p className="text-xs text-amber-600">Sisa dapat diretur: {formatQty(rem)}</p>}
-                        </td>
-                        <td className="px-4 py-2.5">{formatQty(i.quantity)}</td>
-                        <td className="px-4 py-2.5">{formatRupiah(i.price)}</td>
-                        <td className="px-4 py-2.5">{formatRupiah(i.cost_price)}</td>
-                        <td className="px-4 py-2.5">{i.discount ? `-${formatRupiah(i.discount)}` : '-'}</td>
-                        <td className="px-4 py-2.5 text-right font-semibold">{formatRupiah(i.subtotal)}</td>
-                        <td className="px-4 py-2.5 text-right font-medium text-emerald-600">{formatRupiah(i.profit)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
+            ) : (() => {
+              const itemsPageSize = 10;
+              const itemsTotalPages = Math.ceil(s.items.length / itemsPageSize) || 1;
+              const itemsFrom = (itemsPage - 1) * itemsPageSize;
+              const pageItems = s.items.slice(itemsFrom, itemsFrom + itemsPageSize);
+              return (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+                          <th className="px-4 py-2.5 font-semibold">Produk</th>
+                          <th className="px-4 py-2.5 font-semibold">Qty</th>
+                          <th className="px-4 py-2.5 font-semibold">Harga</th>
+                          <th className="px-4 py-2.5 font-semibold">Harga Beli</th>
+                          <th className="px-4 py-2.5 font-semibold">Diskon</th>
+                          <th className="px-4 py-2.5 text-right font-semibold">Subtotal</th>
+                          <th className="px-4 py-2.5 text-right font-semibold">Laba</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {pageItems.map((i) => {
+                          const rem = remaining(i);
+                          return (
+                            <tr key={i.id}>
+                              <td className="px-4 py-2.5">
+                                <p className="font-medium text-slate-800">{i.product?.name || '-'}</p>
+                                {rem < Number(i.quantity) && <p className="text-xs text-amber-600">Sisa dapat diretur: {formatQty(rem)}</p>}
+                              </td>
+                              <td className="px-4 py-2.5">{formatQty(i.quantity)}</td>
+                              <td className="px-4 py-2.5">{formatRupiah(i.price)}</td>
+                              <td className="px-4 py-2.5">{formatRupiah(i.cost_price)}</td>
+                              <td className="px-4 py-2.5">{i.discount ? `-${formatRupiah(i.discount)}` : '-'}</td>
+                              <td className="px-4 py-2.5 text-right font-semibold">{formatRupiah(i.subtotal)}</td>
+                              <td className="px-4 py-2.5 text-right font-medium text-emerald-600">{formatRupiah(i.profit)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  {itemsTotalPages > 1 && (
+                    <div className="border-t border-slate-200">
+                      <Pagination page={itemsPage} totalPages={itemsTotalPages} total={s.items.length} pageSize={itemsPageSize} onPageChange={setItemsPage} />
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </Card>
 
           <div className="flex justify-end">

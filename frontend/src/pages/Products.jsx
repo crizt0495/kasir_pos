@@ -47,7 +47,7 @@ export default function Products() {
   };
 
   const products = useApi(() => productsApi.list(params).then((r) => r.data), [debounced, categoryId, status, page, sort]);
-  const categories = useApi(() => categoriesApi.list().then((r) => r.data), []);
+  const categories = useApi(() => categoriesApi.list({ pageSize: 1000 }).then((r) => r.data?.items || []), []);
   const units = useApi(() => unitsApi.list().then((r) => r.data), []);
 
   const confirmDelete = async () => {

@@ -1,8 +1,10 @@
 import { supabase } from '../config/supabase.js';
 import { writeAudit } from '../services/auditService.js';
+import { getPagination, buildPage } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, conflict, badRequest } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { safeSearch } from '../utils/sanitize.js';
 
 /** Resolve kode permission menjadi id */
 async function resolvePermissionIds(codes) {
@@ -32,12 +34,18 @@ async function bumpUsersTokenVersion(roleId) {
 }
 
 export const listRoles = asyncHandler(async (req, res) => {
-  const { data, error } = await supabase
-    .from('roles')
-    .select('*, role_permissions(permission_id), user_roles(user_id)')
-    .order('name');
+  const { page, pageSize, from, to } = getPagination(req.query, 20);
+  const q = safeSearch(req.query.search);
 
+  let query = supabase
+    .from('roles')
+    .select('*, role_permissions(permission_id), user_roles(user_id)', { count: 'exact' });
+
+  if (q) query = query.or(`name.ilike.%${q}%,code.ilike.%${q}%`);
+
+  const { data, count, error } = await query.order('name').range(from, to);
   if (error) throw error;
+
   const result = (data || []).map((r) => ({
     ...r,
     permission_count: r.role_permissions?.length || 0,
@@ -45,7 +53,7 @@ export const listRoles = asyncHandler(async (req, res) => {
     role_permissions: undefined,
     user_roles: undefined,
   }));
-  return ok(res, result);
+  return ok(res, buildPage(result, count || 0, page, pageSize));
 });
 
 export const getRole = asyncHandler(async (req, res) => {

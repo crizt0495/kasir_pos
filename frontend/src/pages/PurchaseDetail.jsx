@@ -6,7 +6,7 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Card, Button, StatusBadge, ConfirmDialog, Skeleton, ErrorState, EmptyState, Select } from '../components/ui/index.jsx';
+import { Card, Button, StatusBadge, ConfirmDialog, Skeleton, ErrorState, EmptyState, Select, Pagination } from '../components/ui/index.jsx';
 import { formatRupiah, formatDate, formatQty } from '../utils/format.js';
 
 export default function PurchaseDetail() {
@@ -16,6 +16,7 @@ export default function PurchaseDetail() {
   const [toReceive, setToReceive] = useState(false);
   const [toDelete, setToDelete] = useState(false);
   const [acting, setActing] = useState(false);
+  const [itemsPage, setItemsPage] = useState(1);
 
   const detail = useApi(() => purchasesApi.get(id).then((r) => r.data), [id]);
   const p = detail.data;
@@ -121,31 +122,46 @@ export default function PurchaseDetail() {
           <Card title="Item Pembelian" bodyClassName="p-0">
             {!p.items?.length ? (
               <EmptyState title="Tidak ada item" />
-            ) : (
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
-                    <th className="px-4 py-2.5 font-semibold">Produk</th>
-                    <th className="px-4 py-2.5 font-semibold">Qty</th>
-                    <th className="px-4 py-2.5 font-semibold">Harga Beli</th>
-                    <th className="px-4 py-2.5 text-right font-semibold">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {p.items.map((i) => (
-                    <tr key={i.id}>
-                      <td className="px-4 py-2.5">
-                        <p className="font-medium text-slate-800">{i.product?.name || '-'}</p>
-                        <p className="text-xs text-slate-400">{i.product?.sku}</p>
-                      </td>
-                      <td className="px-4 py-2.5">{formatQty(i.quantity)}</td>
-                      <td className="px-4 py-2.5">{formatRupiah(i.cost_price)}</td>
-                      <td className="px-4 py-2.5 text-right font-semibold">{formatRupiah(i.subtotal)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+            ) : (() => {
+              const itemsPageSize = 10;
+              const itemsTotalPages = Math.ceil(p.items.length / itemsPageSize) || 1;
+              const itemsFrom = (itemsPage - 1) * itemsPageSize;
+              const pageItems = p.items.slice(itemsFrom, itemsFrom + itemsPageSize);
+              return (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+                          <th className="px-4 py-2.5 font-semibold">Produk</th>
+                          <th className="px-4 py-2.5 font-semibold">Qty</th>
+                          <th className="px-4 py-2.5 font-semibold">Harga Beli</th>
+                          <th className="px-4 py-2.5 text-right font-semibold">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {pageItems.map((i) => (
+                          <tr key={i.id}>
+                            <td className="px-4 py-2.5">
+                              <p className="font-medium text-slate-800">{i.product?.name || '-'}</p>
+                              <p className="text-xs text-slate-400">{i.product?.sku}</p>
+                            </td>
+                            <td className="px-4 py-2.5">{formatQty(i.quantity)}</td>
+                            <td className="px-4 py-2.5">{formatRupiah(i.cost_price)}</td>
+                            <td className="px-4 py-2.5 text-right font-semibold">{formatRupiah(i.subtotal)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {itemsTotalPages > 1 && (
+                    <div className="border-t border-slate-200">
+                      <Pagination page={itemsPage} totalPages={itemsTotalPages} total={p.items.length} pageSize={itemsPageSize} onPageChange={setItemsPage} />
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </Card>
 
           <div className="flex justify-end">

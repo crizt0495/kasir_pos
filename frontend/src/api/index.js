@@ -118,7 +118,7 @@ export const usersApi = {
 };
 
 export const rolesApi = {
-  list: () => api.get('/roles').then((r) => r.data),
+  list: (params) => api.get('/roles', { params }).then((r) => r.data),
   get: (id) => api.get(`/roles/${id}`).then((r) => r.data),
   create: (payload) => api.post('/roles', payload).then((r) => r.data),
   update: (id, payload) => api.put(`/roles/${id}`, payload).then((r) => r.data),

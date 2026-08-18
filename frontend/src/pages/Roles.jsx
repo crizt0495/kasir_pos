@@ -2,26 +2,30 @@ import { useState } from 'react';
 import { Plus, Pencil, Trash2, ShieldCheck } from 'lucide-react';
 import { rolesApi, permissionsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
+import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
-  DataTable, Button, Modal, Field, Input, Textarea, Badge, ConfirmDialog, Card, Skeleton, ErrorState, PageHeader,
+  DataTable, Button, Modal, Field, Input, Textarea, Badge, ConfirmDialog, Card, SearchInput, Skeleton, ErrorState, PageHeader,
 } from '../components/ui/index.jsx';
 
 export default function Roles() {
   const { can } = usePermission();
+  const [search, setSearch] = useState('');
+  const debounced = useDebounce(search, 400);
+  const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', code: '', description: '' });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState(null);
-  const [permRole, setPermRole] = useState(null); // role yang sedang diatur permissions
+  const [permRole, setPermRole] = useState(null);
   const [selectedPerms, setSelectedPerms] = useState([]);
   const [savingPerms, setSavingPerms] = useState(false);
 
-  const roles = useApi(() => rolesApi.list().then((r) => r.data), []);
+  const roles = useApi(() => rolesApi.list({ page, pageSize: 20, search: debounced || undefined }).then((r) => r.data), [page, debounced]);
   const permissions = useApi(() => permissionsApi.list().then((r) => r.data), []);
 
   const openCreate = () => {
@@ -161,8 +165,14 @@ export default function Roles() {
                 </div>
               )},
             ]}
-            data={roles.data || []}
+            data={roles.data?.items || []}
             loading={false}
+            page={page}
+            totalPages={roles.data?.totalPages}
+            total={roles.data?.total}
+            pageSize={roles.data?.pageSize}
+            onPageChange={setPage}
+            toolbar={<SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari role..." />}
             renderCard={(r) => (
               <div className="space-y-2">
                 <div className="flex items-start justify-between">

@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Save, ArrowLeft } from 'lucide-react';
+import { Save, ArrowLeft, Tags, Layers } from 'lucide-react';
 import { productsApi, categoriesApi, unitsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
+import { usePermission } from '../hooks/usePermission.js';
 import { productSchema } from '../schemas/index.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Button, Field, Input, Select, Textarea, Card, Skeleton, ErrorState } from '../components/ui/index.jsx';
+import { Button, Field, Input, Select, Textarea, Card, Modal, Skeleton, ErrorState } from '../components/ui/index.jsx';
 import ProductImage from '../components/ProductImage.jsx';
 
 export default function ProductForm() {
@@ -16,15 +17,25 @@ export default function ProductForm() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(isEdit);
+  const { can } = usePermission();
 
-  const categories = useApi(() => categoriesApi.list().then((r) => r.data), []);
+  const categories = useApi(() => categoriesApi.list({ pageSize: 1000 }).then((r) => r.data?.items || []), []);
   const units = useApi(() => unitsApi.list().then((r) => r.data), []);
+
+  const [catModal, setCatModal] = useState(false);
+  const [catForm, setCatForm] = useState({ name: '', description: '' });
+  const [catSaving, setCatSaving] = useState(false);
+
+  const [unitModal, setUnitModal] = useState(false);
+  const [unitForm, setUnitForm] = useState({ name: '', short_name: '' });
+  const [unitSaving, setUnitSaving] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(productSchema),
@@ -78,6 +89,36 @@ export default function ProductForm() {
     }
   };
 
+  const saveCategory = async () => {
+    if (!catForm.name.trim()) { toast.error('Nama kategori wajib diisi'); return; }
+    setCatSaving(true);
+    try {
+      const res = await categoriesApi.create(catForm);
+      toast.success('Kategori berhasil dibuat');
+      setCatModal(false);
+      setCatForm({ name: '', description: '' });
+      await categories.reload();
+      setValue('category_id', res.data?.id || '');
+    } catch (error) { toast.error(getErrorMessage(error, 'Gagal membuat kategori')); }
+    finally { setCatSaving(false); }
+  };
+
+  const saveUnit = async () => {
+    if (!unitForm.name.trim() || !unitForm.short_name.trim()) {
+      toast.error('Nama dan singkatan satuan wajib diisi'); return;
+    }
+    setUnitSaving(true);
+    try {
+      const res = await unitsApi.create(unitForm);
+      toast.success('Satuan berhasil dibuat');
+      setUnitModal(false);
+      setUnitForm({ name: '', short_name: '' });
+      await units.reload();
+      setValue('unit_id', res.data?.id || '');
+    } catch (error) { toast.error(getErrorMessage(error, 'Gagal membuat satuan')); }
+    finally { setUnitSaving(false); }
+  };
+
   if (loading) {
     return (
       <Card bodyClassName="p-6">
@@ -116,16 +157,30 @@ export default function ProductForm() {
               <Input {...register('barcode')} error={errors.barcode} placeholder="8991001000001" />
             </Field>
             <Field label="Kategori" error={errors.category_id?.message}>
-              <Select {...register('category_id')} error={errors.category_id}>
-                <option value="">Pilih kategori</option>
-                {(categories.data || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </Select>
+              <div className="flex items-center gap-1">
+                <Select {...register('category_id')} error={errors.category_id} className="flex-1">
+                  <option value="">Pilih kategori</option>
+                  {(categories.data || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </Select>
+                {can('categories.create') && (
+                  <button type="button" onClick={() => setCatModal(true)} title="Tambah kategori" className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
+                    <Tags className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </Field>
             <Field label="Satuan" error={errors.unit_id?.message}>
-              <Select {...register('unit_id')} error={errors.unit_id}>
-                <option value="">Pilih satuan</option>
-                {(units.data || []).map((u) => <option key={u.id} value={u.id}>{u.name} ({u.short_name})</option>)}
-              </Select>
+              <div className="flex items-center gap-1">
+                <Select {...register('unit_id')} error={errors.unit_id} className="flex-1">
+                  <option value="">Pilih satuan</option>
+                  {(units.data || []).map((u) => <option key={u.id} value={u.id}>{u.name} ({u.short_name})</option>)}
+                </Select>
+                {can('products.create') && (
+                  <button type="button" onClick={() => setUnitModal(true)} title="Tambah satuan" className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
+                    <Layers className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </Field>
             <Field label="Harga Beli" required error={errors.purchase_price?.message}>
               <Input type="number" step="100" {...register('purchase_price')} error={errors.purchase_price} />
@@ -167,6 +222,48 @@ export default function ProductForm() {
           </div>
         </form>
       </Card>
+
+      <Modal
+        open={catModal}
+        onClose={() => setCatModal(false)}
+        title="Tambah Kategori"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCatModal(false)}>Batal</Button>
+            <Button onClick={saveCategory} loading={catSaving}>Simpan</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Field label="Nama Kategori" required>
+            <Input value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} placeholder="cth: Makanan" autoFocus />
+          </Field>
+          <Field label="Deskripsi">
+            <Input value={catForm.description} onChange={(e) => setCatForm({ ...catForm, description: e.target.value })} placeholder="Deskripsi singkat (opsional)" />
+          </Field>
+        </div>
+      </Modal>
+
+      <Modal
+        open={unitModal}
+        onClose={() => setUnitModal(false)}
+        title="Tambah Satuan"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setUnitModal(false)}>Batal</Button>
+            <Button onClick={saveUnit} loading={unitSaving}>Simpan</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Field label="Nama Satuan" required>
+            <Input value={unitForm.name} onChange={(e) => setUnitForm({ ...unitForm, name: e.target.value })} placeholder="cth: Kilogram" autoFocus />
+          </Field>
+          <Field label="Singkatan" required hint="Singkatan yang ditampilkan di tabel">
+            <Input value={unitForm.short_name} onChange={(e) => setUnitForm({ ...unitForm, short_name: e.target.value })} placeholder="cth: Kg" />
+          </Field>
+        </div>
+      </Modal>
     </div>
   );
 }
