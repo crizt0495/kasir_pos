@@ -19,8 +19,6 @@ export function SearchInput({ value, onChange, placeholder = 'Cari...', classNam
 }
 
 export function Pagination({ page, totalPages, total, pageSize, onPageChange }) {
-  if (totalPages <= 1) return null;
-
   const pages = [];
   const showPages = 5;
   let start = Math.max(1, page - Math.floor(showPages / 2));
@@ -42,75 +40,77 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange }) 
       <span className="text-xs text-slate-500 sm:hidden">
         {page}/{totalPages} · {total} data
       </span>
-      <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          icon={ChevronsLeft}
-          onClick={() => onPageChange(1)}
-          disabled={page <= 1}
-          aria-label="Halaman pertama"
-          className="hidden sm:inline-flex"
-        />
-        <Button
-          variant="ghost"
-          size="sm"
-          icon={ChevronLeft}
-          onClick={() => onPageChange(page - 1)}
-          disabled={page <= 1}
-          aria-label="Halaman sebelumnya"
-        />
-        <div className="hidden sm:flex items-center gap-1">
-          {start > 1 && (
-            <>
-              <Button variant="ghost" size="sm" onClick={() => onPageChange(1)} aria-label="Halaman 1">
-                1
+      {totalPages > 1 && (
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={ChevronsLeft}
+            onClick={() => onPageChange(1)}
+            disabled={page <= 1}
+            aria-label="Halaman pertama"
+            className="hidden sm:inline-flex"
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={ChevronLeft}
+            onClick={() => onPageChange(page - 1)}
+            disabled={page <= 1}
+            aria-label="Halaman sebelumnya"
+          />
+          <div className="hidden sm:flex items-center gap-1">
+            {start > 1 && (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => onPageChange(1)} aria-label="Halaman 1">
+                  1
+                </Button>
+                {start > 2 && <span className="px-1 text-slate-400">…</span>}
+              </>
+            )}
+            {pages.map((p) => (
+              <Button
+                key={p}
+                variant={p === page ? 'primary' : 'ghost'}
+                size="sm"
+                onClick={() => onPageChange(p)}
+                aria-label={`Halaman ${p}`}
+                aria-current={p === page ? 'page' : undefined}
+              >
+                {p}
               </Button>
-              {start > 2 && <span className="px-1 text-slate-400">…</span>}
-            </>
-          )}
-          {pages.map((p) => (
-            <Button
-              key={p}
-              variant={p === page ? 'primary' : 'ghost'}
-              size="sm"
-              onClick={() => onPageChange(p)}
-              aria-label={`Halaman ${p}`}
-              aria-current={p === page ? 'page' : undefined}
-            >
-              {p}
-            </Button>
-          ))}
-          {end < totalPages && (
-            <>
-              {end < totalPages - 1 && <span className="px-1 text-slate-400">…</span>}
-              <Button variant="ghost" size="sm" onClick={() => onPageChange(totalPages)} aria-label={`Halaman ${totalPages}`}>
-                {totalPages}
-              </Button>
-            </>
-          )}
+            ))}
+            {end < totalPages && (
+              <>
+                {end < totalPages - 1 && <span className="px-1 text-slate-400">…</span>}
+                <Button variant="ghost" size="sm" onClick={() => onPageChange(totalPages)} aria-label={`Halaman ${totalPages}`}>
+                  {totalPages}
+                </Button>
+              </>
+            )}
+          </div>
+          <span className="hidden sm:inline text-xs text-slate-400 px-1">
+            {page}/{totalPages}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={ChevronRight}
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= totalPages}
+            aria-label="Halaman selanjutnya"
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={ChevronsRight}
+            onClick={() => onPageChange(totalPages)}
+            disabled={page >= totalPages}
+            aria-label="Halaman terakhir"
+            className="hidden sm:inline-flex"
+          />
         </div>
-        <span className="hidden sm:inline text-xs text-slate-400 px-1">
-          {page}/{totalPages}
-        </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          icon={ChevronRight}
-          onClick={() => onPageChange(page + 1)}
-          disabled={page >= totalPages}
-          aria-label="Halaman selanjutnya"
-        />
-        <Button
-          variant="ghost"
-          size="sm"
-          icon={ChevronsRight}
-          onClick={() => onPageChange(totalPages)}
-          disabled={page >= totalPages}
-          aria-label="Halaman terakhir"
-          className="hidden sm:inline-flex"
-        />
-      </div>
+      )}
     </nav>
   );
 }

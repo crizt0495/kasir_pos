@@ -248,11 +248,9 @@ export default function ProfitSharing() {
                   </tbody>
                 </table>
               </div>
-              {sharesTotalPages > 1 && (
-                <div className="border-t border-slate-200">
-                  <Pagination page={sharesPage} totalPages={sharesTotalPages} total={allItems.length} pageSize={sharesPageSize} onPageChange={setSharesPage} />
-                </div>
-              )}
+              <div className="border-t border-slate-200">
+                <Pagination page={sharesPage} totalPages={sharesTotalPages} total={allItems.length} pageSize={sharesPageSize} onPageChange={setSharesPage} />
+              </div>
                 </>
               );
             })()}
@@ -295,11 +293,9 @@ export default function ProfitSharing() {
                     </table>
                   </div>
                 )}
-                {distributions.data?.totalPages > 1 && (
-                  <div className="border-t border-slate-200">
-                    <Pagination page={distributionsPage} totalPages={distributions.data.totalPages} total={distributions.data.total} pageSize={distributions.data.pageSize} onPageChange={setDistributionsPage} />
-                  </div>
-                )}
+                <div className="border-t border-slate-200">
+                  <Pagination page={distributionsPage} totalPages={distributions.data?.totalPages || 1} total={distributions.data?.total || 0} pageSize={distributions.data?.pageSize || 20} onPageChange={setDistributionsPage} />
+                </div>
               </>
             )}
           </Card>

@@ -181,11 +181,9 @@ export default function SaleDetail() {
                       </tbody>
                     </table>
                   </div>
-                  {itemsTotalPages > 1 && (
-                    <div className="border-t border-slate-200">
-                      <Pagination page={itemsPage} totalPages={itemsTotalPages} total={s.items.length} pageSize={itemsPageSize} onPageChange={setItemsPage} />
-                    </div>
-                  )}
+                  <div className="border-t border-slate-200">
+                    <Pagination page={itemsPage} totalPages={itemsTotalPages} total={s.items.length} pageSize={itemsPageSize} onPageChange={setItemsPage} />
+                  </div>
                 </>
               );
             })()}
