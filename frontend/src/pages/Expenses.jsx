@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { expensesApi, cashierApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
+import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
@@ -17,6 +18,7 @@ const emptyForm = { expense_date: todayInput(), category: 'Operasional', amount:
 export default function Expenses() {
   const { can } = usePermission();
   const [search, setSearch] = useState('');
+  const debounced = useDebounce(search, 400);
   const [category, setCategory] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -29,8 +31,8 @@ export default function Expenses() {
   const [toDelete, setToDelete] = useState(null);
 
   const list = useApi(
-    () => expensesApi.list({ search: search || undefined, category: category || undefined, from: from || undefined, to: to || undefined, page, pageSize: 20 }).then((r) => r.data),
-    [search, category, from, to, page]
+    () => expensesApi.list({ search: debounced || undefined, category: category || undefined, from: from || undefined, to: to || undefined, page, pageSize: 20 }).then((r) => r.data),
+    [debounced, category, from, to, page]
   );
 
   const openCreate = () => {

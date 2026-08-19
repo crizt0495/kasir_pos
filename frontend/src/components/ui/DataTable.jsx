@@ -19,6 +19,12 @@ export function SearchInput({ value, onChange, placeholder = 'Cari...', classNam
 }
 
 export function Pagination({ page, totalPages, total, pageSize, onPageChange }) {
+  useEffect(() => {
+    if (totalPages && page > totalPages && page > 1 && onPageChange) {
+      onPageChange(totalPages);
+    }
+  }, [totalPages, page, onPageChange]);
+
   const pages = [];
   const showPages = 5;
   let start = Math.max(1, page - Math.floor(showPages / 2));
