@@ -55,7 +55,6 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange }) 
             onClick={() => onPageChange(1)}
             disabled={page <= 1}
             aria-label="Halaman pertama"
-            className="hidden sm:inline-flex"
           />
           <Button
             variant="ghost"
@@ -65,7 +64,7 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange }) 
             disabled={page <= 1}
             aria-label="Halaman sebelumnya"
           />
-          <div className="hidden sm:flex items-center gap-1">
+          <div className="flex items-center gap-1">
             {start > 1 && (
               <>
                 <Button variant="ghost" size="sm" onClick={() => onPageChange(1)} aria-label="Halaman 1">
@@ -95,7 +94,7 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange }) 
               </>
             )}
           </div>
-          <span className="hidden sm:inline text-xs text-slate-400 px-1">
+          <span className="text-xs text-slate-400 px-1">
             {page}/{totalPages}
           </span>
           <Button
@@ -113,7 +112,6 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange }) 
             onClick={() => onPageChange(totalPages)}
             disabled={page >= totalPages}
             aria-label="Halaman terakhir"
-            className="hidden sm:inline-flex"
           />
         </div>
       )}
