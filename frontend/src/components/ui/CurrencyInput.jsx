@@ -10,6 +10,16 @@ const baseInputClass =
   'disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 ' +
   'aria-invalid:border-danger-400 aria-invalid:hover:border-danger-400 aria-invalid:focus:ring-danger-500/20 aria-invalid:focus:border-danger-500';
 
+function posInFormatted(formatted, digitIndex) {
+  if (digitIndex <= 0) return 0;
+  let count = 0;
+  for (let i = 0; i < formatted.length; i++) {
+    if (/\d/.test(formatted[i])) count++;
+    if (count === digitIndex) return i + 1;
+  }
+  return formatted.length;
+}
+
 const CurrencyInput = forwardRef(function CurrencyInput(
   { error, className = '', onChange, onBlur, value = 0, placeholder = '0', disabled, name, id },
   ref,
@@ -22,28 +32,15 @@ const CurrencyInput = forwardRef(function CurrencyInput(
   }, [ref]);
 
   const [draft, setDraft] = useState('');
-  const [focused, setFocused] = useState(false);
   const committedRef = useRef(0);
 
   useEffect(() => {
-    if (!focused) {
-      const num = Number(value || 0);
-      committedRef.current = num;
-      setDraft(num ? formatRupiah(num) : '');
-    }
-  }, [value, focused]);
-
-  const commit = (raw) => {
-    const digits = raw.replace(/\D/g, '');
-    const num = digits ? Number(digits) : 0;
+    const num = Number(value || 0);
     committedRef.current = num;
     setDraft(num ? formatRupiah(num) : '');
-    if (onChange) onChange(num);
-  };
+  }, [value]);
 
-  const handleFocus = (e) => {
-    setFocused(true);
-    setDraft(String(committedRef.current || ''));
+  const handleFocus = () => {
     requestAnimationFrame(() => {
       const input = innerRef.current;
       if (input) {
@@ -54,22 +51,34 @@ const CurrencyInput = forwardRef(function CurrencyInput(
   };
 
   const handleInput = (e) => {
-    const raw = e.target.value.replace(/\D/g, '');
-    const num = raw ? Number(raw) : 0;
-    setDraft(raw || '');
+    const input = e.target;
+    const cursorDigitPos = (() => {
+      const before = input.value.slice(0, input.selectionStart);
+      return (before.match(/\d/g) || []).length;
+    })();
+
+    const digits = input.value.replace(/\D/g, '');
+    const num = digits ? Number(digits) : 0;
+    const formatted = num ? formatRupiah(num) : '';
+
+    setDraft(formatted);
+    if (onChange) onChange(num);
 
     requestAnimationFrame(() => {
-      const input = innerRef.current;
-      if (input) {
-        const len = input.value.length;
-        input.setSelectionRange(len, len);
+      const el = innerRef.current;
+      if (el) {
+        const pos = posInFormatted(formatted, cursorDigitPos);
+        el.setSelectionRange(pos, pos);
       }
     });
   };
 
   const handleBlur = (e) => {
-    setFocused(false);
-    commit(e.target.value);
+    const digits = e.target.value.replace(/\D/g, '');
+    const num = digits ? Number(digits) : 0;
+    committedRef.current = num;
+    setDraft(num ? formatRupiah(num) : '');
+    if (onChange) onChange(num);
     if (onBlur) onBlur(e);
   };
 
