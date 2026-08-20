@@ -10,56 +10,85 @@ const baseInputClass =
   'disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 ' +
   'aria-invalid:border-danger-400 aria-invalid:hover:border-danger-400 aria-invalid:focus:ring-danger-500/20 aria-invalid:focus:border-danger-500';
 
-export default forwardRef(function CurrencyInput({ error, className = '', onChange, value = 0, placeholder = '0', ...props }, ref) {
+const CurrencyInput = forwardRef(function CurrencyInput(
+  { error, className = '', onChange, onBlur, value = 0, placeholder = '0', disabled, name, id },
+  ref,
+) {
   const innerRef = useRef(null);
-  const refCallback = useCallback((node) => {
+  const setRefs = useCallback((node) => {
     innerRef.current = node;
     if (typeof ref === 'function') ref(node);
     else if (ref) ref.current = node;
   }, [ref]);
 
-  const [displayValue, setDisplayValue] = useState('');
-  const lastNumRef = useRef(0);
+  const [draft, setDraft] = useState('');
+  const [focused, setFocused] = useState(false);
+  const committedRef = useRef(0);
 
   useEffect(() => {
-    const num = Number(value || 0);
-    if (num !== lastNumRef.current) {
-      lastNumRef.current = num;
-      setDisplayValue(num ? formatRupiah(num) : '');
+    if (!focused) {
+      const num = Number(value || 0);
+      committedRef.current = num;
+      setDraft(num ? formatRupiah(num) : '');
     }
-  }, [value]);
+  }, [value, focused]);
 
-  const handleChange = (e) => {
-    const raw = e.target.value;
+  const commit = (raw) => {
     const digits = raw.replace(/\D/g, '');
     const num = digits ? Number(digits) : 0;
+    committedRef.current = num;
+    setDraft(num ? formatRupiah(num) : '');
+    if (onChange) onChange(num);
+  };
 
-    const newDisplay = num ? formatRupiah(num) : '';
-    setDisplayValue(newDisplay);
-    lastNumRef.current = num;
+  const handleFocus = (e) => {
+    setFocused(true);
+    setDraft(String(committedRef.current || ''));
+    requestAnimationFrame(() => {
+      const input = innerRef.current;
+      if (input) {
+        const len = input.value.length;
+        input.setSelectionRange(len, len);
+      }
+    });
+  };
 
-    if (onChange) {
-      onChange(num);
-    }
+  const handleInput = (e) => {
+    const raw = e.target.value.replace(/\D/g, '');
+    const num = raw ? Number(raw) : 0;
+    setDraft(raw || '');
 
     requestAnimationFrame(() => {
       const input = innerRef.current;
-      if (!input) return;
-      const end = newDisplay.length;
-      input.setSelectionRange(end, end);
+      if (input) {
+        const len = input.value.length;
+        input.setSelectionRange(len, len);
+      }
     });
+  };
+
+  const handleBlur = (e) => {
+    setFocused(false);
+    commit(e.target.value);
+    if (onBlur) onBlur(e);
   };
 
   return (
     <input
-      ref={refCallback}
+      ref={setRefs}
       type="text"
       inputMode="numeric"
+      name={name}
+      id={id}
+      disabled={disabled}
       placeholder={placeholder}
       className={`${baseInputClass} ${error ? 'border-danger-400' : ''} ${className}`}
-      value={displayValue}
-      onChange={handleChange}
-      {...props}
+      value={draft}
+      onFocus={handleFocus}
+      onInput={handleInput}
+      onBlur={handleBlur}
     />
   );
 });
+
+export default CurrencyInput;
