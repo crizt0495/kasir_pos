@@ -19,49 +19,34 @@ export default forwardRef(function CurrencyInput({ error, className = '', onChan
   }, [ref]);
 
   const [displayValue, setDisplayValue] = useState('');
-  const composingRef = useRef(false);
+  const lastNumRef = useRef(0);
 
   useEffect(() => {
     const num = Number(value || 0);
-    setDisplayValue(num ? formatRupiah(num) : '');
+    if (num !== lastNumRef.current) {
+      lastNumRef.current = num;
+      setDisplayValue(num ? formatRupiah(num) : '');
+    }
   }, [value]);
 
-  const handleInput = (e) => {
-    if (composingRef.current) return;
-    applyFormat(e);
-  };
-
-  const handleCompositionEnd = (e) => {
-    composingRef.current = false;
-    applyFormat(e);
-  };
-
-  const applyFormat = (e) => {
-    const input = innerRef.current;
-    if (!input) return;
-    const cursorPos = input.selectionStart;
-    const raw = input.value;
+  const handleChange = (e) => {
+    const raw = e.target.value;
     const digits = raw.replace(/\D/g, '');
     const num = digits ? Number(digits) : 0;
 
     const newDisplay = num ? formatRupiah(num) : '';
     setDisplayValue(newDisplay);
+    lastNumRef.current = num;
 
     if (onChange) {
       onChange(num);
     }
 
     requestAnimationFrame(() => {
-      if (!innerRef.current) return;
-      if (num === 0) {
-        innerRef.current.setSelectionRange(0, 0);
-        return;
-      }
-      const oldDigitCount = (raw.match(/\d/g) || []).length;
-      const newDigitCount = (newDisplay.match(/\d/g) || []).length;
-      let newPos = cursorPos + (newDigitCount - oldDigitCount);
-      newPos = Math.max(0, Math.min(newPos, newDisplay.length));
-      innerRef.current.setSelectionRange(newPos, newPos);
+      const input = innerRef.current;
+      if (!input) return;
+      const end = newDisplay.length;
+      input.setSelectionRange(end, end);
     });
   };
 
@@ -73,8 +58,7 @@ export default forwardRef(function CurrencyInput({ error, className = '', onChan
       placeholder={placeholder}
       className={`${baseInputClass} ${error ? 'border-danger-400' : ''} ${className}`}
       value={displayValue}
-      onInput={handleInput}
-      onCompositionEnd={handleCompositionEnd}
+      onChange={handleChange}
       {...props}
     />
   );
