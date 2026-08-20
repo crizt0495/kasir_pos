@@ -1,5 +1,5 @@
 import { forwardRef, useRef, useCallback, useEffect, useState } from 'react';
-import { formatRupiah } from '../utils/format.js';
+import { formatRupiah } from '../../utils/format.js';
 
 const baseInputClass =
   'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 ' +
