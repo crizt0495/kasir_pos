@@ -99,21 +99,28 @@ export default function Reports() {
         <div className="space-y-4">
           {/* Ringkasan */}
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {(tab === 'sales' || tab === 'profit') && (
+            {tab === 'sales' && (
               <>
-                <SummaryCard label="Total Penjualan" value={formatRupiah(d.totals?.sales ?? d.totals?.revenue)} />
+                <SummaryCard label="Total Penjualan" value={formatRupiah(d.totals?.sales)} />
                 <SummaryCard label="Jumlah Transaksi" value={formatNumber(d.totals?.transactions)} />
-                {tab === 'sales' ? (
-                  <SummaryCard label="Retur" value={formatRupiah(d.totals?.refunds)} />
-                ) : (
-                  <SummaryCard label="HPP" value={formatRupiah(d.totals?.cogs)} />
-                )}
-                <SummaryCard label={tab === 'profit' ? 'Profit' : 'Net'} value={formatRupiah(tab === 'profit' ? d.totals?.profit : d.totals?.net)} highlight />
+                <SummaryCard label="Diskon" value={formatRupiah(d.totals?.discount)} />
+                <SummaryCard label="Pajak" value={formatRupiah(d.totals?.tax)} />
+                <SummaryCard label="Retur" value={formatRupiah(d.totals?.refunds)} />
+                <SummaryCard label="Net Penjualan" value={formatRupiah(d.totals?.net)} highlight />
+              </>
+            )}
+            {tab === 'profit' && (
+              <>
+                <SummaryCard label="Total Pendapatan" value={formatRupiah(d.totals?.revenue)} />
+                <SummaryCard label="Jumlah Transaksi" value={formatNumber(d.totals?.transactions)} />
+                <SummaryCard label="HPP (COGS)" value={formatRupiah(d.totals?.cogs)} />
+                <SummaryCard label="Profit" value={formatRupiah(d.totals?.profit)} highlight />
               </>
             )}
             {tab === 'products' && (
               <>
-                <SummaryCard label="Produk Terjual" value={formatNumber(d.total_products_sold)} />
+                <SummaryCard label="Total Produk Dijual" value={formatNumber(d.total_products_sold)} />
+                <SummaryCard label="Produk Terlaris" value={d.top?.[0]?.name || '-'} />
                 <SummaryCard label="Periode" value={`${d.from} → ${d.to}`} />
               </>
             )}
@@ -125,21 +132,26 @@ export default function Reports() {
                 <SummaryCard label="Stok Habis" value={formatNumber(d.totals?.out_of_stock)} />
               </>
             )}
+            {tab === 'cashier' && (
+              <>
+                <SummaryCard label="Total Kasir Aktif" value={formatNumber(d.cashiers?.length)} />
+                <SummaryCard label="Total Transaksi" value={formatNumber(d.cashiers?.reduce((a, c) => a + c.transactions, 0))} />
+                <SummaryCard label="Total Pendapatan" value={formatRupiah(d.cashiers?.reduce((a, c) => a + c.total, 0))} highlight />
+              </>
+            )}
             {tab === 'purchases' && (
               <>
                 <SummaryCard label="Jumlah Pembelian" value={formatNumber(d.totals?.count)} />
-                <SummaryCard label="Total Pembelian" value={formatRupiah(d.totals?.total)} />
+                <SummaryCard label="Total Pengeluaran" value={formatRupiah(d.totals?.total)} highlight />
+                <SummaryCard label="Supplier Terlibat" value={formatNumber(d.suppliers?.length)} />
                 <SummaryCard label="Periode" value={`${d.from} → ${d.to}`} />
               </>
-            )}
-            {tab === 'cashier' && (
-              <SummaryCard label="Kasir" value={formatNumber(d.cashiers?.length)} />
             )}
           </div>
 
           {/* Grafik utk penjualan & profit */}
           {(tab === 'sales' || tab === 'profit') && (
-            <Card title={tab === 'sales' ? 'Grafik Penjualan' : 'Grafik Revenue vs Profit'} bodyClassName="p-4">
+            <Card title={tab === 'sales' ? 'Grafik Penjualan Harian' : 'Grafik Revenue vs Profit'} bodyClassName="p-4">
               {d.buckets?.length ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={d.buckets} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
@@ -149,7 +161,10 @@ export default function Reports() {
                     <Tooltip formatter={(v) => formatRupiah(v)} />
                     <Legend />
                     {tab === 'sales' ? (
-                      <Bar dataKey="sales" name="Penjualan" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                      <>
+                        <Bar dataKey="sales" name="Penjualan" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="refunds" name="Retur" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                      </>
                     ) : (
                       <>
                         <Bar dataKey="revenue" name="Pendapatan" fill="#4f46e5" radius={[4, 4, 0, 0]} />
@@ -192,12 +207,25 @@ function SalesTable({ d }) {
   return (
     <div className="divide-y divide-slate-100">
       {(!d.buckets || d.buckets.length === 0) && <EmptyState title="Belum ada data" />}
+      <div className="hidden border-b border-slate-100 bg-slate-50/80 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:flex sm:justify-between">
+        <span className="w-32">Tanggal</span>
+        <div className="flex gap-6">
+          <span className="w-16 text-right">Transaksi</span>
+          <span className="w-28 text-right">Penjualan</span>
+          <span className="w-24 text-right">Diskon</span>
+          <span className="w-20 text-right">Pajak</span>
+          <span className="w-24 text-right">Retur</span>
+          <span className="w-28 text-right">Net</span>
+        </div>
+      </div>
       {d.buckets?.map((b) => (
         <div key={b.label} className="flex items-center justify-between px-4 py-2.5 text-sm">
-          <span className="font-medium text-slate-700">{formatDate(b.label)}</span>
+          <span className="w-32 font-medium text-slate-700">{formatDate(b.label)}</span>
           <div className="flex gap-6">
-            <span className="text-slate-500">{formatNumber(b.transactions)} transaksi</span>
+            <span className="w-16 text-right text-slate-500">{formatNumber(b.transactions)}</span>
             <span className="w-28 text-right font-semibold">{formatRupiah(b.sales)}</span>
+            <span className="w-24 text-right text-amber-600">{formatRupiah(b.discount)}</span>
+            <span className="w-20 text-right text-slate-500">{formatRupiah(b.tax)}</span>
             <span className="w-24 text-right text-red-500">-{formatRupiah(b.refunds)}</span>
             <span className="w-28 text-right font-bold text-primary-700">{formatRupiah(b.sales - b.refunds)}</span>
           </div>
@@ -223,10 +251,20 @@ function ProfitTable({ d }) {
   return (
     <div className="divide-y divide-slate-100">
       {(!d.buckets || d.buckets.length === 0) && <EmptyState title="Belum ada data" />}
+      <div className="hidden border-b border-slate-100 bg-slate-50/80 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:flex sm:justify-between">
+        <span className="w-32">Tanggal</span>
+        <div className="flex gap-6">
+          <span className="w-16 text-right">Transaksi</span>
+          <span className="w-28 text-right">Revenue</span>
+          <span className="w-28 text-right">HPP</span>
+          <span className="w-28 text-right">Profit</span>
+        </div>
+      </div>
       {d.buckets?.map((b) => (
         <div key={b.label} className="flex items-center justify-between px-4 py-2.5 text-sm">
-          <span className="font-medium text-slate-700">{formatDate(b.label)}</span>
+          <span className="w-32 font-medium text-slate-700">{formatDate(b.label)}</span>
           <div className="flex gap-6">
+            <span className="w-16 text-right text-slate-500">{formatNumber(b.transactions)}</span>
             <span className="w-28 text-right">{formatRupiah(b.revenue)}</span>
             <span className="w-28 text-right text-slate-500">{formatRupiah(b.cogs)}</span>
             <span className="w-28 text-right font-bold text-emerald-600">{formatRupiah(b.profit)}</span>
@@ -263,7 +301,10 @@ function ProductsTable({ d }) {
             <span className="font-medium text-slate-700">{p.name}</span>
             <span className="text-xs text-slate-400">{p.sku}</span>
           </div>
-          <span className="w-24 text-right">{formatNumber(p.quantity)} terjual</span>
+          <div className="flex gap-6">
+            <span className="w-24 text-right">{formatNumber(p.quantity)} terjual</span>
+            <span className="w-28 text-right font-semibold">{formatRupiah(p.revenue)}</span>
+          </div>
         </div>
       ))}
     </div>
@@ -274,7 +315,7 @@ function InventoryTable({ d }) {
   return (
     <div className="divide-y divide-slate-100">
       <p className="px-4 py-2 text-xs font-semibold uppercase text-slate-400">Pergerakan Stok ({d.from} → {d.to})</p>
-      {d.movements?.length === 0 && <EmptyState title="Belum ada data" />}
+      {d.movements?.length === 0 && <EmptyState title="Belum ada data pergerakan stok" />}
       {d.movements?.map((m) => (
         <div key={m.type} className="flex items-center justify-between px-4 py-2.5 text-sm">
           <span className="font-medium text-slate-700">{m.type}</span>
@@ -285,13 +326,32 @@ function InventoryTable({ d }) {
           </div>
         </div>
       ))}
+
       {d.low_stock_list?.length > 0 && (
         <>
-          <p className="border-t border-slate-100 px-4 py-2 text-xs font-semibold uppercase text-slate-400">Stok Menipis</p>
+          <p className="border-t border-slate-100 px-4 py-2 text-xs font-semibold uppercase text-slate-400">Stok Menipis ({d.low_stock_list.length} produk)</p>
           {d.low_stock_list.map((p) => (
             <div key={p.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
-              <span className="font-medium text-slate-700">{p.name}</span>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-slate-700">{p.name}</span>
+                <span className="text-xs text-slate-400">{p.sku}</span>
+              </div>
               <span className="text-amber-600">stok {formatNumber(p.stock)} / min {formatNumber(p.min_stock)}</span>
+            </div>
+          ))}
+        </>
+      )}
+
+      {d.out_of_stock_list?.length > 0 && (
+        <>
+          <p className="border-t border-slate-100 px-4 py-2 text-xs font-semibold uppercase text-slate-400">Stok Habis ({d.out_of_stock_list.length} produk)</p>
+          {d.out_of_stock_list.map((p) => (
+            <div key={p.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-slate-700">{p.name}</span>
+                <span className="text-xs text-slate-400">{p.sku}</span>
+              </div>
+              <Badge color="bg-red-100 text-red-700">Habis</Badge>
             </div>
           ))}
         </>
@@ -305,12 +365,24 @@ function CashierTable({ d }) {
     <div className="divide-y divide-slate-100">
       {!d.cashiers?.length && <EmptyState title="Belum ada data" />}
       {d.cashiers?.map((c) => (
-        <div key={c.cashier_id} className="flex items-center justify-between px-4 py-2.5 text-sm">
-          <div>
-            <p className="font-medium text-slate-700">{c.full_name || c.username}</p>
-            <p className="text-xs text-slate-400">{formatNumber(c.transactions)} transaksi</p>
+        <div key={c.cashier_id} className="px-4 py-3 text-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-slate-700">{c.full_name || c.username}</p>
+              {c.full_name && <p className="text-xs text-slate-400">@{c.username}</p>}
+              <p className="text-xs text-slate-400">{formatNumber(c.transactions)} transaksi</p>
+            </div>
+            <span className="font-semibold">{formatRupiah(c.total)}</span>
           </div>
-          <span className="font-semibold">{formatRupiah(c.total)}</span>
+          {c.payment_methods && Object.keys(c.payment_methods).length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {Object.entries(c.payment_methods).map(([m, total]) => (
+                <span key={m} className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${paymentMethodColor(m)}`}>
+                  {paymentMethodLabel(m)}: {formatRupiah(total)}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       ))}
     </div>
