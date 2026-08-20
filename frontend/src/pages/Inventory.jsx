@@ -16,6 +16,7 @@ export default function Inventory() {
   const [categoryId, setCategoryId] = useState('');
   const [filter, setFilter] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [adjusting, setAdjusting] = useState(null);
   const [form, setForm] = useState({ quantity: 0, reason: '' });
   const [saving, setSaving] = useState(false);
@@ -23,8 +24,8 @@ export default function Inventory() {
 
   const categories = useApi(() => categoriesApi.list({ pageSize: 1000 }).then((r) => r.data?.items || []), []);
   const list = useApi(
-    () => inventoryApi.list({ search: debounced || undefined, category_id: categoryId || undefined, filter: filter || undefined, page, pageSize: 20 }).then((r) => r.data),
-    [debounced, categoryId, filter, page]
+    () => inventoryApi.list({ search: debounced || undefined, category_id: categoryId || undefined, filter: filter || undefined, page, pageSize }).then((r) => r.data),
+    [debounced, categoryId, filter, page, pageSize]
   );
 
   const openAdjust = (p) => {
@@ -103,8 +104,9 @@ export default function Inventory() {
         page={page}
         totalPages={d?.totalPages}
         total={d?.total}
-        pageSize={d?.pageSize}
+        pageSize={pageSize}
         onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
         renderCard={(r) => (
           <div className="space-y-2.5">
             <div className="flex items-start justify-between">

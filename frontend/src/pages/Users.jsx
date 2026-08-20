@@ -18,12 +18,13 @@ export default function Users() {
   const [search, setSearch] = useState('');
   const debounced = useDebounce(search, 400);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [toDelete, setToDelete] = useState(null);
   const [resetUser, setResetUser] = useState(null);
   const [resetPwd, setResetPwd] = useState('');
   const [resetting, setResetting] = useState(false);
 
-  const list = useApi(() => usersApi.list({ search: debounced || undefined, page, pageSize: 20 }).then((r) => r.data), [debounced, page]);
+  const list = useApi(() => usersApi.list({ search: debounced || undefined, page, pageSize }).then((r) => r.data), [debounced, page, pageSize]);
 
   const confirmDelete = async () => {
     try {
@@ -123,8 +124,9 @@ export default function Users() {
         page={page}
         totalPages={d?.totalPages}
         total={d?.total}
-        pageSize={d?.pageSize}
+        pageSize={pageSize}
         onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
         renderCard={(r) => (
           <div className="space-y-2.5">
             <div className="flex items-center gap-3">

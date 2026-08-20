@@ -32,6 +32,7 @@ export default function Movements() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const list = useApi(
     () =>
@@ -41,9 +42,9 @@ export default function Movements() {
         from: from || undefined,
         to: to || undefined,
         page,
-        pageSize: 20,
+        pageSize,
       }).then((r) => r.data),
-    [debounced, type, from, to, page]
+    [debounced, type, from, to, page, pageSize]
   );
 
   const d = list.data;
@@ -77,8 +78,9 @@ export default function Movements() {
         page={page}
         totalPages={d?.totalPages}
         total={d?.total}
-        pageSize={d?.pageSize}
+        pageSize={pageSize}
         onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
         renderCard={(r) => (
           <div className="space-y-2">
             <div className="flex items-start justify-between">

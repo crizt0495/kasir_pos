@@ -15,11 +15,12 @@ export default function AuditLogs() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [selected, setSelected] = useState(null);
 
   const list = useApi(
-    () => auditApi.list({ search: debounced || undefined, module: module || undefined, from: from || undefined, to: to || undefined, page, pageSize: 20 }).then((r) => r.data),
-    [debounced, module, from, to, page]
+    () => auditApi.list({ search: debounced || undefined, module: module || undefined, from: from || undefined, to: to || undefined, page, pageSize }).then((r) => r.data),
+    [debounced, module, from, to, page, pageSize]
   );
 
   const d = list.data;
@@ -56,8 +57,9 @@ export default function AuditLogs() {
         page={page}
         totalPages={d?.totalPages}
         total={d?.total}
-        pageSize={d?.pageSize}
+        pageSize={pageSize}
         onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
         renderCard={(r) => (
           <div className="space-y-2">
             <div className="flex items-start justify-between">

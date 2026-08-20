@@ -19,6 +19,7 @@ export default function Products() {
   const [categoryId, setCategoryId] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState({ key: 'name', order: 'asc' });
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -41,12 +42,12 @@ export default function Products() {
     category_id: categoryId || undefined,
     status: status || undefined,
     page,
-    pageSize: 20,
+    pageSize,
     sort: sort.key,
     order: sort.order,
   };
 
-  const products = useApi(() => productsApi.list(params).then((r) => r.data), [debounced, categoryId, status, page, sort]);
+  const products = useApi(() => productsApi.list(params).then((r) => r.data), [debounced, categoryId, status, page, pageSize, sort]);
   const categories = useApi(() => categoriesApi.list({ pageSize: 1000 }).then((r) => r.data?.items || []), []);
   const units = useApi(() => unitsApi.list().then((r) => r.data), []);
 
@@ -159,8 +160,9 @@ export default function Products() {
         page={page}
         totalPages={d?.totalPages}
         total={d?.total}
-        pageSize={d?.pageSize}
+        pageSize={pageSize}
         onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
         sort={sort}
         onSortChange={handleSort}
         renderCard={(r) => (

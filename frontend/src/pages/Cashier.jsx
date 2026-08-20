@@ -5,7 +5,7 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Card, Button, Field, Input, Modal, ConfirmDialog, StatusBadge, Skeleton, EmptyState, Badge, PageHeader } from '../components/ui/index.jsx';
+import { Card, Button, Field, Input, Modal, ConfirmDialog, StatusBadge, Skeleton, EmptyState, Badge, PageHeader, Pagination } from '../components/ui/index.jsx';
 import { formatRupiah, formatDateTime, formatNumber } from '../utils/format.js';
 
 export default function Cashier() {
@@ -20,6 +20,8 @@ export default function Cashier() {
   const [showAddTx, setShowAddTx] = useState(false);
   const [txForm, setTxForm] = useState({ type: 'IN', amount: '', notes: '' });
   const [addingTx, setAddingTx] = useState(false);
+  const [txPage, setTxPage] = useState(1);
+  const txPageSize = 20;
 
   const session = useApi(() => cashierApi.openSession().then((r) => r.data), []);
   // Ambil hingga 1000 transaksi untuk perhitungan kas yang akurat (server menghitung ulang saat tutup)
@@ -167,28 +169,39 @@ export default function Cashier() {
         ) : !transactions.data?.items?.length ? (
           <EmptyState title="Belum ada transaksi kas" />
         ) : (
-          <div className="max-h-96 divide-y divide-slate-100 overflow-y-auto">
-            {transactions.data.items.map((t) => (
-              <div key={t.id} className="flex items-center justify-between px-4 py-2.5">
-                <div className="flex items-center gap-3">
-                  {Number(t.amount) >= 0 ? (
-                    <ArrowDownCircle className="h-5 w-5 text-emerald-500" />
-                  ) : (
-                    <ArrowUpCircle className="h-5 w-5 text-red-500" />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">
-                      {t.type === 'SALE' ? 'Penjualan' : t.type === 'EXPENSE' ? 'Pengeluaran' : t.type === 'REFUND' ? 'Refund' : t.type === 'IN' ? 'Cash Masuk' : 'Cash Keluar'}
-                    </p>
-                    <p className="text-xs text-slate-400">{formatDateTime(t.created_at)} {t.notes ? `· ${t.notes}` : ''}</p>
+          <>
+            <div className="divide-y divide-slate-100">
+              {transactions.data.items.slice((txPage - 1) * txPageSize, txPage * txPageSize).map((t) => (
+                <div key={t.id} className="flex items-center justify-between px-4 py-2.5">
+                  <div className="flex items-center gap-3">
+                    {Number(t.amount) >= 0 ? (
+                      <ArrowDownCircle className="h-5 w-5 text-emerald-500" />
+                    ) : (
+                      <ArrowUpCircle className="h-5 w-5 text-red-500" />
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">
+                        {t.type === 'SALE' ? 'Penjualan' : t.type === 'EXPENSE' ? 'Pengeluaran' : t.type === 'REFUND' ? 'Refund' : t.type === 'IN' ? 'Cash Masuk' : 'Cash Keluar'}
+                      </p>
+                      <p className="text-xs text-slate-400">{formatDateTime(t.created_at)} {t.notes ? `· ${t.notes}` : ''}</p>
+                    </div>
                   </div>
+                  <span className={`text-sm font-semibold ${Number(t.amount) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {Number(t.amount) >= 0 ? '+' : '-'}{formatRupiah(Math.abs(t.amount))}
+                  </span>
                 </div>
-                <span className={`text-sm font-semibold ${Number(t.amount) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {Number(t.amount) >= 0 ? '+' : '-'}{formatRupiah(Math.abs(t.amount))}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+            <div className="border-t border-slate-200">
+              <Pagination
+                page={txPage}
+                totalPages={Math.ceil(transactions.data.items.length / txPageSize)}
+                total={transactions.data.items.length}
+                pageSize={txPageSize}
+                onPageChange={setTxPage}
+              />
+            </div>
+          </>
         )}
       </Card>
 

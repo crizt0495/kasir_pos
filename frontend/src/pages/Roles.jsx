@@ -15,6 +15,7 @@ export default function Roles() {
   const [search, setSearch] = useState('');
   const debounced = useDebounce(search, 400);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', code: '', description: '' });
@@ -25,7 +26,7 @@ export default function Roles() {
   const [selectedPerms, setSelectedPerms] = useState([]);
   const [savingPerms, setSavingPerms] = useState(false);
 
-  const roles = useApi(() => rolesApi.list({ page, pageSize: 20, search: debounced || undefined }).then((r) => r.data), [page, debounced]);
+  const roles = useApi(() => rolesApi.list({ page, pageSize, search: debounced || undefined }).then((r) => r.data), [page, pageSize, debounced]);
   const permissions = useApi(() => permissionsApi.list().then((r) => r.data), []);
 
   const openCreate = () => {
@@ -170,8 +171,9 @@ export default function Roles() {
             page={page}
             totalPages={roles.data?.totalPages}
             total={roles.data?.total}
-            pageSize={roles.data?.pageSize}
+            pageSize={pageSize}
             onPageChange={setPage}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
             toolbar={<SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari role..." />}
             renderCard={(r) => (
               <div className="space-y-2">

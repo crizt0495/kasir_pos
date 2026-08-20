@@ -14,14 +14,15 @@ export default function Opnames() {
   const { can } = usePermission();
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [toDelete, setToDelete] = useState(null);
   const [toComplete, setToComplete] = useState(null);
   const [toCancel, setToCancel] = useState(null);
   const [acting, setActing] = useState(false);
 
   const list = useApi(
-    () => inventoryApi.opnames({ status: status || undefined, page, pageSize: 20 }).then((r) => r.data),
-    [status, page]
+    () => inventoryApi.opnames({ status: status || undefined, page, pageSize }).then((r) => r.data),
+    [status, page, pageSize]
   );
 
   const complete = async () => {
@@ -112,8 +113,9 @@ export default function Opnames() {
         page={page}
         totalPages={d?.totalPages}
         total={d?.total}
-        pageSize={d?.pageSize}
+        pageSize={pageSize}
         onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
         renderCard={(r) => (
           <div className="space-y-2.5">
             <div className="flex items-start justify-between">

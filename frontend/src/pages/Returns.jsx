@@ -14,10 +14,11 @@ export default function Returns() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const list = useApi(
-    () => returnsApi.list({ search: debounced || undefined, from: from || undefined, to: to || undefined, page, pageSize: 20 }).then((r) => r.data),
-    [debounced, from, to, page]
+    () => returnsApi.list({ search: debounced || undefined, from: from || undefined, to: to || undefined, page, pageSize }).then((r) => r.data),
+    [debounced, from, to, page, pageSize]
   );
 
   const d = list.data;
@@ -52,8 +53,9 @@ export default function Returns() {
         page={page}
         totalPages={d?.totalPages}
         total={d?.total}
-        pageSize={d?.pageSize}
+        pageSize={pageSize}
         onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
         renderCard={(r) => (
           <div className="space-y-2.5">
             <div className="flex items-start justify-between">

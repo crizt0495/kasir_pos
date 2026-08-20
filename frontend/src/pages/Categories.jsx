@@ -16,6 +16,7 @@ export default function Categories() {
   const [search, setSearch] = useState('');
   const debounced = useDebounce(search, 400);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [toDelete, setToDelete] = useState(null);
@@ -23,7 +24,7 @@ export default function Categories() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
-  const list = useApi(() => categoriesApi.list({ page, pageSize: 20, search: debounced || undefined }).then((r) => r.data), [page, debounced]);
+  const list = useApi(() => categoriesApi.list({ page, pageSize, search: debounced || undefined }).then((r) => r.data), [page, pageSize, debounced]);
 
   const openCreate = () => {
     setEditing(null);
@@ -121,8 +122,9 @@ export default function Categories() {
             page={page}
             totalPages={d?.totalPages}
             total={d?.total}
-            pageSize={d?.pageSize}
+            pageSize={pageSize}
             onPageChange={setPage}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
             toolbar={<SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari kategori..." />}
             renderCard={(r) => (
               <div className="space-y-2">

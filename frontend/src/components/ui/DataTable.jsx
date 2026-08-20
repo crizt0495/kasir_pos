@@ -18,7 +18,7 @@ export function SearchInput({ value, onChange, placeholder = 'Cari...', classNam
   );
 }
 
-export function Pagination({ page, totalPages, total, pageSize, onPageChange }) {
+export function Pagination({ page, totalPages, total, pageSize, onPageChange, onPageSizeChange, pageSizeOptions = [20, 50, 100] }) {
   useEffect(() => {
     if (totalPages && page > totalPages && page > 1 && onPageChange) {
       onPageChange(totalPages);
@@ -39,10 +39,27 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange }) 
   }
 
   return (
-    <nav className="flex flex-wrap items-center justify-between gap-2 px-3 py-3 text-sm text-slate-600 sm:px-4" aria-label="Pagination">
-      <span className="hidden text-xs text-slate-500 sm:inline">
-        Menampilkan <b>{(page - 1) * pageSize + 1}</b>–<b>{Math.min(page * pageSize, total)}</b> dari <b>{total}</b> data
-      </span>
+    <nav className="flex flex-wrap items-center justify-between gap-3 px-3 py-3 text-sm text-slate-600 sm:px-4" aria-label="Pagination">
+      <div className="flex items-center gap-3">
+        {onPageSizeChange && (
+          <label className="flex items-center gap-1.5 text-xs text-slate-500">
+            Tampilkan
+            <select
+              value={pageSize}
+              onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+            >
+              {pageSizeOptions.map((size) => (
+                <option key={size} value={size}>{size}</option>
+              ))}
+            </select>
+            per halaman
+          </label>
+        )}
+        <span className="hidden text-xs text-slate-500 sm:inline">
+          Menampilkan <b>{(page - 1) * pageSize + 1}</b>–<b>{Math.min(page * pageSize, total)}</b> dari <b>{total}</b> data
+        </span>
+      </div>
       <span className="text-xs text-slate-500 sm:hidden">
         {page}/{totalPages} · {total} data
       </span>
@@ -131,6 +148,7 @@ export function DataTable({
   total,
   pageSize,
   onPageChange,
+  onPageSizeChange,
   rowKey = 'id',
   onRowClick,
   toolbar,
@@ -295,7 +313,7 @@ export function DataTable({
       </div>
       {!loading && !error && data.length > 0 && total !== undefined && (
         <div className="border-t border-slate-200">
-          <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={onPageChange} />
+          <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={onPageChange} onPageSizeChange={onPageSizeChange} />
         </div>
       )}
     </div>

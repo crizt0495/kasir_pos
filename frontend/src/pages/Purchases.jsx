@@ -18,6 +18,7 @@ export default function Purchases() {
   const [supplierId, setSupplierId] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [toReceive, setToReceive] = useState(null);
   const [toDelete, setToDelete] = useState(null);
   const [acting, setActing] = useState(false);
@@ -28,8 +29,8 @@ export default function Purchases() {
     []
   );
   const list = useApi(
-    () => purchasesApi.list({ search: debounced || undefined, supplier_id: supplierId || undefined, status: status || undefined, page, pageSize: 20 }).then((r) => r.data),
-    [debounced, supplierId, status, page]
+    () => purchasesApi.list({ search: debounced || undefined, supplier_id: supplierId || undefined, status: status || undefined, page, pageSize }).then((r) => r.data),
+    [debounced, supplierId, status, page, pageSize]
   );
 
   const receive = async () => {
@@ -108,8 +109,9 @@ export default function Purchases() {
         page={page}
         totalPages={d?.totalPages}
         total={d?.total}
-        pageSize={d?.pageSize}
+        pageSize={pageSize}
         onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
         renderCard={(r) => (
           <div className="space-y-2.5">
             <div className="flex items-start justify-between">

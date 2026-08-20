@@ -21,6 +21,7 @@ export default function Sales() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [sort, setSort] = useState({ key: 'created_at', order: 'desc' });
   const [receiptSale, setReceiptSale] = useState(null);
   const [settings, setSettings] = useState({});
@@ -40,11 +41,11 @@ export default function Sales() {
         from: from || undefined,
         to: to || undefined,
         page,
-        pageSize: 20,
+        pageSize,
         sort: sort.key,
         order: sort.order,
       }).then((r) => r.data),
-    [debounced, cashierId, method, status, from, to, page, sort]
+    [debounced, cashierId, method, status, from, to, page, pageSize, sort]
   );
 
   const handleSort = (key) => {
@@ -101,8 +102,9 @@ export default function Sales() {
         page={page}
         totalPages={d?.totalPages}
         total={d?.total}
-        pageSize={d?.pageSize}
+        pageSize={pageSize}
         onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
         sort={sort}
         onSortChange={handleSort}
         renderCard={(r) => (

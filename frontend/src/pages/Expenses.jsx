@@ -23,6 +23,7 @@ export default function Expenses() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -31,8 +32,8 @@ export default function Expenses() {
   const [toDelete, setToDelete] = useState(null);
 
   const list = useApi(
-    () => expensesApi.list({ search: debounced || undefined, category: category || undefined, from: from || undefined, to: to || undefined, page, pageSize: 20 }).then((r) => r.data),
-    [debounced, category, from, to, page]
+    () => expensesApi.list({ search: debounced || undefined, category: category || undefined, from: from || undefined, to: to || undefined, page, pageSize }).then((r) => r.data),
+    [debounced, category, from, to, page, pageSize]
   );
 
   const openCreate = () => {
@@ -137,8 +138,9 @@ export default function Expenses() {
         page={page}
         totalPages={d?.totalPages}
         total={d?.total}
-        pageSize={d?.pageSize}
+        pageSize={pageSize}
         onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
         renderCard={(r) => (
           <div className="space-y-2">
             <div className="flex items-start justify-between">

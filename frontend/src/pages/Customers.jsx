@@ -18,6 +18,7 @@ export default function Customers() {
   const [search, setSearch] = useState('');
   const debounced = useDebounce(search, 400);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -25,7 +26,7 @@ export default function Customers() {
   const [formError, setFormError] = useState('');
   const [toDelete, setToDelete] = useState(null);
 
-  const list = useApi(() => customersApi.list({ search: debounced || undefined, page, pageSize: 20 }).then((r) => r.data), [debounced, page]);
+  const list = useApi(() => customersApi.list({ search: debounced || undefined, page, pageSize }).then((r) => r.data), [debounced, page, pageSize]);
 
   const openCreate = () => {
     setEditing(null);
@@ -119,8 +120,9 @@ export default function Customers() {
         page={page}
         totalPages={d?.totalPages}
         total={d?.total}
-        pageSize={d?.pageSize}
+        pageSize={pageSize}
         onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
         renderCard={(r) => (
           <div className="space-y-2.5">
             <div className="flex items-start justify-between">

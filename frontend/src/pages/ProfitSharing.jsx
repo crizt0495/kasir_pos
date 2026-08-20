@@ -24,6 +24,7 @@ export default function ProfitSharing() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [periodsLoading, setPeriodsLoading] = useState(true);
   const [sharesPage, setSharesPage] = useState(1);
+  const [sharesPageSize, setSharesPageSize] = useState(20);
   const [distributionsPage, setDistributionsPage] = useState(1);
 
   const loadPeriods = async () => {
@@ -47,9 +48,9 @@ export default function ProfitSharing() {
   const shares = useApi(
     () =>
       profitApi
-        .shares({ year: year || undefined, status: statusFilter || undefined })
+        .shares({ year: year || undefined, status: statusFilter || undefined, page: sharesPage, pageSize: sharesPageSize })
         .then((r) => r.data),
-    [year, statusFilter, refreshKey]
+    [year, statusFilter, refreshKey, sharesPage, sharesPageSize]
   );
 
   const distributions = useApi(
@@ -190,11 +191,9 @@ export default function ProfitSharing() {
             ) : !shares.data?.items?.length ? (
               <EmptyState title="Belum ada data" description="Penjualan ke pelanggan terdaftar akan otomatis masuk di sini" />
             ) : (() => {
-              const allItems = shares.data.items;
-              const sharesPageSize = 20;
-              const sharesTotalPages = Math.ceil(allItems.length / sharesPageSize) || 1;
-              const sharesFrom = (sharesPage - 1) * sharesPageSize;
-              const pageItems = allItems.slice(sharesFrom, sharesFrom + sharesPageSize);
+              const pageItems = shares.data.items || [];
+              const total = shares.data.total || 0;
+              const totalPages = shares.data.totalPages || 1;
               return (
                 <>
                   <div className="overflow-x-auto">
@@ -249,7 +248,7 @@ export default function ProfitSharing() {
                 </table>
               </div>
               <div className="border-t border-slate-200">
-                <Pagination page={sharesPage} totalPages={sharesTotalPages} total={allItems.length} pageSize={sharesPageSize} onPageChange={setSharesPage} />
+                <Pagination page={sharesPage} totalPages={totalPages} total={total} pageSize={sharesPageSize} onPageChange={setSharesPage} onPageSizeChange={(size) => { setSharesPageSize(size); setSharesPage(1); }} />
               </div>
                 </>
               );
