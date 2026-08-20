@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save, ArrowLeft, Tags, Layers, Plus } from 'lucide-react';
 import { productsApi, categoriesApi, unitsApi } from '../api/index.js';
@@ -36,6 +36,7 @@ export default function ProductForm() {
     reset,
     watch,
     setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(productSchema),
@@ -183,10 +184,22 @@ export default function ProductForm() {
               </div>
             </Field>
             <Field label="Harga Beli" required error={errors.purchase_price?.message}>
-              <CurrencyInput {...register('purchase_price')} error={errors.purchase_price} placeholder="0" />
+              <Controller
+                control={control}
+                name="purchase_price"
+                render={({ field }) => (
+                  <CurrencyInput value={field.value} onChange={field.onChange} error={errors.purchase_price} placeholder="0" />
+                )}
+              />
             </Field>
             <Field label="Harga Jual" required error={errors.sale_price?.message}>
-              <CurrencyInput {...register('sale_price')} error={errors.sale_price} placeholder="0" />
+              <Controller
+                control={control}
+                name="sale_price"
+                render={({ field }) => (
+                  <CurrencyInput value={field.value} onChange={field.onChange} error={errors.sale_price} placeholder="0" />
+                )}
+              />
             </Field>
             <Field label="Stok Awal" error={errors.stock?.message}>
               <Input type="number" step="0.001" {...register('stock')} error={errors.stock} disabled={isEdit} />

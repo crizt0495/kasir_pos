@@ -10,7 +10,7 @@ const baseInputClass =
   'disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 ' +
   'aria-invalid:border-danger-400 aria-invalid:hover:border-danger-400 aria-invalid:focus:ring-danger-500/20 aria-invalid:focus:border-danger-500';
 
-export default forwardRef(function CurrencyInput({ error, className = '', onChange, value, ...props }, ref) {
+export default forwardRef(function CurrencyInput({ error, className = '', onChange, value = 0, placeholder = '0', ...props }, ref) {
   const innerRef = useRef(null);
   const refCallback = useCallback((node) => {
     innerRef.current = node;
@@ -19,45 +19,49 @@ export default forwardRef(function CurrencyInput({ error, className = '', onChan
   }, [ref]);
 
   const [displayValue, setDisplayValue] = useState('');
+  const composingRef = useRef(false);
 
   useEffect(() => {
     const num = Number(value || 0);
     setDisplayValue(num ? formatRupiah(num) : '');
   }, [value]);
 
-  const handleChange = (e) => {
-    const cursorPos = e.target.selectionStart;
-    const oldDisplay = e.target.value;
+  const handleInput = (e) => {
+    if (composingRef.current) return;
+    applyFormat(e);
+  };
 
-    const digits = oldDisplay.replace(/\D/g, '');
+  const handleCompositionEnd = (e) => {
+    composingRef.current = false;
+    applyFormat(e);
+  };
+
+  const applyFormat = (e) => {
+    const input = innerRef.current;
+    if (!input) return;
+    const cursorPos = input.selectionStart;
+    const raw = input.value;
+    const digits = raw.replace(/\D/g, '');
     const num = digits ? Number(digits) : 0;
 
+    const newDisplay = num ? formatRupiah(num) : '';
+    setDisplayValue(newDisplay);
+
     if (onChange) {
-      const syntheticEvent = {
-        ...e,
-        target: { ...e.target, value: num },
-      };
-      onChange(syntheticEvent);
+      onChange(num);
     }
 
     requestAnimationFrame(() => {
-      const input = innerRef.current;
-      if (!input) return;
-      const newDisplay = input.value;
+      if (!innerRef.current) return;
       if (num === 0) {
-        input.setSelectionRange(0, 0);
+        innerRef.current.setSelectionRange(0, 0);
         return;
       }
-      const oldDigits = oldDisplay.replace(/\D/g, '');
-      const newDigits = newDisplay.replace(/\D/g, '');
-      let newPos = cursorPos;
-      if (newDigits.length > oldDigits.length) {
-        newPos = cursorPos + (newDigits.length - oldDigits.length);
-      } else if (newDigits.length < oldDigits.length) {
-        newPos = cursorPos - (oldDigits.length - newDigits.length);
-      }
+      const oldDigitCount = (raw.match(/\d/g) || []).length;
+      const newDigitCount = (newDisplay.match(/\d/g) || []).length;
+      let newPos = cursorPos + (newDigitCount - oldDigitCount);
       newPos = Math.max(0, Math.min(newPos, newDisplay.length));
-      input.setSelectionRange(newPos, newPos);
+      innerRef.current.setSelectionRange(newPos, newPos);
     });
   };
 
@@ -66,9 +70,11 @@ export default forwardRef(function CurrencyInput({ error, className = '', onChan
       ref={refCallback}
       type="text"
       inputMode="numeric"
+      placeholder={placeholder}
       className={`${baseInputClass} ${error ? 'border-danger-400' : ''} ${className}`}
       value={displayValue}
-      onChange={handleChange}
+      onInput={handleInput}
+      onCompositionEnd={handleCompositionEnd}
       {...props}
     />
   );
