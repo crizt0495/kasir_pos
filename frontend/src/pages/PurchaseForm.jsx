@@ -188,7 +188,7 @@ export default function PurchaseForm() {
                     <Input type="number" value={item.cost_price} onChange={(e) => updateItem(item.product_id, { cost_price: Number(e.target.value) })} className="w-28" />
                   </Field>
                   <p className="w-28 pt-5 text-right text-sm font-semibold text-slate-800">
-                    {formatRupiah(Number(item.quantity) * Number(item.cost_price))}
+                    {formatRupiah((Number(item.quantity) || 0) * Number(item.cost_price))}
                   </p>
                   <button onClick={() => setItems((prev) => prev.filter((i) => i.product_id !== item.product_id))} className="mb-1 rounded-md p-1.5 text-red-400 hover:bg-red-50">
                     <Trash2 className="h-4 w-4" />

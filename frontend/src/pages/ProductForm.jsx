@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Save, ArrowLeft, Tags, Layers } from 'lucide-react';
+import { Save, ArrowLeft, Tags, Layers, Plus } from 'lucide-react';
+import { formatRupiah } from '../utils/format.js';
 import { productsApi, categoriesApi, unitsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { productSchema } from '../schemas/index.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Button, Field, Input, Select, Textarea, Card, Modal, Skeleton, ErrorState } from '../components/ui/index.jsx';
+import { Button, Field, Input, Select, Textarea, CurrencyInput, Card, Modal, Skeleton, ErrorState } from '../components/ui/index.jsx';
 import ProductImage from '../components/ProductImage.jsx';
 
 export default function ProductForm() {
@@ -162,9 +163,9 @@ export default function ProductForm() {
                   <option value="">Pilih kategori</option>
                   {(categories.data || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
-                {can('categories.create') && (
-                  <button type="button" onClick={() => setCatModal(true)} title="Tambah kategori" className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
-                    <Tags className="h-4 w-4" />
+{can('categories.create') && (
+                  <button type="button" onClick={() => setCatModal(true)} title="ambah kategori" className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
+                    <Plus className="h-4 w-4" />
                   </button>
                 )}
               </div>
@@ -177,16 +178,16 @@ export default function ProductForm() {
                 </Select>
                 {can('products.create') && (
                   <button type="button" onClick={() => setUnitModal(true)} title="Tambah satuan" className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
-                    <Layers className="h-4 w-4" />
+                    <Plus className="h-4 w-4" />
                   </button>
                 )}
               </div>
             </Field>
             <Field label="Harga Beli" required error={errors.purchase_price?.message}>
-              <Input type="number" step="100" {...register('purchase_price')} error={errors.purchase_price} />
+              <CurrencyInput {...register('purchase_price')} error={errors.purchase_price} placeholder="0" />
             </Field>
             <Field label="Harga Jual" required error={errors.sale_price?.message}>
-              <Input type="number" step="100" {...register('sale_price')} error={errors.sale_price} />
+              <CurrencyInput {...register('sale_price')} error={errors.sale_price} placeholder="0" />
             </Field>
             <Field label="Stok Awal" error={errors.stock?.message}>
               <Input type="number" step="0.001" {...register('stock')} error={errors.stock} disabled={isEdit} />
