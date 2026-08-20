@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save, ArrowLeft, Tags, Layers, Plus } from 'lucide-react';
-import { formatRupiah } from '../utils/format.js';
 import { productsApi, categoriesApi, unitsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
