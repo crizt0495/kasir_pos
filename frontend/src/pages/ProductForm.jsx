@@ -163,8 +163,8 @@ export default function ProductForm() {
                   <option value="">Pilih kategori</option>
                   {(categories.data || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
-{can('categories.create') && (
-                  <button type="button" onClick={() => setCatModal(true)} title="ambah kategori" className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
+                {can('categories.create') && (
+                  <button type="button" onClick={() => setCatModal(true)} title="Tambah kategori" className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
                     <Plus className="h-4 w-4" />
                   </button>
                 )}
@@ -207,7 +207,7 @@ export default function ProductForm() {
             <Field label="Stok Minimum" error={errors.min_stock?.message} hint="Peringatan stok menipis">
               <Input type="number" step="0.001" {...register('min_stock')} error={errors.min_stock} />
             </Field>
-              <Field label="Status">
+            <Field label="Status">
               <Select {...register('status')}>
                 <option value="active">Aktif</option>
                 <option value="inactive">Nonaktif</option>
