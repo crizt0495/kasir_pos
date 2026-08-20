@@ -41,8 +41,8 @@ export default function ProductForm() {
   } = useForm({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      sku: '', barcode: '', name: '', category_id: '', unit_id: '', purchase_price: 0,
-      sale_price: 0, stock: 0, min_stock: 0, status: 'active', description: '', image_url: '',
+      sku: '', barcode: '', name: '', category_id: '', unit_id: '', purchase_price: '',
+      sale_price: '', stock: '', min_stock: '', status: 'active', description: '', image_url: '',
     },
   });
 
@@ -202,10 +202,10 @@ export default function ProductForm() {
               />
             </Field>
             <Field label="Stok Awal" error={errors.stock?.message}>
-              <Input type="number" step="0.001" {...register('stock')} error={errors.stock} disabled={isEdit} />
+              <Input type="number" step="0.001" {...register('stock')} error={errors.stock} disabled={isEdit} placeholder="0" />
             </Field>
             <Field label="Stok Minimum" error={errors.min_stock?.message} hint="Peringatan stok menipis">
-              <Input type="number" step="0.001" {...register('min_stock')} error={errors.min_stock} />
+              <Input type="number" step="0.001" {...register('min_stock')} error={errors.min_stock} placeholder="0" />
             </Field>
             <Field label="Status">
               <Select {...register('status')}>
