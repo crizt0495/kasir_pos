@@ -152,7 +152,7 @@ export default function UserForm() {
               <ShieldCheck className="h-4 w-4 text-primary-500" /> Role (hak akses)
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {(roles.data || []).map((role) => (
+              {(roles.data?.items || []).map((role) => (
                 <label
                   key={role.id}
                   className={`flex cursor-pointer items-center justify-between rounded-lg border px-3 py-2.5 ${

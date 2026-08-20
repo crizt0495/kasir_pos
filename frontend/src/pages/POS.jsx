@@ -194,7 +194,7 @@ export default function POS() {
           >
             Semua
           </button>
-          {(categories.data || []).map((c) => (
+          {(categories.data?.items || []).map((c) => (
             <button
               key={c.id}
               onClick={() => setCategoryId(categoryId === c.id ? '' : c.id)}
