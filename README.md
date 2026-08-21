@@ -102,6 +102,7 @@ pos-app/
    - `supabase/migrations/0004_misc.sql`
    - `supabase/migrations/0005_profit_sharing.sql`
    - `supabase/migrations/0006_grants.sql`
+   - `supabase/migrations/0007_opname_datetime.sql`
 4. Jalankan `supabase/seed.sql` terakhir.
 
 > `0006_grants.sql` memberikan hak akses DML ke role API (anon/authenticated/service_role) —
