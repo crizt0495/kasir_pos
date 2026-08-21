@@ -3,6 +3,9 @@
 ## Project
 Aplikasi Point of Sale (POS) modern: React 18 + Vite + Tailwind CSS v4 (frontend), Express.js (backend), Supabase PostgreSQL + RLS (DB), Zustand, Recharts, Lucide React. Workspace npm di root: `frontend/`, `backend/`.
 
+## Workflow Git
+- Setiap perbaikan/fitur selesai dan lolos test: langsung commit (gaya conventional: `feat:`/`fix:` + deskripsi Indonesia) lalu push ke `origin main` tanpa menunggu diminta.
+
 ## Command penting
 - Dev (dari root): `npm run dev` (backend :3001 + frontend :5173 via concurrently)
 - Build: `npm run build` (build frontend)
