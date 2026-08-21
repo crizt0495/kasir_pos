@@ -9,7 +9,10 @@ export const adjustStockSchema = z.object({
 });
 
 export const opnameCreateSchema = z.object({
-  opname_date: z.string().date('Tanggal tidak valid').optional(),
+  opname_date: z
+    .string()
+    .refine((v) => !Number.isNaN(Date.parse(v)), 'Tanggal tidak valid')
+    .optional(),
   notes: z.string().trim().max(500).nullable().optional(),
   items: z
     .array(
@@ -24,7 +27,10 @@ export const opnameCreateSchema = z.object({
 });
 
 export const opnameUpdateSchema = z.object({
-  opname_date: z.string().date('Tanggal tidak valid').optional(),
+  opname_date: z
+    .string()
+    .refine((v) => !Number.isNaN(Date.parse(v)), 'Tanggal tidak valid')
+    .optional(),
   notes: z.string().trim().max(500).nullable().optional(),
   items: z
     .array(

@@ -8,7 +8,7 @@ import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { Button, Card, Input, Field, Textarea, SearchInput, ConfirmDialog, StatusBadge, Skeleton } from '../components/ui/index.jsx';
-import { formatQty } from '../utils/format.js';
+import { dateTimeInput, formatDateTime, formatQty } from '../utils/format.js';
 
 export default function OpnameForm() {
   const { id } = useParams();
@@ -20,7 +20,7 @@ export default function OpnameForm() {
   const debounced = useDebounce(search, 400);
   const [items, setItems] = useState([]); // { product_id, product, system_stock, physical_stock, reason }
   const [notes, setNotes] = useState('');
-  const [opnameDate, setOpnameDate] = useState(new Date().toISOString().slice(0, 10));
+  const [opnameDate, setOpnameDate] = useState(() => dateTimeInput());
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(isView);
   const [existing, setExisting] = useState(null);
@@ -40,7 +40,7 @@ export default function OpnameForm() {
       .then((res) => {
         if (cancelled) return;
         setExisting(res.data);
-        setOpnameDate(res.data.opname_date);
+        setOpnameDate(dateTimeInput(res.data.opname_date));
         setNotes(res.data.notes || '');
         setItems(
           res.data.items.map((i) => ({
@@ -84,7 +84,7 @@ export default function OpnameForm() {
     setSaving(true);
     try {
       const payload = {
-        opname_date: opnameDate,
+        opname_date: opnameDate ? new Date(opnameDate).toISOString() : undefined,
         notes: notes || null,
         items: items.map((i) => ({
           product_id: i.product_id,
@@ -137,7 +137,7 @@ export default function OpnameForm() {
             {isNew ? 'Buat Stock Opname' : isReadOnly ? 'Detail Stock Opname' : 'Edit Stock Opname'}
           </h1>
           <p className="text-sm text-slate-500">
-            {isNew ? 'Pilih produk, isi stok fisik, dan catat selisih' : `${existing?.opname_date} · `}
+            {isNew ? 'Pilih produk, isi stok fisik, dan catat selisih' : `${formatDateTime(existing?.opname_date)} · `}
             {existing && <StatusBadge status={existing.status} />}
           </p>
         </div>
@@ -148,8 +148,8 @@ export default function OpnameForm() {
 
       <Card bodyClassName="p-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Tanggal Opname">
-            <Input type="date" value={opnameDate} onChange={(e) => setOpnameDate(e.target.value)} disabled={isReadOnly} />
+          <Field label="Tanggal & Waktu Opname">
+            <Input type="datetime-local" value={opnameDate} onChange={(e) => setOpnameDate(e.target.value)} disabled={isReadOnly} />
           </Field>
           <Field label="Catatan">
             <Input value={notes} onChange={(e) => setNotes(e.target.value)} disabled={isReadOnly} placeholder="Catatan opname..." />

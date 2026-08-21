@@ -42,6 +42,11 @@ export function todayInput() {
   return dayjs().format('YYYY-MM-DD');
 }
 
+/** Nilai input datetime-local (YYYY-MM-DDTHH:mm), default sekarang */
+export function dateTimeInput(value) {
+  return dayjs(value || undefined).format('YYYY-MM-DDTHH:mm');
+}
+
 /** Nama metode pembayaran dalam Bahasa Indonesia */
 export const PAYMENT_METHOD_LABELS = {
   CASH: 'Tunai',

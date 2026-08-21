@@ -7,7 +7,7 @@ import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { DataTable, Button, StatusBadge, ConfirmDialog, PageHeader } from '../components/ui/index.jsx';
-import { formatDate, formatQty } from '../utils/format.js';
+import { formatDateTime, formatQty } from '../utils/format.js';
 
 export default function Opnames() {
   const navigate = useNavigate();
@@ -79,7 +79,7 @@ export default function Opnames() {
 
       <DataTable
         columns={[
-          { key: 'opname_date', header: 'Tanggal', render: (r) => formatDate(r.opname_date) },
+          { key: 'opname_date', header: 'Tanggal', render: (r) => formatDateTime(r.opname_date) },
           { key: 'creator', header: 'Dibuat Oleh', render: (r) => r.creator?.profiles?.full_name || r.creator?.username || '-' },
           { key: 'item_count', header: 'Jumlah Produk', render: (r) => formatQty(r.item_count) },
           { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
@@ -120,7 +120,7 @@ export default function Opnames() {
           <div className="space-y-2.5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-medium text-slate-800">{formatDate(r.opname_date)}</p>
+                <p className="font-medium text-slate-800">{formatDateTime(r.opname_date)}</p>
                 <p className="text-xs text-slate-400">Oleh: {r.creator?.profiles?.full_name || r.creator?.username || '-'}</p>
               </div>
               <StatusBadge status={r.status} />
