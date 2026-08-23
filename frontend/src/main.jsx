@@ -7,7 +7,18 @@ import './index.css';
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/sw.js')
+      .register('/sw.js', { updateViaCache: 'none' })
+      .then((reg) => {
+        // Saat SW baru aktif (bundle baru terdeploy), muat ulang sekali agar
+        // pengguna tidak lagi menjalankan chunk lama yang sudah tidak cocok
+        let reloaded = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (reloaded) return;
+          reloaded = true;
+          window.location.reload();
+        });
+        reg.update().catch(() => {});
+      })
       .catch((err) => console.warn('Service worker gagal didaftarkan:', err));
   });
 }
