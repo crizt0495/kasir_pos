@@ -355,7 +355,7 @@ export const cashierReport = asyncHandler(async (req, res) => {
       byCashier[key] = {
         cashier_id: s.cashier_id,
         username: s.users?.cashier_username || '-',
-        full_name: s.users?.cashier_name || '-',
+        full_name: s.users?.cashier_name?.full_name || s.users?.cashier_name || '-',
         transactions: 0,
         total: 0,
         payment_methods: {},

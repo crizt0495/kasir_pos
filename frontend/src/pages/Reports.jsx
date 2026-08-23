@@ -361,6 +361,7 @@ function InventoryTable({ d }) {
 }
 
 function CashierTable({ d }) {
+  const getName = (v) => (typeof v === 'string' ? v : v?.full_name || v?.name || '');
   return (
     <div className="divide-y divide-slate-100">
       {!d.cashiers?.length && <EmptyState title="Belum ada data" />}
@@ -368,8 +369,8 @@ function CashierTable({ d }) {
         <div key={c.cashier_id} className="px-4 py-3 text-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-slate-700">{c.full_name || c.username}</p>
-              {c.full_name && <p className="text-xs text-slate-400">@{c.username}</p>}
+              <p className="font-medium text-slate-700">{getName(c.full_name) || c.username}</p>
+              {getName(c.full_name) && <p className="text-xs text-slate-400">@{c.username}</p>}
               <p className="text-xs text-slate-400">{formatNumber(c.transactions)} transaksi</p>
             </div>
             <span className="font-semibold">{formatRupiah(c.total)}</span>
