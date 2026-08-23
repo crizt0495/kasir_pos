@@ -17,7 +17,7 @@ export default function Suppliers() {
   const [search, setSearch] = useState('');
   const debounced = useDebounce(search, 400);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -90,6 +90,7 @@ export default function Suppliers() {
       />
 
       <DataTable
+        storageKey="suppliers"
         columns={[
           { key: 'name', header: 'Supplier', render: (r) => (
             <div className="flex items-center gap-2">

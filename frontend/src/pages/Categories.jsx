@@ -18,7 +18,7 @@ export default function Categories() {
   const [search, setSearch] = useState('');
   const debounced = useDebounce(search, 400);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [toDelete, setToDelete] = useState(null);
@@ -96,6 +96,7 @@ export default function Categories() {
           <ErrorState onRetry={list.reload} />
         ) : (
           <DataTable
+            storageKey="categories"
             columns={[
               { key: 'name', header: 'Nama', render: (r) => (
                 <div className="flex items-center gap-2">

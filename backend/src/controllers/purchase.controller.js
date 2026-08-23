@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { writeAudit } from '../services/auditService.js';
-import { getPagination, buildPage } from '../utils/pagination.js';
+import { getPagination, buildPage, fetchPage, countSignature } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, badRequest, AppError, extractPgMessage } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -21,27 +21,35 @@ async function fetchPurchaseDetail(id) {
 }
 
 export const listPurchases = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query, 20);
+  const { page, pageSize } = getPagination(req.query, 20);
   const q = safeSearch(req.query.search);
   const { supplier_id, status, payment_status } = req.query;
 
-  let query = supabase.from('purchases').select(LIST_SELECT, { count: 'exact' });
-  if (q) query = query.or(`purchase_number.ilike.%${q}%,invoice_number.ilike.%${q}%`);
-  if (supplier_id) query = query.eq('supplier_id', supplier_id);
-  if (status) query = query.eq('status', status);
-  if (payment_status) query = query.eq('payment_status', payment_status);
-  if (req.query.from) query = query.gte('purchase_date', req.query.from);
-  if (req.query.to) query = query.lte('purchase_date', req.query.to);
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('purchases').select(select, opts);
+      if (q) query = query.or(`purchase_number.ilike.%${q}%,invoice_number.ilike.%${q}%`);
+      if (supplier_id) query = query.eq('supplier_id', supplier_id);
+      if (status) query = query.eq('status', status);
+      if (payment_status) query = query.eq('payment_status', payment_status);
+      if (req.query.from) query = query.gte('purchase_date', req.query.from);
+      if (req.query.to) query = query.lte('purchase_date', req.query.to);
+      return query;
+    },
+    select: LIST_SELECT,
+    signature: countSignature('purchases', [q, supplier_id, status, payment_status, req.query.from, req.query.to]),
+    page,
+    pageSize,
+    orderBy: 'purchase_date',
+    ascending: false,
+  });
 
-  const { data, count, error } = await query.order('purchase_date', { ascending: false }).range(from, to);
-  if (error) throw error;
-
-  const items = (data || []).map((p) => ({
+  const items = result.items.map((p) => ({
     ...p,
     item_count: p.items?.[0]?.count || 0,
     items: undefined,
   }));
-  return ok(res, buildPage(items, count || 0, page, pageSize));
+  return ok(res, { ...result, items });
 });
 
 export const getPurchase = asyncHandler(async (req, res) => {

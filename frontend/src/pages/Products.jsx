@@ -19,7 +19,7 @@ export default function Products() {
   const [categoryId, setCategoryId] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
   const [sort, setSort] = useState({ key: 'name', order: 'asc' });
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -118,8 +118,9 @@ export default function Products() {
       />
 
       <DataTable
+        storageKey="products"
         columns={[
-          { key: 'name', header: 'Produk', sortable: true, render: (r) => (
+          { key: 'name', header: 'Produk', sortable: true, hideable: false, render: (r) => (
             <div className="flex items-center gap-3">
               <ProductImage src={r.image_url} alt={r.name} className="h-10 w-10" />
               <div className="min-w-0">
@@ -128,17 +129,17 @@ export default function Products() {
               </div>
             </div>
           )},
-          { key: 'category', header: 'Kategori', render: (r) => r.category?.name || '-' },
-          { key: 'unit', header: 'Satuan', render: (r) => r.unit?.short_name || '-' },
-          { key: 'purchase_price', header: 'Harga Beli', sortable: true, render: (r) => formatRupiah(r.purchase_price) },
-          { key: 'sale_price', header: 'Harga Jual', sortable: true, render: (r) => <span className="font-semibold">{formatRupiah(r.sale_price)}</span> },
-          { key: 'stock', header: 'Stok', sortable: true, render: (r) => (
+          { key: 'category', header: 'Kategori', priority: 'md', render: (r) => r.category?.name || '-' },
+          { key: 'unit', header: 'Satuan', priority: 'lg', render: (r) => r.unit?.short_name || '-' },
+          { key: 'purchase_price', header: 'Harga Beli', align: 'right', sortable: true, priority: 'lg', render: (r) => formatRupiah(r.purchase_price) },
+          { key: 'sale_price', header: 'Harga Jual', align: 'right', sortable: true, render: (r) => <span className="font-semibold">{formatRupiah(r.sale_price)}</span> },
+          { key: 'stock', header: 'Stok', align: 'right', sortable: true, render: (r) => (
             <span className={Number(r.stock) <= Number(r.min_stock) ? 'font-semibold text-red-600' : ''}>
               {formatQty(r.stock)}
             </span>
           )},
-          { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
-          { key: 'actions', header: 'Aksi', render: (r) => (
+          { key: 'status', header: 'Status', priority: 'md', render: (r) => <StatusBadge status={r.status} /> },
+          { key: 'actions', header: 'Aksi', align: 'right', hideable: false, render: (r) => (
             <div className="flex gap-1">
               {can('products.update') && (
                 <button onClick={() => navigate(`/products/${r.id}/edit`)} className="rounded-md p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600">

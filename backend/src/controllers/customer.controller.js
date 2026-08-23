@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { writeAudit } from '../services/auditService.js';
-import { getPagination, buildPage } from '../utils/pagination.js';
+import { getPagination, buildPage, fetchPage, countSignature } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, AppError } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -11,30 +11,45 @@ import { safeSearch } from '../utils/sanitize.js';
 // ============================================================
 
 const CUSTOMER_SELECT = '*, sales: sales(status, total)';
+// Daftar: kolom minimal — agregat transaksi dihitung via fn_customers_stats
+// (jangan embed seluruh riwayat sales per pelanggan di daftar)
+const CUSTOMER_LIST_SELECT = 'id, name, phone, email, is_general, created_at';
 
 export const listCustomers = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query);
+  const { page, pageSize } = getPagination(req.query);
   const q = safeSearch(req.query.search);
 
-  let query = supabase.from('customers').select(CUSTOMER_SELECT, { count: 'exact' });
-  if (q) query = query.or(`name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`);
-  if (req.query.is_general === 'true') query = query.eq('is_general', true);
-  else if (req.query.is_general === 'false') query = query.eq('is_general', false);
-
-  const { data, count, error } = await query.order('created_at', { ascending: false }).range(from, to);
-  if (error) throw error;
-
-  const items = (data || []).map((c) => {
-    const validSales = (c.sales || []).filter((s) => s.status !== 'cancelled');
-    return {
-      ...c,
-      sales: undefined,
-      total_transactions: validSales.length,
-      total_spend: validSales.reduce((sum, s) => sum + Number(s.total || 0), 0),
-    };
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('customers').select(select, opts);
+      if (q) query = query.or(`name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`);
+      if (req.query.is_general === 'true') query = query.eq('is_general', true);
+      else if (req.query.is_general === 'false') query = query.eq('is_general', false);
+      return query;
+    },
+    select: CUSTOMER_LIST_SELECT,
+    signature: countSignature('customers', [q, req.query.is_general]),
+    page,
+    pageSize,
+    orderBy: 'created_at',
   });
 
-  return ok(res, buildPage(items, count || 0, page, pageSize));
+  const ids = result.items.map((c) => c.id);
+  let statsMap = {};
+  if (ids.length) {
+    const { data: stats } = await supabase.rpc('fn_customers_stats', { p_ids: ids });
+    for (const row of Array.isArray(stats) ? stats : []) {
+      statsMap[row.customer_id] = { total_transactions: Number(row.total_transactions || 0), total_spend: Number(row.total_spend || 0) };
+    }
+  }
+
+  const items = result.items.map((c) => ({
+    ...c,
+    total_transactions: statsMap[c.id]?.total_transactions ?? 0,
+    total_spend: statsMap[c.id]?.total_spend ?? 0,
+  }));
+
+  return ok(res, { ...result, items });
 });
 
 export const getCustomer = asyncHandler(async (req, res) => {
@@ -108,17 +123,24 @@ export const deleteCustomer = asyncHandler(async (req, res) => {
 // ============================================================
 
 export const listSuppliers = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query);
+  const { page, pageSize } = getPagination(req.query);
   const q = safeSearch(req.query.search);
   const { status } = req.query;
 
-  let query = supabase.from('suppliers').select('*', { count: 'exact' });
-  if (q) query = query.or(`name.ilike.%${q}%,phone.ilike.%${q}%,contact_person.ilike.%${q}%`);
-  if (status) query = query.eq('status', status);
-
-  const { data, count, error } = await query.order('created_at', { ascending: false }).range(from, to);
-  if (error) throw error;
-  return ok(res, buildPage(data || [], count || 0, page, pageSize));
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('suppliers').select(select, opts);
+      if (q) query = query.or(`name.ilike.%${q}%,phone.ilike.%${q}%,contact_person.ilike.%${q}%`);
+      if (status) query = query.eq('status', status);
+      return query;
+    },
+    select: 'id, name, contact_person, phone, email, address, notes, status, created_at',
+    signature: countSignature('suppliers', [q, status]),
+    page,
+    pageSize,
+    orderBy: 'created_at',
+  });
+  return ok(res, result);
 });
 
 export const getSupplier = asyncHandler(async (req, res) => {

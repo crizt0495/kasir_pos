@@ -20,7 +20,7 @@ export default function Customers() {
   const [search, setSearch] = useState('');
   const debounced = useDebounce(search, 400);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -93,6 +93,7 @@ export default function Customers() {
       />
 
       <DataTable
+        storageKey="customers"
         columns={[
           { key: 'name', header: 'Nama', render: (r) => <span className="font-medium text-slate-800">{r.name}</span> },
           { key: 'phone', header: 'No. HP', render: (r) => r.phone || '-' },

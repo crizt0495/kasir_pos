@@ -23,7 +23,7 @@ export default function ProfitSharing() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [periodsLoading, setPeriodsLoading] = useState(true);
   const [sharesPage, setSharesPage] = useState(1);
-  const [sharesPageSize, setSharesPageSize] = useState(20);
+  const [sharesPageSize, setSharesPageSize] = useState(25);
   const [distributionsPage, setDistributionsPage] = useState(1);
 
   const loadPeriods = async () => {

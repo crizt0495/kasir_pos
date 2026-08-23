@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { writeAudit } from '../services/auditService.js';
-import { getPagination, buildPage, dateRange } from '../utils/pagination.js';
+import { getPagination, buildPage, fetchPage, countSignature, dateRange } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, badRequest, extractPgMessage, AppError } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -12,45 +12,48 @@ const PRODUCT_STOCK_SELECT = 'id, sku, barcode, name, stock, min_stock, status, 
 // STOK (daftar + filter)
 // ============================================================
 export const listInventory = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query, 20);
+  const { page, pageSize } = getPagination(req.query, 20);
   const q = safeSearch(req.query.search);
   const { category_id, filter } = req.query;
 
-  let query = supabase.from('products').select(PRODUCT_STOCK_SELECT, { count: 'exact' });
-  if (q) query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%,barcode.ilike.%${q}%`);
-  if (category_id) query = query.eq('category_id', category_id);
-  if (filter === 'low') query = query.lte('stock', 'min_stock');
-  if (filter === 'out') query = query.lte('stock', 0);
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('products').select(select, opts);
+      if (q) query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%,barcode.ilike.%${q}%`);
+      if (category_id) query = query.eq('category_id', category_id);
+      if (filter === 'low') query = query.lte('stock', 'min_stock');
+      if (filter === 'out') query = query.lte('stock', 0);
+      return query;
+    },
+    select: PRODUCT_STOCK_SELECT,
+    signature: countSignature('inventory_products', [q, category_id, filter]),
+    page,
+    pageSize,
+    orderBy: 'name',
+    ascending: true,
+  });
 
-  const { data, count, error } = await query.order('name').range(from, to);
-  if (error) throw error;
-
-  const items = (data || []).map((p) => ({
+  const items = result.items.map((p) => ({
     ...p,
     is_low: Number(p.stock) <= Number(p.min_stock),
     is_out: Number(p.stock) <= 0,
   }));
-  return ok(res, buildPage(items, count || 0, page, pageSize));
+  return ok(res, { ...result, items });
 });
 
 // ============================================================
 // PERGERAKAN STOK
 // ============================================================
 export const listMovements = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query, 20);
+  const { page, pageSize } = getPagination(req.query, 20);
   const { product_id, type } = req.query;
   const q = safeSearch(req.query.search);
   const range = dateRange(req.query.from, req.query.to);
 
-  let query = supabase
-    .from('inventory_movements')
-    .select('*, product:products(id, name, sku)', { count: 'exact' });
-  if (product_id) query = query.eq('product_id', product_id);
-  if (type) query = query.eq('type', type);
-  if (range.gte) query = query.gte('created_at', range.gte);
-  if (range.lte) query = query.lte('created_at', range.lte);
+  // Cari product_id yang cocok dulu (dibatasi), lalu filter movement —
+  // menghindari scan penuh tabel movements yang jauh lebih besar
+  let matchedIds = null;
   if (q) {
-    // Cari product_id yang cocok dulu, lalu filter movement
     const { data: matched } = await supabase
       .from('products')
       .select('id')
@@ -60,12 +63,27 @@ export const listMovements = asyncHandler(async (req, res) => {
     if (!ids.length) {
       return ok(res, buildPage([], 0, page, pageSize));
     }
-    query = query.in('product_id', ids);
+    matchedIds = ids;
   }
 
-  const { data, count, error } = await query.order('created_at', { ascending: false }).range(from, to);
-  if (error) throw error;
-  return ok(res, buildPage(data || [], count || 0, page, pageSize));
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('inventory_movements').select(select, opts);
+      if (product_id) query = query.eq('product_id', product_id);
+      if (type) query = query.eq('type', type);
+      if (range.gte) query = query.gte('created_at', range.gte);
+      if (range.lte) query = query.lte('created_at', range.lte);
+      if (matchedIds) query = query.in('product_id', matchedIds);
+      return query;
+    },
+    select: '*, product:products(id, name, sku)',
+    signature: countSignature('inventory_movements', [product_id, type, req.query.from, req.query.to, matchedIds]),
+    page,
+    pageSize,
+    orderBy: 'created_at',
+    ascending: false,
+  });
+  return ok(res, result);
 });
 
 // ============================================================
@@ -90,23 +108,29 @@ export const adjustStock = asyncHandler(async (req, res) => {
 // STOCK OPNAME
 // ============================================================
 export const listOpnames = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query, 20);
+  const { page, pageSize } = getPagination(req.query, 20);
   const { status } = req.query;
 
-  let query = supabase
-    .from('stock_opnames')
-    .select('*, items:stock_opname_items(count), creator:users!stock_opnames_created_by_fkey(id, username, profiles(full_name))', { count: 'exact' });
-  if (status) query = query.eq('status', status);
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('stock_opnames').select(select, opts);
+      if (status) query = query.eq('status', status);
+      return query;
+    },
+    select: '*, items:stock_opname_items(count), creator:users!stock_opnames_created_by_fkey(id, username, profiles(full_name))',
+    signature: countSignature('stock_opnames', [status]),
+    page,
+    pageSize,
+    orderBy: 'opname_date',
+    ascending: false,
+  });
 
-  const { data, count, error } = await query.order('opname_date', { ascending: false }).range(from, to);
-  if (error) throw error;
-
-  const items = (data || []).map((o) => ({
+  const items = result.items.map((o) => ({
     ...o,
     item_count: o.items?.[0]?.count || 0,
     items: undefined,
   }));
-  return ok(res, buildPage(items, count || 0, page, pageSize));
+  return ok(res, { ...result, items });
 });
 
 export const getOpname = asyncHandler(async (req, res) => {

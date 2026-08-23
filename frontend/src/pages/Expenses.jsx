@@ -25,7 +25,7 @@ export default function Expenses() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -111,6 +111,7 @@ export default function Expenses() {
       />
 
       <DataTable
+        storageKey="expenses"
         columns={[
           { key: 'expense_date', header: 'Tanggal', render: (r) => formatDate(r.expense_date) },
           { key: 'category', header: 'Kategori', render: (r) => <Badge color="bg-slate-100 text-slate-700">{r.category}</Badge> },

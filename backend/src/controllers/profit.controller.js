@@ -1,5 +1,5 @@
 import { supabase } from '../config/supabase.js';
-import { getPagination, buildPage } from '../utils/pagination.js';
+import { getPagination, buildPage, fetchPage, countSignature } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, AppError, extractPgMessage } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -143,23 +143,30 @@ export const listShares = asyncHandler(async (req, res) => {
 });
 
 export const listDistributions = asyncHandler(async (req, res) => {
-  const { page, pageSize, from: rangeFrom, to: rangeTo } = getPagination(req.query, 20);
+  const { page, pageSize } = getPagination(req.query, 20);
 
-  let query = supabase
-    .from('profit_distributions')
-    .select('*, period:profit_periods(year), customer:customers(id, name), distributor:users(id, username, profiles(full_name))', { count: 'exact' })
-    .order('distributed_at', { ascending: false });
-
+  let periodId = null;
   if (req.query.year) {
     const { data: period } = await supabase.from('profit_periods').select('id').eq('year', Number(req.query.year)).maybeSingle();
-    if (period) query = query.eq('period_id', period.id);
+    periodId = period?.id || null;
   } else if (req.query.period_id) {
-    query = query.eq('period_id', req.query.period_id);
+    periodId = req.query.period_id;
   }
 
-  const { data, count, error } = await query.range(rangeFrom, rangeTo);
-  if (error) throw error;
-  return ok(res, buildPage(data || [], count || 0, page, pageSize));
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('profit_distributions').select(select, opts);
+      if (periodId) query = query.eq('period_id', periodId);
+      return query;
+    },
+    select: '*, period:profit_periods(year), customer:customers(id, name), distributor:users(id, username, profiles(full_name))',
+    signature: countSignature('profit_distributions', [periodId]),
+    page,
+    pageSize,
+    orderBy: 'distributed_at',
+    ascending: false,
+  });
+  return ok(res, result);
 });
 
 export const distributeProfit = asyncHandler(async (req, res) => {

@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import { supabase } from '../config/supabase.js';
 import { loadUserAuth, serializeSession } from '../services/authService.js';
 import { writeAudit } from '../services/auditService.js';
-import { getPagination, buildPage } from '../utils/pagination.js';
+import { getPagination, buildPage, fetchPage, countSignature } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { AppError, notFound, conflict, badRequest } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -29,23 +29,29 @@ export async function resolveRoleIds(refs) {
 }
 
 export const listUsers = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query);
+  const { page, pageSize } = getPagination(req.query);
   const q = safeSearch(req.query.search);
   const { is_active } = req.query;
 
-  let query = supabase.from('v_users').select('*', { count: 'exact' });
-  if (q) {
-    query = query.or(`username.ilike.%${q}%,full_name.ilike.%${q}%,email.ilike.%${q}%`);
-  }
-  if (is_active === 'true' || is_active === 'false') {
-    query = query.eq('is_active', is_active === 'true');
-  }
-  const { data, count, error } = await query
-    .order('created_at', { ascending: false })
-    .range(from, to);
-
-  if (error) throw error;
-  return ok(res, buildPage(data || [], count || 0, page, pageSize));
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('v_users').select(select, opts);
+      if (q) {
+        query = query.or(`username.ilike.%${q}%,full_name.ilike.%${q}%,email.ilike.%${q}%`);
+      }
+      if (is_active === 'true' || is_active === 'false') {
+        query = query.eq('is_active', is_active === 'true');
+      }
+      return query;
+    },
+    select: '*',
+    signature: countSignature('v_users', [q, is_active]),
+    page,
+    pageSize,
+    orderBy: 'created_at',
+    ascending: false,
+  });
+  return ok(res, result);
 });
 
 export const getUser = asyncHandler(async (req, res) => {

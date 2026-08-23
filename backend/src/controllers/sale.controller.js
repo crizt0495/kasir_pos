@@ -1,7 +1,7 @@
 import { supabase } from '../config/supabase.js';
 import { writeAudit } from '../services/auditService.js';
 import { notifyNewSale } from '../services/notificationService.js';
-import { getPagination, buildPage } from '../utils/pagination.js';
+import { getPagination, buildPage, fetchPage, countSignature } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, AppError, extractPgMessage } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -39,32 +39,36 @@ function handleRpcError(error) {
 }
 
 export const listSales = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query, 20);
+  const { page, pageSize } = getPagination(req.query, 20);
   const q = safeSearch(req.query.search);
   const { cashier_id, payment_method, status, customer_id } = req.query;
 
-  let query = supabase.from('sales').select(SALE_LIST_SELECT, { count: 'exact' });
-  if (q) query = query.ilike('invoice_number', `%${q}%`);
-  if (cashier_id) query = query.eq('cashier_id', cashier_id);
-  if (customer_id) query = query.eq('customer_id', customer_id);
-  if (payment_method) query = query.eq('payment_method', payment_method);
-  if (status) query = query.eq('status', status);
-  if (req.query.from) query = query.gte('created_at', `${req.query.from}T00:00:00.000Z`);
-  if (req.query.to) query = query.lte('created_at', `${req.query.to}T23:59:59.999Z`);
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('sales').select(select, opts);
+      if (q) query = query.ilike('invoice_number', `%${q}%`);
+      if (cashier_id) query = query.eq('cashier_id', cashier_id);
+      if (customer_id) query = query.eq('customer_id', customer_id);
+      if (payment_method) query = query.eq('payment_method', payment_method);
+      if (status) query = query.eq('status', status);
+      if (req.query.from) query = query.gte('created_at', `${req.query.from}T00:00:00.000Z`);
+      if (req.query.to) query = query.lte('created_at', `${req.query.to}T23:59:59.999Z`);
+      return query;
+    },
+    select: SALE_LIST_SELECT,
+    signature: countSignature('sales', [q, cashier_id, customer_id, payment_method, status, req.query.from, req.query.to]),
+    page,
+    pageSize,
+    orderBy: ({ created_at: 'created_at', total: 'total', invoice_number: 'invoice_number' })[req.query.sort] || 'created_at',
+    ascending: req.query.order === 'asc',
+  });
 
-  const sortable = { created_at: 'created_at', total: 'total', invoice_number: 'invoice_number' };
-  const sortCol = sortable[req.query.sort] || 'created_at';
-  const ascending = req.query.order === 'asc';
-
-  const { data, count, error } = await query.order(sortCol, { ascending }).range(from, to);
-  if (error) throw error;
-
-  const items = (data || []).map((s) => ({
+  const items = result.items.map((s) => ({
     ...s,
     item_count: s.items?.[0]?.count || 0,
     items: undefined,
   }));
-  return ok(res, buildPage(items, count || 0, page, pageSize));
+  return ok(res, { ...result, items });
 });
 
 export const getSale = asyncHandler(async (req, res) => {
@@ -119,29 +123,32 @@ export const refundSale = asyncHandler(async (req, res) => {
 // RETURNS (riwayat)
 // ============================================================
 export const listReturns = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query, 20);
+  const { page, pageSize } = getPagination(req.query, 20);
   const q = safeSearch(req.query.search);
 
-  let query = supabase
-    .from('returns')
-    .select(
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('returns').select(select, opts);
+      if (q) query = query.or(`return_number.ilike.%${q}%,sale.invoice_number.ilike.%${q}%`);
+      if (req.query.from) query = query.gte('created_at', `${req.query.from}T00:00:00.000Z`);
+      if (req.query.to) query = query.lte('created_at', `${req.query.to}T23:59:59.999Z`);
+      return query;
+    },
+    select:
       '*, sale: sales(invoice_number, payment_method), customer: customers(id, name), ' +
-        'created_by_user: users(id, username, profiles(full_name)), items: return_items(count)',
-      { count: 'exact' }
-    );
-  if (q) query = query.or(`return_number.ilike.%${q}%,sale.invoice_number.ilike.%${q}%`);
-  if (req.query.from) query = query.gte('created_at', `${req.query.from}T00:00:00.000Z`);
-  if (req.query.to) query = query.lte('created_at', `${req.query.to}T23:59:59.999Z`);
+      'created_by_user: users(id, username, profiles(full_name)), items: return_items(count)',
+    signature: countSignature('returns', [q, req.query.from, req.query.to]),
+    page,
+    pageSize,
+    orderBy: 'created_at',
+  });
 
-  const { data, count, error } = await query.order('created_at', { ascending: false }).range(from, to);
-  if (error) throw error;
-
-  const items = (data || []).map((r) => ({
+  const items = result.items.map((r) => ({
     ...r,
     item_count: r.items?.[0]?.count || 0,
     items: undefined,
   }));
-  return ok(res, buildPage(items, count || 0, page, pageSize));
+  return ok(res, { ...result, items });
 });
 
 export const getReturn = asyncHandler(async (req, res) => {

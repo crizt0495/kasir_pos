@@ -17,7 +17,7 @@ export default function Roles() {
   const [search, setSearch] = useState('');
   const debounced = useDebounce(search, 400);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', code: '', description: '' });
@@ -140,6 +140,7 @@ export default function Roles() {
           <ErrorState onRetry={roles.reload} />
         ) : (
           <DataTable
+            storageKey="roles"
             columns={[
               { key: 'role', header: 'Role', render: (r) => (
                 <div className="flex items-center gap-2">

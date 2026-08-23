@@ -32,7 +32,7 @@ export default function Movements() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
 
   const list = useApi(
     () =>
@@ -54,22 +54,23 @@ export default function Movements() {
       <PageHeader title="Pergerakan Stok" description="Riwayat semua perubahan stok produk" />
 
       <DataTable
+        storageKey="movements"
         columns={[
-          { key: 'created_at', header: 'Waktu', render: (r) => formatDateTime(r.created_at) },
-          { key: 'product', header: 'Produk', render: (r) => (
+          { key: 'created_at', header: 'Waktu', hideable: false, render: (r) => formatDateTime(r.created_at) },
+          { key: 'product', header: 'Produk', hideable: false, render: (r) => (
             <div>
               <p className="font-medium text-slate-800">{r.product?.name || '-'}</p>
               <p className="text-xs text-slate-400">{r.product?.sku || ''}</p>
             </div>
           )},
           { key: 'type', header: 'Jenis', render: (r) => <Badge color={TYPE_BADGES[r.type]}>{TYPE_LABELS[r.type] || r.type}</Badge> },
-          { key: 'quantity', header: 'Qty', render: (r) => (
+          { key: 'quantity', header: 'Qty', align: 'right', render: (r) => (
             <span className={`font-semibold ${Number(r.quantity) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               {Number(r.quantity) >= 0 ? '+' : ''}{formatNumber(r.quantity)}
             </span>
           )},
-          { key: 'stock', header: 'Stok (sebelum → sesudah)', render: (r) => `${formatQty(r.before_stock)} → ${formatQty(r.after_stock)}` },
-          { key: 'notes', header: 'Catatan', render: (r) => <span className="line-clamp-1 max-w-48">{r.notes || '-'}</span> },
+          { key: 'stock', header: 'Stok (sebelum → sesudah)', priority: 'md', render: (r) => `${formatQty(r.before_stock)} → ${formatQty(r.after_stock)}` },
+          { key: 'notes', header: 'Catatan', priority: 'lg', render: (r) => <span className="line-clamp-1 max-w-48">{r.notes || '-'}</span> },
         ]}
         data={d?.items || []}
         loading={list.loading}

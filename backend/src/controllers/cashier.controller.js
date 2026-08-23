@@ -1,6 +1,7 @@
 import { supabase } from '../config/supabase.js';
 import { writeAudit } from '../services/auditService.js';
-import { getPagination, buildPage } from '../utils/pagination.js';
+import { getPagination, buildPage, fetchPage, countSignature } from '../utils/pagination.js';
+import { safeSearch } from '../utils/sanitize.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, conflict, badRequest, AppError, extractPgMessage } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -9,19 +10,25 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 // CASH SESSIONS
 // ============================================================
 export const listSessions = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query, 20);
+  const { page, pageSize } = getPagination(req.query, 20);
   const { status } = req.query;
 
-  let query = supabase
-    .from('cash_sessions')
-    .select('*, opened_by_user: users(id, username, profiles(full_name))', { count: 'exact' });
-  if (status) query = query.eq('status', status);
-  if (req.query.from) query = query.gte('opened_at', `${req.query.from}T00:00:00.000Z`);
-  if (req.query.to) query = query.lte('opened_at', `${req.query.to}T23:59:59.999Z`);
-
-  const { data, count, error } = await query.order('opened_at', { ascending: false }).range(from, to);
-  if (error) throw error;
-  return ok(res, buildPage(data || [], count || 0, page, pageSize));
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('cash_sessions').select(select, opts);
+      if (status) query = query.eq('status', status);
+      if (req.query.from) query = query.gte('opened_at', `${req.query.from}T00:00:00.000Z`);
+      if (req.query.to) query = query.lte('opened_at', `${req.query.to}T23:59:59.999Z`);
+      return query;
+    },
+    select: '*, opened_by_user: users(id, username, profiles(full_name))',
+    signature: countSignature('cash_sessions', [status, req.query.from, req.query.to]),
+    page,
+    pageSize,
+    orderBy: 'opened_at',
+    ascending: false,
+  });
+  return ok(res, result);
 });
 
 export const getOpenSession = asyncHandler(async (req, res) => {
@@ -117,20 +124,26 @@ export const closeSession = asyncHandler(async (req, res) => {
 // CASH TRANSACTIONS
 // ============================================================
 export const listTransactions = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query, 20);
+  const { page, pageSize } = getPagination(req.query, 20);
   const { session_id, type } = req.query;
 
-  let query = supabase
-    .from('cash_transactions')
-    .select('*, created_by_user: users(id, username, profiles(full_name))', { count: 'exact' });
-  if (session_id) query = query.eq('session_id', session_id);
-  if (type) query = query.eq('type', type);
-  if (req.query.from) query = query.gte('created_at', `${req.query.from}T00:00:00.000Z`);
-  if (req.query.to) query = query.lte('created_at', `${req.query.to}T23:59:59.999Z`);
-
-  const { data, count, error } = await query.order('created_at', { ascending: false }).range(from, to);
-  if (error) throw error;
-  return ok(res, buildPage(data || [], count || 0, page, pageSize));
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('cash_transactions').select(select, opts);
+      if (session_id) query = query.eq('session_id', session_id);
+      if (type) query = query.eq('type', type);
+      if (req.query.from) query = query.gte('created_at', `${req.query.from}T00:00:00.000Z`);
+      if (req.query.to) query = query.lte('created_at', `${req.query.to}T23:59:59.999Z`);
+      return query;
+    },
+    select: '*, created_by_user: users(id, username, profiles(full_name))',
+    signature: countSignature('cash_transactions', [session_id, type, req.query.from, req.query.to]),
+    page,
+    pageSize,
+    orderBy: 'created_at',
+    ascending: false,
+  });
+  return ok(res, result);
 });
 
 export const addTransaction = asyncHandler(async (req, res) => {
@@ -163,19 +176,27 @@ export const addTransaction = asyncHandler(async (req, res) => {
 // EXPENSES
 // ============================================================
 export const listExpenses = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query, 20);
+  const { page, pageSize } = getPagination(req.query, 20);
   const { category } = req.query;
+  const q = safeSearch(req.query.search);
 
-  let query = supabase
-    .from('expenses')
-    .select('*, created_by_user: users!expenses_created_by_fkey(id, username, profiles(full_name))', { count: 'exact' });
-  if (category) query = query.eq('category', category);
-  if (req.query.from) query = query.gte('expense_date', req.query.from);
-  if (req.query.to) query = query.lte('expense_date', req.query.to);
-
-  const { data, count, error } = await query.order('expense_date', { ascending: false }).range(from, to);
-  if (error) throw error;
-  return ok(res, buildPage(data || [], count || 0, page, pageSize));
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('expenses').select(select, opts);
+      if (category) query = query.eq('category', category);
+      if (q) query = query.ilike('description', `%${q}%`);
+      if (req.query.from) query = query.gte('expense_date', req.query.from);
+      if (req.query.to) query = query.lte('expense_date', req.query.to);
+      return query;
+    },
+    select: '*, created_by_user: users!expenses_created_by_fkey(id, username, profiles(full_name))',
+    signature: countSignature('expenses', [q, category, req.query.from, req.query.to]),
+    page,
+    pageSize,
+    orderBy: 'expense_date',
+    ascending: false,
+  });
+  return ok(res, result);
 });
 
 export const createExpense = asyncHandler(async (req, res) => {

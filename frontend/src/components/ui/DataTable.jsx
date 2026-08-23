@@ -1,7 +1,9 @@
 import { useRef, useState, useEffect } from 'react';
-import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUp, ArrowDown, Columns3, Check } from 'lucide-react';
 import { Skeleton, EmptyState, ErrorState } from './Feedback.jsx';
 import { Button } from './Button.jsx';
+
+export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 250];
 
 export function SearchInput({ value, onChange, placeholder = 'Cari...', className = '', 'aria-label': ariaLabel }) {
   return (
@@ -18,7 +20,7 @@ export function SearchInput({ value, onChange, placeholder = 'Cari...', classNam
   );
 }
 
-export function Pagination({ page, totalPages, total, pageSize, onPageChange, onPageSizeChange, pageSizeOptions = [20, 50, 100] }) {
+export function Pagination({ page, totalPages, total, pageSize, onPageChange, onPageSizeChange, pageSizeOptions = PAGE_SIZE_OPTIONS }) {
   useEffect(() => {
     if (totalPages && page > totalPages && page > 1 && onPageChange) {
       onPageChange(totalPages);
@@ -136,6 +138,18 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange, on
   );
 }
 
+const PRIORITY_CLASS = { md: 'hidden md:table-cell', lg: 'hidden lg:table-cell' };
+
+function readHiddenCols(storageKey) {
+  if (!storageKey) return [];
+  try {
+    const raw = JSON.parse(localStorage.getItem(`dt:hidden:${storageKey}`) || '[]');
+    return Array.isArray(raw) ? raw.filter((v) => typeof v === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
 export function DataTable({
   columns,
   data = [],
@@ -158,20 +172,87 @@ export function DataTable({
   striped = true,
   hoverable = true,
   renderCard,
+  storageKey,
 }) {
   const hasCards = Boolean(renderCard);
+  const [hiddenCols, setHiddenCols] = useState(() => new Set(readHiddenCols(storageKey)));
+
+  useEffect(() => {
+    setHiddenCols(new Set(readHiddenCols(storageKey)));
+  }, [storageKey]);
+
+  // Kolom yang bisa disembunyikan user (hideable !== false)
+  const hideableColumns = columns.filter((c) => c.hideable !== false);
+  const showPicker = hideableColumns.length > 1;
+
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      localStorage.setItem(`dt:hidden:${storageKey}`, JSON.stringify([...hiddenCols]));
+    } catch { /* penyimpanan tidak tersedia */ }
+  }, [storageKey, hiddenCols]);
+
+  const toggleCol = (key) => {
+    setHiddenCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else {
+        // Minimal satu kolom harus tetap tampil
+        const remaining = columns.filter((c) => !next.has(c.key) && c.key !== key);
+        if (!remaining.length) return prev;
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  // Kolom tampil = tidak disembunyikan user. Priority md/lg tetap di-render
+  // tapi disembunyikan lewat CSS pada viewport kecil.
+  const visibleColumns = columns.filter((c) => !hiddenCols.has(c.key));
+  const colSpan = Math.max(visibleColumns.length, 1);
+
+  const hasData = data.length > 0;
+  const firstLoad = loading && !hasData; // skeleton hanya saat belum ada data sama sekali
+  const refreshing = loading && hasData; // pindah halaman/filter: pertahankan tabel, redupkan
+
+  const pickerItems = hideableColumns.map((c) => ({
+    label: c.headerLabel || (typeof c.header === 'string' ? c.header : c.key),
+    icon: hiddenCols.has(c.key) ? undefined : Check,
+    keepOpen: true,
+    onClick: () => toggleCol(c.key),
+  }));
 
   return (
-    <div className={`rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden ${className}`}>
+    <div className={`relative rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden ${className}`}>
+      {refreshing && <div className="absolute inset-x-0 top-0 z-30 h-0.5 animate-pulse bg-primary-500" aria-hidden="true" />}
+
       {toolbar && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 bg-slate-50/50 px-3 py-3 sm:px-4">
           {toolbar}
         </div>
       )}
 
+      {(showPicker || refreshing) && (
+        <div className="flex items-center justify-end gap-2 border-b border-slate-100 bg-white px-3 py-2 sm:px-4">
+          <span className="mr-auto text-xs text-slate-400" role="status">
+            {firstLoad ? 'Memuat data...' : refreshing ? 'Memperbarui...' : ''}
+          </span>
+          {showPicker && (
+            <Dropdown
+              trigger={
+                <Button size="xs" variant="ghost" icon={Columns3}>
+                  Kolom ({visibleColumns.length}/{columns.length})
+                </Button>
+              }
+              items={pickerItems}
+            />
+          )}
+        </div>
+      )}
+
       {hasCards && (
         <div className="md:hidden">
-          {loading ? (
+          {firstLoad ? (
             <div className="p-3 space-y-3">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="rounded-xl border border-slate-100 p-4 space-y-3">
@@ -192,10 +273,10 @@ export function DataTable({
             </div>
           ) : error ? (
             <ErrorState message="Terjadi kesalahan, silakan coba lagi" onRetry={onRetry} />
-          ) : data.length === 0 ? (
+          ) : data.length === 0 && !loading ? (
             <EmptyState title={emptyText} />
           ) : (
-            <div className="p-3 space-y-2">
+            <div className={`p-3 space-y-2 transition-opacity duration-150 ${refreshing ? 'pointer-events-none opacity-50' : ''}`}>
               {data.map((row, idx) => (
                 <div
                   key={row[rowKey] ?? idx}
@@ -207,7 +288,7 @@ export function DataTable({
                   tabIndex={onRowClick ? 0 : undefined}
                   onKeyDown={onRowClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(row); }} : undefined}
                 >
-                  {renderCard(row, columns)}
+                  {renderCard(row, visibleColumns)}
                 </div>
               ))}
             </div>
@@ -215,26 +296,26 @@ export function DataTable({
         </div>
       )}
 
-      <div className={`${hasCards ? 'hidden md:block' : ''} overflow-x-auto`}>
+      <div className={`${hasCards ? 'hidden md:block' : ''} overflow-auto max-h-[70dvh] transition-opacity duration-150 ${refreshing ? 'pointer-events-none opacity-50' : ''}`}>
         <table className="w-full min-w-[640px] text-left text-sm" role="grid">
-          <thead>
-            <tr className="border-b border-slate-200/80 bg-slate-50/80 text-xs uppercase tracking-wider text-slate-500">
-              {columns.map((c) => {
+          <thead className="sticky top-0 z-10">
+            <tr className="border-b border-slate-200/80 text-xs uppercase tracking-wider text-slate-500">
+              {visibleColumns.map((c) => {
                 const sortable = Boolean(c.sortable && onSortChange);
                 const sortKey = c.sortKey || c.key;
                 const active = sortable && sort?.key === sortKey;
                 return (
                   <th
                     key={c.key}
-                    className={`px-4 py-3 font-semibold ${c.className || ''} ${c.align ? `text-${c.align}` : ''}`}
+                    className={`bg-slate-50 px-4 py-3 font-semibold ${c.className || ''} ${c.align ? `text-${c.align}` : ''} ${PRIORITY_CLASS[c.priority] || ''}`}
                     scope="col"
                     style={{ width: c.width }}
+                    aria-sort={active ? (sort.order === 'asc' ? 'ascending' : 'descending') : undefined}
                   >
                     {sortable ? (
                       <button
                         onClick={() => onSortChange(sortKey)}
                         className={`inline-flex items-center gap-1 hover:text-slate-800 transition-colors ${active ? 'text-primary-600' : ''}`}
-                        aria-sort={active ? (sort.order === 'asc' ? 'ascending' : 'descending') : 'none'}
                       >
                         {c.header}
                         {active ? (
@@ -256,29 +337,25 @@ export function DataTable({
             </tr>
           </thead>
           <tbody className={`divide-y divide-slate-100 ${striped ? 'bg-white' : ''}`}>
-            {loading ? (
-              <tr>
-                <td colSpan={columns.length}>
-                  <div className="space-y-3 p-4">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="flex gap-4">
-                        {Array.from({ length: columns.length }).map((_, j) => (
-                          <Skeleton key={j} className="h-5 flex-1" />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </td>
-              </tr>
+            {firstLoad ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <tr key={`skeleton-${i}`} className={i % 2 === 1 && striped ? 'bg-slate-50/50' : ''}>
+                  {visibleColumns.map((c) => (
+                    <td key={c.key} className={`px-4 py-3 ${PRIORITY_CLASS[c.priority] || ''}`}>
+                      <Skeleton className="h-5 w-full max-w-[160px]" />
+                    </td>
+                  ))}
+                </tr>
+              ))
             ) : error ? (
               <tr>
-                <td colSpan={columns.length}>
+                <td colSpan={colSpan}>
                   <ErrorState message="Terjadi kesalahan, silakan coba lagi" onRetry={onRetry} />
                 </td>
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length}>
+                <td colSpan={colSpan}>
                   <EmptyState title={emptyText} />
                 </td>
               </tr>
@@ -297,10 +374,10 @@ export function DataTable({
                   role={onRowClick ? 'button' : undefined}
                   aria-label={onRowClick ? 'Klik untuk melihat detail' : undefined}
                 >
-                  {columns.map((c) => (
+                  {visibleColumns.map((c) => (
                     <td
                       key={c.key}
-                      className={`px-4 py-3 text-slate-700 ${c.className || ''} ${c.align ? `text-${c.align}` : ''}`}
+                      className={`px-4 py-3 text-slate-700 ${c.className || ''} ${c.align ? `text-${c.align}` : ''} ${PRIORITY_CLASS[c.priority] || ''}`}
                     >
                       {c.render ? c.render(row) : row[c.key]}
                     </td>
@@ -311,7 +388,7 @@ export function DataTable({
           </tbody>
         </table>
       </div>
-      {!loading && !error && data.length > 0 && total !== undefined && (
+      {!error && !(loading && !hasData) && total !== undefined && (
         <div className="border-t border-slate-200">
           <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={onPageChange} onPageSizeChange={onPageSizeChange} />
         </div>

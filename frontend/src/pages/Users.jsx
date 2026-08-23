@@ -20,7 +20,7 @@ export default function Users() {
   const [search, setSearch] = useState('');
   const debounced = useDebounce(search, 400);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
   const [toDelete, setToDelete] = useState(null);
   const [resetUser, setResetUser] = useState(null);
   const [resetPwd, setResetPwd] = useState('');
@@ -73,6 +73,7 @@ export default function Users() {
       />
 
       <DataTable
+        storageKey="users"
         columns={[
           { key: 'user', header: 'User', render: (r) => (
             <div className="flex items-center gap-3">

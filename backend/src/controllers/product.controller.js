@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { writeAudit } from '../services/auditService.js';
-import { getPagination, buildPage } from '../utils/pagination.js';
+import { getPagination, buildPage, fetchPage, countSignature } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, conflict } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -13,24 +13,29 @@ const PRODUCT_SELECT = '*, category:categories(id, name), unit:product_units(id,
 // ============================================================
 
 export const listProducts = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query, 20);
+  const { page, pageSize } = getPagination(req.query, 20);
   const q = safeSearch(req.query.search);
   const { category_id, status, sort } = req.query;
 
-  let query = supabase.from('products').select(PRODUCT_SELECT, { count: 'exact' });
+  const sortable = { name: 'name', created_at: 'created_at', sale_price: 'sale_price', stock: 'stock', purchase_price: 'purchase_price' };
+  const order = sortable[sort] || 'name';
 
-  if (q) query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%,barcode.ilike.%${q}%`);
-  if (category_id) query = query.eq('category_id', category_id);
-  if (status) query = query.eq('status', status);
-
-  const sortable = { name: ['name'], created_at: ['created_at'], sale_price: ['sale_price'], stock: ['stock'], purchase_price: ['purchase_price'] };
-  const order = sortable[sort] ? sortable[sort][0] : 'name';
-  const direction = req.query.order === 'desc' ? { ascending: false } : { ascending: true };
-
-  const { data, count, error } = await query.order(order, direction).range(from, to);
-  if (error) throw error;
-
-  return ok(res, buildPage(data || [], count || 0, page, pageSize));
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('products').select(select, opts);
+      if (q) query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%,barcode.ilike.%${q}%`);
+      if (category_id) query = query.eq('category_id', category_id);
+      if (status) query = query.eq('status', status);
+      return query;
+    },
+    select: PRODUCT_SELECT,
+    signature: countSignature('products', [q, category_id, status]),
+    page,
+    pageSize,
+    orderBy: order,
+    ascending: req.query.order !== 'desc',
+  });
+  return ok(res, result);
 });
 
 export const getProduct = asyncHandler(async (req, res) => {
@@ -164,17 +169,25 @@ export const createUnit = asyncHandler(async (req, res) => {
 // ============================================================
 
 export const listCategories = asyncHandler(async (req, res) => {
-  const { page, pageSize, from, to } = getPagination(req.query, 20);
+  const { page, pageSize } = getPagination(req.query, 20);
   const q = (req.query.search || '').trim();
   const { status } = req.query;
 
-  let query = supabase.from('categories').select('*', { count: 'exact' }).order('name');
-  if (q) query = query.ilike('name', `%${q}%`);
-  if (status) query = query.eq('status', status);
-
-  const { data, count, error } = await query.range(from, to);
-  if (error) throw error;
-  return ok(res, buildPage(data || [], count || 0, page, pageSize));
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('categories').select(select, opts);
+      if (q) query = query.ilike('name', `%${q}%`);
+      if (status) query = query.eq('status', status);
+      return query;
+    },
+    select: 'id, name, description, status, created_at',
+    signature: countSignature('categories', [q, status]),
+    page,
+    pageSize,
+    orderBy: 'name',
+    ascending: true,
+  });
+  return ok(res, result);
 });
 
 export const createCategory = asyncHandler(async (req, res) => {

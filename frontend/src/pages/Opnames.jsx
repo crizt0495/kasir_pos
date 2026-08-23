@@ -14,7 +14,7 @@ export default function Opnames() {
   const { can } = usePermission();
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
   const [toDelete, setToDelete] = useState(null);
   const [toComplete, setToComplete] = useState(null);
   const [toCancel, setToCancel] = useState(null);
@@ -78,6 +78,7 @@ export default function Opnames() {
       />
 
       <DataTable
+        storageKey="opnames"
         columns={[
           { key: 'opname_date', header: 'Tanggal', render: (r) => formatDateTime(r.opname_date) },
           { key: 'creator', header: 'Dibuat Oleh', render: (r) => r.creator?.profiles?.full_name || r.creator?.username || '-' },

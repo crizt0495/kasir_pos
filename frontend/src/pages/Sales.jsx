@@ -21,7 +21,7 @@ export default function Sales() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
   const [sort, setSort] = useState({ key: 'created_at', order: 'desc' });
   const [receiptSale, setReceiptSale] = useState(null);
   const [settings, setSettings] = useState({});
@@ -70,19 +70,20 @@ export default function Sales() {
       <PageHeader title="Riwayat Penjualan" description="Semua transaksi penjualan toko" />
 
       <DataTable
+        storageKey="sales"
         columns={[
-          { key: 'invoice_number', header: 'No. Transaksi', sortable: true, render: (r) => <span className="font-medium text-primary-600">{r.invoice_number}</span> },
+          { key: 'invoice_number', header: 'No. Transaksi', sortable: true, hideable: false, render: (r) => <span className="font-medium text-primary-600">{r.invoice_number}</span> },
           { key: 'created_at', header: 'Tanggal', sortable: true, render: (r) => formatDateTime(r.created_at) },
-          { key: 'cashier', header: 'Kasir', render: (r) => r.cashier?.profiles?.full_name || r.cashier?.username || '-' },
-          { key: 'customer', header: 'Pelanggan', render: (r) => r.customer?.name || '-' },
-          { key: 'payment_method', header: 'Metode', render: (r) => (
+          { key: 'cashier', header: 'Kasir', priority: 'lg', render: (r) => r.cashier?.profiles?.full_name || r.cashier?.username || '-' },
+          { key: 'customer', header: 'Pelanggan', priority: 'md', render: (r) => r.customer?.name || '-' },
+          { key: 'payment_method', header: 'Metode', priority: 'lg', render: (r) => (
             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${paymentMethodColor(r.payment_method)}`}>
               {paymentMethodLabel(r.payment_method)}
             </span>
           )},
-          { key: 'total', header: 'Total', sortable: true, render: (r) => <span className="font-semibold">{formatRupiah(r.total)}</span> },
+          { key: 'total', header: 'Total', align: 'right', sortable: true, hideable: false, render: (r) => <span className="font-semibold">{formatRupiah(r.total)}</span> },
           { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
-          { key: 'actions', header: 'Aksi', render: (r) => (
+          { key: 'actions', header: 'Aksi', align: 'right', hideable: false, render: (r) => (
             <div className="flex gap-1">
               {can('sales.view') && (
                 <button onClick={() => navigate(`/sales/${r.id}`)} className="rounded-md p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-600">

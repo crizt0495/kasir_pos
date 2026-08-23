@@ -18,7 +18,7 @@ export default function Purchases() {
   const [supplierId, setSupplierId] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
   const [toReceive, setToReceive] = useState(null);
   const [toDelete, setToDelete] = useState(null);
   const [acting, setActing] = useState(false);
@@ -72,6 +72,7 @@ export default function Purchases() {
       />
 
       <DataTable
+        storageKey="purchases"
         columns={[
           { key: 'purchase_number', header: 'No. Pembelian', render: (r) => <span className="font-medium text-primary-600">{r.purchase_number}</span> },
           { key: 'supplier', header: 'Supplier', render: (r) => r.supplier?.name || '-' },

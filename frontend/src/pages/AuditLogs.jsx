@@ -15,7 +15,7 @@ export default function AuditLogs() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
   const [selected, setSelected] = useState(null);
 
   const list = useApi(
@@ -30,8 +30,9 @@ export default function AuditLogs() {
       <PageHeader title="Audit Log" description="Semua aktivitas penting pengguna" />
 
       <DataTable
+        storageKey="audit-logs"
         columns={[
-          { key: 'created_at', header: 'Waktu', render: (r) => formatDateTime(r.created_at) },
+          { key: 'created_at', header: 'Waktu', hideable: false, render: (r) => formatDateTime(r.created_at) },
           { key: 'user', header: 'User', render: (r) => (
             <div>
               <p className="font-medium text-slate-800">{r.username || r.user?.username || 'Sistem'}</p>
@@ -40,7 +41,7 @@ export default function AuditLogs() {
           )},
           { key: 'action', header: 'Aksi', render: (r) => <Badge color="bg-primary-100 text-primary-700">{r.action}</Badge> },
           { key: 'module', header: 'Modul', render: (r) => <Badge color="bg-slate-100 text-slate-600">{r.module}</Badge> },
-          { key: 'record_id', header: 'ID Record', render: (r) => <code className="text-xs text-slate-400">{r.record_id ? r.record_id.slice(0, 8) : '-'}</code> },
+          { key: 'record_id', header: 'ID Record', priority: 'lg', render: (r) => <code className="text-xs text-slate-400">{r.record_id ? r.record_id.slice(0, 8) : '-'}</code> },
           { key: 'details', header: 'Detail', render: (r) => (
             <button
               onClick={() => setSelected(r)}

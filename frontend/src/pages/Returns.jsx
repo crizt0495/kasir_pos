@@ -14,7 +14,7 @@ export default function Returns() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
 
   const list = useApi(
     () => returnsApi.list({ search: debounced || undefined, from: from || undefined, to: to || undefined, page, pageSize }).then((r) => r.data),
@@ -28,6 +28,7 @@ export default function Returns() {
       <PageHeader title="Retur" description="Riwayat retur penjualan" />
 
       <DataTable
+        storageKey="returns"
         columns={[
           { key: 'return_number', header: 'No. Retur', render: (r) => (
             <span className="flex items-center gap-1.5 font-medium text-red-600">

@@ -18,7 +18,7 @@ export default function Inventory() {
   const [categoryId, setCategoryId] = useState('');
   const [filter, setFilter] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(25);
   const [adjusting, setAdjusting] = useState(null);
   const [form, setForm] = useState({ quantity: 0, reason: '' });
   const [saving, setSaving] = useState(false);
@@ -75,6 +75,7 @@ export default function Inventory() {
       <PageHeader title="Stok" description="Pantau dan kelola stok produk" />
 
       <DataTable
+        storageKey="inventory"
         columns={[
           { key: 'product', header: 'Produk', render: (r) => (
             <div>
