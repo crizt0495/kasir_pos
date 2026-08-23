@@ -10,7 +10,7 @@ import { useApi } from '../hooks/useApi.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { computeTotals, computeTax, computeChange } from '../utils/cart.js';
-import { formatRupiah, formatNumber, formatQty, paymentMethodLabel } from '../utils/format.js';
+import { formatRupiah, formatNumber, formatQty, formatDateTime, paymentMethodLabel } from '../utils/format.js';
 import {
   Button, Modal, ConfirmDialog, Input, Select, Field, Textarea, Skeleton, EmptyState, ErrorState, Badge,
 } from '../components/ui/index.jsx';
@@ -691,7 +691,7 @@ function HeldCartsModal({ open, onClose, heldCarts, onResume, onRemove }) {
                 <p className="text-sm font-medium text-slate-800">
                   {h.items.length} item · {formatQty(h.items.reduce((s, i) => s + i.quantity, 0))} pcs
                 </p>
-                <p className="text-xs text-slate-400/80">{new Date(h.heldAt).toLocaleString('id-ID')}</p>
+                <p className="text-xs text-slate-400/80">{formatDateTime(h.heldAt)}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => onResume(h.id)}>

@@ -1,5 +1,17 @@
 import dayjs from 'dayjs';
 
+// Nama bulan singkat Indonesia — dikomposisi manual agar output deterministik
+// (tidak bergantung pada locale bundle dayjs)
+const MONTHS_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+/** 15 Agu 2026 */
+function partsID(value) {
+  const d = dayjs(value);
+  const day = String(d.date()).padStart(2, '0');
+  const month = MONTHS_ID[d.month()];
+  return { day, month, year: d.year(), time: d.format('HH:mm'), valid: d.isValid() };
+}
+
 const rupiah = new Intl.NumberFormat('id-ID', {
   style: 'currency',
   currency: 'IDR',
@@ -28,13 +40,15 @@ export function formatQty(value) {
 /** Format tanggal: 15 Agu 2026 */
 export function formatDate(value) {
   if (!value) return '-';
-  return dayjs(value).format('DD MMM YYYY');
+  const { day, month, year, valid } = partsID(value);
+  return valid ? `${day} ${month} ${year}` : '-';
 }
 
 /** Format tanggal + jam: 15 Agu 2026, 14:30 */
 export function formatDateTime(value) {
   if (!value) return '-';
-  return dayjs(value).format('DD MMM YYYY, HH:mm');
+  const { day, month, year, time, valid } = partsID(value);
+  return valid ? `${day} ${month} ${year}, ${time}` : '-';
 }
 
 /** Tanggal input HTML (YYYY-MM-DD) hari ini */

@@ -8,6 +8,7 @@ import { categorySchema } from '../schemas/index.js';
 import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
+import { formatDate } from '../utils/format.js';
 import {
   Card, DataTable, SearchInput, Button, Modal, Field, Input, Textarea, Select,
   ConfirmDialog, StatusBadge, EmptyState, Skeleton, ErrorState, PageHeader,
@@ -106,7 +107,7 @@ export default function Categories() {
               )},
               { key: 'description', header: 'Deskripsi', render: (r) => r.description || '-' },
               { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
-              { key: 'created_at', header: 'Dibuat', render: (r) => new Date(r.created_at).toLocaleDateString('id-ID') },
+              { key: 'created_at', header: 'Dibuat', render: (r) => formatDate(r.created_at) },
               { key: 'actions', header: 'Aksi', render: (r) => (
                 <div className="flex gap-1">
                   {can('categories.update') && (
@@ -143,7 +144,7 @@ export default function Categories() {
                 </div>
                 {r.description && <p className="text-xs text-slate-500 line-clamp-2">{r.description}</p>}
                 <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>{new Date(r.created_at).toLocaleDateString('id-ID')}</span>
+                  <span>{formatDate(r.created_at)}</span>
                   <div className="flex gap-1">
                     {can('categories.update') && (
                       <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
