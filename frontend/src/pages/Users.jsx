@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Trash2, KeyRound } from 'lucide-react';
 import { usersApi } from '../api/index.js';
@@ -6,6 +6,8 @@ import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { useAuthStore } from '../stores/authStore.js';
+import { resetPasswordSchema } from '../schemas/index.js';
+import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { DataTable, SearchInput, Button, Badge, ConfirmDialog, Modal, Field, Input, PageHeader } from '../components/ui/index.jsx';
@@ -26,6 +28,11 @@ export default function Users() {
 
   const list = useApi(() => usersApi.list({ search: debounced || undefined, page, pageSize }).then((r) => r.data), [debounced, page, pageSize]);
 
+  const { isValid: resetValid, errors: resetErrors } = useMemo(
+    () => validateSchema(resetPasswordSchema, { password: resetPwd }),
+    [resetPwd]
+  );
+
   const confirmDelete = async () => {
     try {
       await usersApi.remove(toDelete.id);
@@ -38,8 +45,8 @@ export default function Users() {
   };
 
   const doReset = async () => {
-    if (resetPwd.length < 8) {
-      toast.error('Password minimal 8 karakter');
+    if (!resetValid) {
+      toast.error(resetErrors.password || 'Password belum valid');
       return;
     }
     setResetting(true);
@@ -183,12 +190,12 @@ export default function Users() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setResetUser(null)}>Batal</Button>
-            <Button onClick={doReset} loading={resetting}>Reset Password</Button>
+            <Button onClick={doReset} loading={resetting} disabled={!resetValid}>Reset Password</Button>
           </>
         }
       >
-        <Field label="Password baru" hint="Minimal 8 karakter, huruf dan angka. User wajib mengganti saat login berikutnya.">
-          <Input type="password" value={resetPwd} onChange={(e) => setResetPwd(e.target.value)} />
+        <Field label="Password baru" required error={resetErrors.password} hint="Minimal 8 karakter, huruf dan angka. User wajib mengganti saat login berikutnya.">
+          <Input type="password" value={resetPwd} onChange={(e) => setResetPwd(e.target.value)} error={!!resetErrors.password} />
         </Field>
       </Modal>
     </div>

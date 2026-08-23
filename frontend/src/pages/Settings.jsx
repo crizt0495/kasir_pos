@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { Save, Store, Settings as SettingsIcon, Receipt, Percent, Boxes, UserCog } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Save, Store, Settings as SettingsIcon, Receipt, Percent, Boxes, UserCog, AlertTriangle } from 'lucide-react';
 import { settingsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
+import { settingsSchema } from '../schemas/index.js';
+import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { Card, Tabs, Button, Field, Input, Select, Checkbox, PageHeader } from '../components/ui/index.jsx';
@@ -37,8 +39,14 @@ export default function Settings() {
 
   const update = (section, patch) => setForm((f) => ({ ...f, [section]: { ...f[section], ...patch } }));
 
+  const { isValid, errors } = useMemo(() => validateSchema(settingsSchema, form || {}), [form]);
+
   const save = async () => {
     if (!form) return;
+    if (!isValid) {
+      toast.error('Ada pengaturan yang belum valid — periksa field yang bertanda merah');
+      return;
+    }
     setSaving(true);
     try {
       await settingsApi.update([
@@ -67,30 +75,45 @@ export default function Settings() {
       <PageHeader
         title="Settings"
         description="Konfigurasi toko, POS, pajak, dan sistem"
-        actions={<Button onClick={save} loading={saving} icon={Save}>Simpan Pengaturan</Button>}
+        actions={
+          <Button onClick={save} loading={saving} disabled={!isValid} icon={Save}>Simpan Pengaturan</Button>
+        }
       />
+
+      {!isValid && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700" role="alert">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Beberapa pengaturan belum valid sehingga tombol simpan nonaktif:{' '}
+            {Object.keys(errors)
+              .map((k) => TABS.find((t) => t.key === k)?.label || k)
+              .join(', ')}
+            .
+          </span>
+        </div>
+      )}
 
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
 
       {tab === 'store' && (
         <Card title={<span className="flex items-center gap-2"><Store className="h-4 w-4" /> Informasi Toko</span>} bodyClassName="p-5">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Field label="Nama Toko">
-              <Input value={form.store.name || ''} onChange={(e) => update('store', { name: e.target.value })} />
+            <Field label="Nama Toko" required error={errors.store?.name}>
+              <Input value={form.store.name || ''} onChange={(e) => update('store', { name: e.target.value })} error={!!errors.store?.name} />
             </Field>
-            <Field label="Telepon">
+            <Field label="Telepon" hint="Opsional">
               <Input value={form.store.phone || ''} onChange={(e) => update('store', { phone: e.target.value })} />
             </Field>
             <div className="md:col-span-2">
-              <Field label="Alamat">
+              <Field label="Alamat" hint="Opsional">
                 <Input value={form.store.address || ''} onChange={(e) => update('store', { address: e.target.value })} />
               </Field>
             </div>
-            <Field label="Logo (URL)">
-              <Input value={form.store.logo_url || ''} onChange={(e) => update('store', { logo_url: e.target.value })} placeholder="https://..." />
+            <Field label="Logo (URL)" hint="Opsional" error={errors.store?.logo_url}>
+              <Input value={form.store.logo_url || ''} onChange={(e) => update('store', { logo_url: e.target.value })} placeholder="https://..." error={!!errors.store?.logo_url} />
             </Field>
-            <Field label="NPWP">
-              <Input value={form.store.npwp || ''} onChange={(e) => update('store', { npwp: e.target.value })} />
+            <Field label="NPWP" hint="Opsional">
+              <Input value={form.store.npwp || ''} onChange={(e) => update('store', { npwp: e.target.value })} maxLength={50} />
             </Field>
           </div>
         </Card>
@@ -110,8 +133,12 @@ export default function Settings() {
                 <option value="80mm">80mm (printer thermal besar)</option>
               </Select>
             </Field>
-            <Field label="Prefix Nomor Transaksi" hint="Contoh: INV → INV-20260815-000001">
-              <Input value={form.invoice?.prefix || ''} onChange={(e) => update('invoice', { prefix: e.target.value.toUpperCase().slice(0, 10) })} />
+            <Field label="Prefix Nomor Transaksi" required hint="Contoh: INV → INV-20260815-000001" error={errors.invoice?.prefix}>
+              <Input
+                value={form.invoice?.prefix || ''}
+                onChange={(e) => update('invoice', { prefix: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) })}
+                error={!!errors.invoice?.prefix}
+              />
             </Field>
             <Checkbox
               label="Cetak struk otomatis setelah transaksi"
@@ -131,12 +158,16 @@ export default function Settings() {
               checked={form.tax.enabled === true}
               onChange={(e) => update('tax', { enabled: e.target.checked })}
             />
-            <Field label="Persentase Pajak (%)">
+            <Field label="Persentase Pajak (%)" required={form.tax.enabled === true} error={errors.tax?.percentage}>
               <Input
                 type="number"
-                value={form.tax.percentage || 0}
-                onChange={(e) => update('tax', { percentage: Number(e.target.value) || 0 })}
+                min="0"
+                max="100"
+                step="any"
+                value={form.tax.percentage ?? 0}
+                onChange={(e) => update('tax', { percentage: e.target.value === '' ? 0 : Number(e.target.value) })}
                 disabled={form.tax.enabled !== true}
+                error={!!errors.tax?.percentage}
               />
             </Field>
             <p className="text-xs text-slate-400">Pajak dihitung dari subtotal setelah diskon pada saat checkout.</p>
@@ -153,11 +184,14 @@ export default function Settings() {
               onChange={(e) => update('inventory', { allow_negative_stock: e.target.checked })}
             />
             <p className="text-xs text-slate-400">Jika dimatikan, transaksi akan ditolak bila stok tidak mencukupi.</p>
-            <Field label="Ambang Stok Menipis (default)">
+            <Field label="Ambang Stok Menipis (default)" error={errors.inventory?.low_stock_threshold}>
               <Input
                 type="number"
-                value={form.inventory.low_stock_threshold || 0}
-                onChange={(e) => update('inventory', { low_stock_threshold: Number(e.target.value) || 0 })}
+                min="0"
+                step="any"
+                value={form.inventory.low_stock_threshold ?? 0}
+                onChange={(e) => update('inventory', { low_stock_threshold: e.target.value === '' ? 0 : Number(e.target.value) })}
+                error={!!errors.inventory?.low_stock_threshold}
               />
             </Field>
           </div>
@@ -166,11 +200,14 @@ export default function Settings() {
 
       {tab === 'session' && (
         <Card title={<span className="flex items-center gap-2"><UserCog className="h-4 w-4" /> User & Sesi</span>} bodyClassName="p-5">
-          <Field label="Session Timeout (menit)" hint="Sesi login berakhir setelah waktu ini (default 480 menit / 8 jam)">
+          <Field label="Session Timeout (menit)" required error={errors.user_session?.session_timeout_minutes} hint="Sesi login berakhir setelah waktu ini (default 480 menit / 8 jam)">
             <Input
               type="number"
-              value={form.user_session.session_timeout_minutes || 480}
-              onChange={(e) => update('user_session', { session_timeout_minutes: Number(e.target.value) || 480 })}
+              min="1"
+              step="1"
+              value={form.user_session.session_timeout_minutes ?? 480}
+              onChange={(e) => update('user_session', { session_timeout_minutes: e.target.value === '' ? 0 : Number(e.target.value) })}
+              error={!!errors.user_session?.session_timeout_minutes}
             />
           </Field>
         </Card>

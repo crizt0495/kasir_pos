@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Printer, RotateCcw, ReceiptText } from 'lucide-react';
 import { salesApi, settingsApi, cashierApi } from '../api/index.js';
@@ -38,6 +38,20 @@ export default function SaleDetail() {
 
   const totalRefund = (s?.items || []).reduce((sum, item) => sum + (Number(refundItems[item.id] || 0) * Number(item.price)), 0);
 
+  const refundValidation = useMemo(() => {
+    const errors = { items: '', reason: '' };
+    const selected = Object.values(refundItems).filter((q) => Number(q) > 0);
+    if (!selected.length) errors.items = 'Pilih minimal satu item untuk diretur';
+    const over = Object.entries(refundItems).find(([itemId, qty]) => {
+      const item = s?.items?.find((i) => i.id === itemId);
+      return item && Number(qty) > remaining(item);
+    });
+    if (over) errors.items = 'Jumlah retur melebihi sisa yang dapat diretur';
+    if (reason.trim().length < 3) errors.reason = 'Alasan retur wajib diisi (min 3 karakter)';
+    else if (reason.length > 1000) errors.reason = 'Alasan retur maksimal 1000 karakter';
+    return { isValid: !errors.items && !errors.reason, errors };
+  }, [refundItems, reason, s]);
+
   const openRefund = () => {
     setRefundItems({});
     setReason('');
@@ -49,12 +63,8 @@ export default function SaleDetail() {
       .filter(([, qty]) => Number(qty) > 0)
       .map(([saleItemId, qty]) => ({ sale_item_id: saleItemId, quantity: Number(qty) }));
 
-    if (!items.length) {
-      toast.error('Pilih minimal satu item');
-      return;
-    }
-    if (reason.trim().length < 3) {
-      toast.error('Alasan retur minimal 3 karakter');
+    if (!refundValidation.isValid) {
+      toast.error(refundValidation.errors.items || refundValidation.errors.reason);
       return;
     }
 
@@ -235,7 +245,11 @@ export default function SaleDetail() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowRefund(false)}>Batal</Button>
-            <Button variant="danger" onClick={() => setConfirmRefund(true)} disabled={!Object.values(refundItems).some((q) => Number(q) > 0)}>
+            <Button
+              variant="danger"
+              onClick={() => setConfirmRefund(true)}
+              disabled={!refundValidation.isValid || submitting}
+            >
               <RotateCcw className="h-4 w-4" /> Refund {totalRefund > 0 ? formatRupiah(totalRefund) : ''}
             </Button>
           </>
@@ -245,10 +259,15 @@ export default function SaleDetail() {
           <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
             Pilih item dan jumlah yang diretur. Stok akan kembali, dan jika penjualan tunai, uang dikembalikan dari kas.
           </div>
+          {refundValidation.errors.items && (
+            <p className="-mt-2 text-xs text-danger-600" role="alert">{refundValidation.errors.items}</p>
+          )}
           <div className="space-y-2">
             {(s?.items || []).map((item) => {
               const rem = remaining(item);
               if (rem <= 0) return null;
+              const qty = Number(refundItems[item.id] || 0);
+              const over = qty > rem;
               return (
                 <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2.5">
                   <div className="min-w-0 flex-1">
@@ -256,6 +275,7 @@ export default function SaleDetail() {
                     <p className="text-xs text-slate-400">
                       Terjual {formatQty(item.quantity)} · Sisa retur {formatQty(rem)} · {formatRupiah(item.price)}/pcs
                     </p>
+                    {over && <p className="mt-0.5 text-xs text-danger-600" role="alert">Maksimal {formatQty(rem)}</p>}
                   </div>
                   <Input
                     type="number"
@@ -265,13 +285,14 @@ export default function SaleDetail() {
                     placeholder="0"
                     onChange={(e) => setRefundItems((prev) => ({ ...prev, [item.id]: e.target.value }))}
                     className="w-24 text-right"
+                    error={over}
                   />
                 </div>
               );
             })}
           </div>
-          <Field label="Alasan Retur" required>
-            <Textarea rows={2} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="cth: produk rusak / salah barang" />
+          <Field label="Alasan Retur" required error={refundValidation.errors.reason}>
+            <Textarea rows={2} maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="cth: produk rusak / salah barang" error={!!refundValidation.errors.reason} />
           </Field>
         </div>
       </Modal>

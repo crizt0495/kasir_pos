@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import { purchasesApi, suppliersApi, productsApi } from '../api/index.js';
@@ -6,8 +6,14 @@ import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Button, Card, Field, Input, Select, Textarea, Skeleton, SearchInput } from '../components/ui/index.jsx';
+import { Button, Card, Field, Input, Select, Skeleton, SearchInput } from '../components/ui/index.jsx';
 import { formatRupiah } from '../utils/format.js';
+
+const parseNum = (v) => {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
 
 export default function PurchaseForm() {
   const { id } = useParams();
@@ -69,17 +75,46 @@ export default function PurchaseForm() {
   const subtotal = items.reduce((s, i) => s + Number(i.quantity) * Number(i.cost_price), 0);
   const total = subtotal - Number(discount);
 
+  const itemIssues = useMemo(
+    () =>
+      items.map((i) => {
+        const issues = {};
+        if (!Number.isFinite(Number(i.quantity)) || Number(i.quantity) <= 0 || i.quantity === '') {
+          if (i.quantity === '' || !Number.isFinite(Number(i.quantity))) issues.quantity = 'Qty wajib diisi';
+          else issues.quantity = 'Qty harus lebih dari 0';
+        }
+        if (i.cost_price === '' || !Number.isFinite(Number(i.cost_price))) issues.cost_price = 'Harga beli wajib diisi';
+        else if (Number(i.cost_price) < 0) issues.cost_price = 'Harga beli tidak boleh negatif';
+        return issues;
+      }),
+    [items]
+  );
+
+  const dateValid = Boolean(purchaseDate) && !Number.isNaN(new Date(purchaseDate).getTime());
+  const discountNum = parseNum(discount);
+  const headerErrors = {
+    purchase_date: dateValid ? '' : 'Tanggal pembelian wajib diisi',
+    invoice_number: invoiceNumber.length > 100 ? 'No. invoice maksimal 100 karakter' : '',
+    discount: discountNum === null ? 'Diskon tidak valid' : discountNum < 0 ? 'Diskon tidak boleh negatif' : '',
+  };
+  const canSave =
+    dateValid &&
+    !headerErrors.invoice_number &&
+    !headerErrors.discount &&
+    items.length > 0 &&
+    itemIssues.every((issues) => Object.keys(issues).length === 0);
+
   const save = async () => {
     if (!items.length) {
       toast.error('Tambahkan minimal satu produk');
       return;
     }
-    if (items.some((i) => !i.quantity || i.quantity <= 0)) {
+    if (itemIssues.some((i) => i.quantity)) {
       toast.error('Qty harus lebih dari 0');
       return;
     }
-    if (items.some((i) => Number(i.cost_price) < 0)) {
-      toast.error('Harga beli tidak boleh negatif');
+    if (itemIssues.some((i) => i.cost_price)) {
+      toast.error('Harga beli tidak valid');
       return;
     }
     setSaving(true);
@@ -130,17 +165,17 @@ export default function PurchaseForm() {
 
       <Card bodyClassName="p-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Field label="Supplier">
+          <Field label="Supplier" hint="Opsional">
             <Select value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
               <option value="">Pilih supplier</option>
               {(suppliers.data?.items || []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </Select>
           </Field>
-          <Field label="No. Invoice Supplier">
-            <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="INV/2026/001" />
+          <Field label="No. Invoice Supplier" hint="Opsional" error={headerErrors.invoice_number}>
+            <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="INV/2026/001" maxLength={100} error={!!headerErrors.invoice_number} />
           </Field>
-          <Field label="Tanggal Pembelian">
-            <Input type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} />
+          <Field label="Tanggal Pembelian" required error={headerErrors.purchase_date}>
+            <Input type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} error={!!headerErrors.purchase_date} />
           </Field>
         </div>
       </Card>
@@ -171,31 +206,40 @@ export default function PurchaseForm() {
 
       <Card title={`Item Pembelian (${items.length})`} bodyClassName="p-0">
         {items.length === 0 ? (
-          <p className="p-6 text-center text-sm text-slate-400">Belum ada produk.</p>
+          <div className="space-y-1 p-6 text-center">
+            <p className="text-sm text-slate-400">Belum ada produk.</p>
+            <p className="text-xs text-danger-600" role="alert">Tambahkan minimal satu produk untuk menyimpan</p>
+          </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {items.map((item) => (
-              <div key={item.product_id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-slate-800">{item.product?.name}</p>
-                  <p className="text-xs text-slate-400">{item.product?.sku}</p>
+            {items.map((item, idx) => {
+              const issues = itemIssues[idx] || {};
+              return (
+                <div key={item.product_id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-slate-800">{item.product?.name}</p>
+                    <p className="text-xs text-slate-400">{item.product?.sku}</p>
+                    {Object.values(issues)[0] && (
+                      <p className="mt-0.5 text-xs text-danger-600 sm:hidden" role="alert">{Object.values(issues)[0]}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Field label="Qty" error={issues.quantity}>
+                      <Input type="number" min="0" step="any" value={item.quantity} onChange={(e) => updateItem(item.product_id, { quantity: e.target.value === '' ? '' : Number(e.target.value) })} className="w-20" error={!!issues.quantity} />
+                    </Field>
+                    <Field label="Harga Beli" error={issues.cost_price}>
+                      <Input type="number" min="0" step="any" value={item.cost_price} onChange={(e) => updateItem(item.product_id, { cost_price: e.target.value === '' ? '' : Number(e.target.value) })} className="w-28" error={!!issues.cost_price} />
+                    </Field>
+                    <p className="w-28 pt-5 text-right text-sm font-semibold text-slate-800">
+                      {formatRupiah((Number(item.quantity) || 0) * Number(item.cost_price))}
+                    </p>
+                    <button onClick={() => setItems((prev) => prev.filter((i) => i.product_id !== item.product_id))} className="mb-1 rounded-md p-1.5 text-red-400 hover:bg-red-50">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Field label="Qty">
-                    <Input type="number" value={item.quantity} onChange={(e) => updateItem(item.product_id, { quantity: Number(e.target.value) })} className="w-20" />
-                  </Field>
-                  <Field label="Harga Beli">
-                    <Input type="number" value={item.cost_price} onChange={(e) => updateItem(item.product_id, { cost_price: Number(e.target.value) })} className="w-28" />
-                  </Field>
-                  <p className="w-28 pt-5 text-right text-sm font-semibold text-slate-800">
-                    {formatRupiah((Number(item.quantity) || 0) * Number(item.cost_price))}
-                  </p>
-                  <button onClick={() => setItems((prev) => prev.filter((i) => i.product_id !== item.product_id))} className="mb-1 rounded-md p-1.5 text-red-400 hover:bg-red-50">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>
@@ -208,7 +252,10 @@ export default function PurchaseForm() {
           </div>
           <div className="flex w-full max-w-xs items-center justify-between">
             <span className="text-sm text-slate-500">Diskon</span>
-            <Input type="number" value={discount} onChange={(e) => setDiscount(Number(e.target.value) || 0)} className="w-32 text-right" />
+            <div className="flex flex-col items-end">
+              <Input type="number" min="0" value={discount} onChange={(e) => setDiscount(e.target.value === '' ? 0 : Number(e.target.value))} className={`w-32 text-right ${headerErrors.discount ? 'border-danger-400' : ''}`} />
+              {headerErrors.discount && <p className="mt-1.5 text-xs text-danger-600" role="alert">{headerErrors.discount}</p>}
+            </div>
           </div>
           <div className="flex w-full max-w-xs items-center justify-between border-t border-slate-200 pt-2">
             <span className="text-sm font-semibold text-slate-700">Total</span>
@@ -217,9 +264,16 @@ export default function PurchaseForm() {
         </div>
       </Card>
 
-      <div className="flex justify-end gap-2">
+      <div className="flex items-center justify-end gap-2">
+        {!canSave && (
+          <p className="mr-auto text-xs text-slate-400">
+            {items.length === 0
+              ? 'Tambahkan minimal satu produk dengan qty dan harga yang valid'
+              : 'Lengkapi qty & harga beli setiap item untuk menyimpan'}
+          </p>
+        )}
         <Button variant="secondary" onClick={() => navigate('/purchases')}>Batal</Button>
-        <Button onClick={save} loading={saving} icon={Save}>Simpan Pembelian</Button>
+        <Button onClick={save} loading={saving} disabled={!canSave} icon={Save}>Simpan Pembelian</Button>
       </div>
     </div>
   );

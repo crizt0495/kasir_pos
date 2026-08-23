@@ -48,3 +48,10 @@ export const createPurchaseSchema = z.object({
   notes: z.string().trim().max(1000).nullable().optional(),
   items: z.array(purchaseItemSchema).min(1, 'Daftar produk tidak boleh kosong'),
 });
+
+export const updatePaymentStatusSchema = z.object({
+  payment_status: z.enum(['unpaid', 'partial', 'paid'], {
+    required_error: 'Status pembayaran wajib diisi',
+    invalid_type_error: 'Status pembayaran tidak valid',
+  }),
+});

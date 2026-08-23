@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,8 +19,16 @@ export default function ChangePassword() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm({ resolver: zodResolver(changePasswordSchema) });
+    trigger,
+    formState: { errors, isValid },
+  } = useForm({
+    resolver: zodResolver(changePasswordSchema),
+    mode: 'onChange',
+  });
+
+  useEffect(() => {
+    trigger();
+  }, [trigger]);
 
   const onSubmit = async (values) => {
     setSubmitting(true);
@@ -69,7 +77,7 @@ export default function ChangePassword() {
           <Field label="Konfirmasi password baru" error={errors.confirmPassword?.message}>
             <Input type="password" {...register('confirmPassword')} error={errors.confirmPassword} />
           </Field>
-          <Button type="submit" loading={submitting} className="w-full">
+          <Button type="submit" loading={submitting} disabled={!isValid || submitting} className="w-full">
             Simpan Password
           </Button>
         </form>

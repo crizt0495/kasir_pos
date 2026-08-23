@@ -23,14 +23,21 @@ export default function UserForm() {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    setValue,
+    trigger,
+    formState: { errors, isSubmitting, isValid },
   } = useForm({
     resolver: zodResolver(userSchema),
+    mode: 'onChange',
     defaultValues: {
       username: '', full_name: '', email: '', phone: '', password: '',
       roles: [], is_active: true,
     },
   });
+
+  useEffect(() => {
+    trigger();
+  }, [trigger]);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -50,6 +57,7 @@ export default function UserForm() {
           is_active: data.is_active,
         });
         setSelectedRoles((data.roles || []).map((r) => r.id));
+        trigger();
       })
       .catch((e) => toast.error(getErrorMessage(e)))
       .finally(() => !cancelled && setLoading(false));
@@ -57,10 +65,18 @@ export default function UserForm() {
   }, [id, isEdit, reset]);
 
   const toggleRole = (roleId) => {
-    setSelectedRoles((prev) => (prev.includes(roleId) ? prev.filter((r) => r !== roleId) : [...prev, roleId]));
+    setSelectedRoles((prev) => {
+      const next = prev.includes(roleId) ? prev.filter((r) => r !== roleId) : [...prev, roleId];
+      setValue('roles', next, { shouldValidate: true });
+      return next;
+    });
   };
 
   const onSubmit = async (values) => {
+    if (!selectedRoles.length) {
+      toast.error('Pilih minimal satu role');
+      return;
+    }
     const payload = {
       full_name: values.full_name,
       email: values.email || null,
@@ -75,11 +91,6 @@ export default function UserForm() {
     } else if (values.password) {
       payload.password = values.password;
       payload.must_change_password = true;
-    }
-
-    if (!selectedRoles.length) {
-      toast.error('Pilih minimal satu role');
-      return;
     }
 
     try {
@@ -149,7 +160,7 @@ export default function UserForm() {
 
           <div>
             <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700">
-              <ShieldCheck className="h-4 w-4 text-primary-500" /> Role (hak akses)
+              <ShieldCheck className="h-4 w-4 text-primary-500" /> Role (hak akses) <span className="text-danger-500">*</span>
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {(roles.data?.items || []).map((role) => (
@@ -172,13 +183,21 @@ export default function UserForm() {
                 </label>
               ))}
             </div>
+            {errors.roles && <p className="mt-1.5 text-xs text-danger-600" role="alert">{errors.roles.message}</p>}
           </div>
 
           <Checkbox label="Akun aktif" {...register('is_active')} />
 
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
             <Button variant="secondary" type="button" onClick={() => navigate('/users')}>Batal</Button>
-            <Button type="submit" loading={isSubmitting} icon={Save}>Simpan User</Button>
+            <Button
+              type="submit"
+              disabled={!isValid || isSubmitting || !selectedRoles.length}
+              loading={isSubmitting}
+              icon={Save}
+            >
+              Simpan User
+            </Button>
           </div>
         </form>
       </Card>

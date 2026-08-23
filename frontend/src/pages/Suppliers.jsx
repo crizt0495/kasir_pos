@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus, Pencil, Trash2, Truck } from 'lucide-react';
 import { suppliersApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
+import { supplierSchema } from '../schemas/index.js';
+import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { DataTable, SearchInput, Button, Modal, Field, Input, Textarea, Select, StatusBadge, ConfirmDialog, PageHeader } from '../components/ui/index.jsx';
@@ -25,6 +27,8 @@ export default function Suppliers() {
 
   const list = useApi(() => suppliersApi.list({ search: debounced || undefined, page, pageSize }).then((r) => r.data), [debounced, page, pageSize]);
 
+  const { isValid, errors } = useMemo(() => validateSchema(supplierSchema, form), [form]);
+
   const openCreate = () => {
     setEditing(null);
     setForm(emptyForm);
@@ -42,8 +46,8 @@ export default function Suppliers() {
   };
 
   const save = async () => {
-    if (!form.name.trim()) {
-      setFormError('Nama supplier wajib diisi');
+    if (!isValid) {
+      setFormError(errors.name || 'Data belum lengkap');
       return;
     }
     setSaving(true);
@@ -164,22 +168,22 @@ export default function Suppliers() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setModalOpen(false)}>Batal</Button>
-            <Button onClick={save} loading={saving}>Simpan</Button>
+            <Button onClick={save} loading={saving} disabled={!isValid}>Simpan</Button>
           </>
         }
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="Nama Supplier" required error={formError}>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <Field label="Nama Supplier" required error={errors.name || formError}>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={!!errors.name || !!formError} />
           </Field>
-          <Field label="Kontak Person">
+          <Field label="Kontak Person" hint="Opsional">
             <Input value={form.contact_person} onChange={(e) => setForm({ ...form, contact_person: e.target.value })} />
           </Field>
-          <Field label="Telepon">
-            <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <Field label="Telepon" hint="Opsional — maks 30 karakter" error={errors.phone}>
+            <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} error={!!errors.phone} />
           </Field>
-          <Field label="Email">
-            <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <Field label="Email" hint="Opsional" error={errors.email}>
+            <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} error={!!errors.email} />
           </Field>
           <div className="md:col-span-2">
             <Field label="Alamat">

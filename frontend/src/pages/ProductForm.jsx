@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,7 +6,8 @@ import { Save, ArrowLeft, Plus } from 'lucide-react';
 import { productsApi, categoriesApi, unitsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
-import { productSchema } from '../schemas/index.js';
+import { productSchema, categorySchema, unitSchema } from '../schemas/index.js';
+import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { Button, Field, Input, Select, Textarea, CurrencyInput, Card, Modal, Skeleton, ErrorState } from '../components/ui/index.jsx';
@@ -37,14 +38,20 @@ export default function ProductForm() {
     watch,
     setValue,
     control,
-    formState: { errors, isSubmitting },
+    trigger,
+    formState: { errors, isSubmitting, isValid },
   } = useForm({
     resolver: zodResolver(productSchema),
+    mode: 'onChange',
     defaultValues: {
       sku: '', barcode: '', name: '', category_id: '', unit_id: '', purchase_price: '',
       sale_price: '', stock: '', min_stock: '', status: 'active', description: '', image_url: '',
     },
   });
+
+  useEffect(() => {
+    trigger();
+  }, [trigger]);
 
   const imageUrl = watch('image_url');
 
@@ -61,6 +68,7 @@ export default function ProductForm() {
           category_id: res.data.category_id || '',
           unit_id: res.data.unit_id || '',
         });
+        trigger();
       })
       .catch((e) => toast.error(getErrorMessage(e)))
       .finally(() => !cancelled && setLoading(false));
@@ -90,8 +98,14 @@ export default function ProductForm() {
     }
   };
 
+  const catValidation = useMemo(() => validateSchema(categorySchema, { status: 'active', ...catForm }), [catForm]);
+  const unitValidation = useMemo(() => validateSchema(unitSchema, unitForm), [unitForm]);
+
   const saveCategory = async () => {
-    if (!catForm.name.trim()) { toast.error('Nama kategori wajib diisi'); return; }
+    if (!catValidation.isValid) {
+      toast.error(Object.values(catValidation.errors)[0]);
+      return;
+    }
     setCatSaving(true);
     try {
       const res = await categoriesApi.create(catForm);
@@ -105,8 +119,9 @@ export default function ProductForm() {
   };
 
   const saveUnit = async () => {
-    if (!unitForm.name.trim() || !unitForm.short_name.trim()) {
-      toast.error('Nama dan singkatan satuan wajib diisi'); return;
+    if (!unitValidation.isValid) {
+      toast.error(Object.values(unitValidation.errors)[0]);
+      return;
     }
     setUnitSaving(true);
     try {
@@ -229,7 +244,12 @@ export default function ProductForm() {
             <Button variant="secondary" type="button" onClick={() => navigate('/products')}>
               Batal
             </Button>
-            <Button type="submit" loading={isSubmitting} icon={Save}>
+            <Button
+              type="submit"
+              disabled={!isValid || isSubmitting}
+              loading={isSubmitting}
+              icon={Save}
+            >
               Simpan Produk
             </Button>
           </div>
@@ -243,13 +263,13 @@ export default function ProductForm() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setCatModal(false)}>Batal</Button>
-            <Button onClick={saveCategory} loading={catSaving}>Simpan</Button>
+            <Button onClick={saveCategory} loading={catSaving} disabled={!catValidation.isValid}>Simpan</Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Field label="Nama Kategori" required>
-            <Input value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} placeholder="cth: Makanan" autoFocus />
+          <Field label="Nama Kategori" required error={catValidation.errors.name}>
+            <Input value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} placeholder="cth: Makanan" autoFocus error={!!catValidation.errors.name} />
           </Field>
           <Field label="Deskripsi">
             <Input value={catForm.description} onChange={(e) => setCatForm({ ...catForm, description: e.target.value })} placeholder="Deskripsi singkat (opsional)" />
@@ -264,16 +284,16 @@ export default function ProductForm() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setUnitModal(false)}>Batal</Button>
-            <Button onClick={saveUnit} loading={unitSaving}>Simpan</Button>
+            <Button onClick={saveUnit} loading={unitSaving} disabled={!unitValidation.isValid}>Simpan</Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Field label="Nama Satuan" required>
-            <Input value={unitForm.name} onChange={(e) => setUnitForm({ ...unitForm, name: e.target.value })} placeholder="cth: Kilogram" autoFocus />
+          <Field label="Nama Satuan" required error={unitValidation.errors.name}>
+            <Input value={unitForm.name} onChange={(e) => setUnitForm({ ...unitForm, name: e.target.value })} placeholder="cth: Kilogram" autoFocus error={!!unitValidation.errors.name} />
           </Field>
-          <Field label="Singkatan" required hint="Singkatan yang ditampilkan di tabel">
-            <Input value={unitForm.short_name} onChange={(e) => setUnitForm({ ...unitForm, short_name: e.target.value })} placeholder="cth: Kg" />
+          <Field label="Singkatan" required hint="Singkatan yang ditampilkan di tabel" error={unitValidation.errors.short_name}>
+            <Input value={unitForm.short_name} onChange={(e) => setUnitForm({ ...unitForm, short_name: e.target.value })} placeholder="cth: Kg" error={!!unitValidation.errors.short_name} />
           </Field>
         </div>
       </Modal>

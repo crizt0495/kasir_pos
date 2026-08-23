@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus, Pencil, Trash2, Tags } from 'lucide-react';
 import { categoriesApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
+import { categorySchema } from '../schemas/index.js';
+import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
@@ -26,6 +28,9 @@ export default function Categories() {
 
   const list = useApi(() => categoriesApi.list({ page, pageSize, search: debounced || undefined }).then((r) => r.data), [page, pageSize, debounced]);
 
+  const validation = useMemo(() => validateSchema(categorySchema, form), [form]);
+  const { isValid, errors } = validation;
+
   const openCreate = () => {
     setEditing(null);
     setForm({ name: '', description: '', status: 'active' });
@@ -41,8 +46,8 @@ export default function Categories() {
   };
 
   const save = async () => {
-    if (!form.name.trim()) {
-      setFormError('Nama kategori wajib diisi');
+    if (!isValid) {
+      setFormError(errors.name || 'Data belum lengkap');
       return;
     }
     setSaving(true);
@@ -164,13 +169,13 @@ export default function Categories() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setModalOpen(false)}>Batal</Button>
-            <Button onClick={save} loading={saving}>Simpan</Button>
+            <Button onClick={save} loading={saving} disabled={!isValid}>Simpan</Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Field label="Nama Kategori" required error={formError}>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="cth: Makanan" />
+          <Field label="Nama Kategori" required error={errors.name || formError}>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="cth: Makanan" error={!!errors.name || !!formError} />
           </Field>
           <Field label="Deskripsi">
             <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />

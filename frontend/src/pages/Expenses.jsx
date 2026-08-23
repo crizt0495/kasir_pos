@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { expensesApi, cashierApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
+import { expenseSchema } from '../schemas/index.js';
+import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
@@ -36,6 +38,8 @@ export default function Expenses() {
     [debounced, category, from, to, page, pageSize]
   );
 
+  const { isValid, errors } = useMemo(() => validateSchema(expenseSchema, form), [form]);
+
   const openCreate = () => {
     setEditing(null);
     setForm(emptyForm);
@@ -57,8 +61,8 @@ export default function Expenses() {
   };
 
   const save = async () => {
-    if (!form.category || !Number(form.amount)) {
-      setFormError('Kategori dan nominal wajib diisi');
+    if (!isValid) {
+      setFormError(errors.amount || errors.category || 'Data belum lengkap');
       return;
     }
     setSaving(true);
@@ -190,31 +194,31 @@ export default function Expenses() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setModalOpen(false)}>Batal</Button>
-            <Button onClick={save} loading={saving}>Simpan</Button>
+            <Button onClick={save} loading={saving} disabled={!isValid}>Simpan</Button>
           </>
         }
       >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Tanggal">
-              <Input type="date" value={form.expense_date} onChange={(e) => setForm({ ...form, expense_date: e.target.value })} />
+            <Field label="Tanggal" required>
+              <Input type="date" value={form.expense_date} onChange={(e) => setForm({ ...form, expense_date: e.target.value })} error={!!errors.expense_date} />
             </Field>
-            <Field label="Kategori" required>
+            <Field label="Kategori" required error={errors.category}>
               <Select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </Select>
             </Field>
-            <Field label="Nominal (Rp)" required error={formError}>
-              <Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+            <Field label="Nominal (Rp)" required error={errors.amount || formError}>
+              <Input type="number" min="0" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0" error={!!errors.amount || !!formError} />
             </Field>
-            <Field label="Metode Pembayaran">
+            <Field label="Metode Pembayaran" required>
               <Select value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })}>
                 {['CASH', 'QRIS', 'DEBIT', 'CREDIT', 'TRANSFER', 'E_WALLET'].map((m) => <option key={m} value={m}>{paymentMethodLabel(m)}</option>)}
               </Select>
             </Field>
           </div>
           <Field label="Deskripsi">
-            <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <Textarea rows={2} maxLength={1000} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Opsional" />
           </Field>
         </div>
       </Modal>

@@ -1,6 +1,14 @@
 import { z } from 'zod';
 
 const money = z.coerce.number().min(0, 'Tidak boleh negatif').max(1_000_000_000, 'Nilai terlalu besar');
+const priceRequired = (label) =>
+  z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? undefined : v),
+    z.coerce
+      .number({ required_error: `${label} wajib diisi`, invalid_type_error: `${label} tidak valid` })
+      .min(0, 'Tidak boleh negatif')
+      .max(1_000_000_000, 'Nilai terlalu besar')
+  );
 
 export const loginSchema = z.object({
   username: z.string().trim().min(1, 'Username wajib diisi'),
@@ -30,8 +38,8 @@ export const productSchema = z
     name: z.string().trim().min(1, 'Nama produk wajib diisi').max(255),
     category_id: z.string().uuid().optional().or(z.literal('')),
     unit_id: z.string().uuid().optional().or(z.literal('')),
-    purchase_price: money,
-    sale_price: money,
+    purchase_price: priceRequired('Harga beli'),
+    sale_price: priceRequired('Harga jual'),
     stock: z.coerce.number().min(0, 'Stok tidak boleh negatif'),
     min_stock: z.coerce.number().min(0, 'Stok min tidak boleh negatif'),
     status: z.enum(['active', 'inactive']),
@@ -110,4 +118,70 @@ export const expenseSchema = z.object({
   amount: z.coerce.number().positive('Nominal harus lebih dari 0'),
   description: z.string().trim().max(1000).optional(),
   payment_method: z.enum(['CASH', 'QRIS', 'DEBIT', 'CREDIT', 'TRANSFER', 'E_WALLET']),
+});
+
+export const unitSchema = z.object({
+  name: z.string().trim().min(1, 'Nama satuan wajib diisi').max(100),
+  short_name: z.string().trim().min(1, 'Singkatan wajib diisi').max(20),
+});
+
+export const resetPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(8, 'Password minimal 8 karakter')
+    .regex(/[a-zA-Z]/, 'Harus mengandung huruf')
+    .regex(/[0-9]/, 'Harus mengandung angka'),
+});
+
+const optionalText = (max) => z.string().trim().max(max).nullable().optional();
+const optionalUrl = z.string().trim().url('URL tidak valid').nullable().optional().or(z.literal(''));
+
+export const settingsSchema = z.object({
+  store: z
+    .object({
+      name: z.string().trim().min(1, 'Nama toko wajib diisi').max(255),
+      phone: optionalText(30),
+      address: optionalText(500),
+      logo_url: optionalUrl,
+      npwp: optionalText(50),
+    })
+    .passthrough(),
+  pos: z
+    .object({
+      default_payment_method: z.enum(['CASH', 'QRIS', 'DEBIT', 'CREDIT', 'TRANSFER', 'E_WALLET']),
+      receipt_width: z.enum(['58mm', '80mm']),
+      auto_print_receipt: z.boolean().nullable().optional(),
+    })
+    .passthrough(),
+  tax: z
+    .object({
+      enabled: z.boolean().nullable().optional(),
+      percentage: z.coerce.number().min(0, 'Tidak boleh negatif').max(100, 'Maksimal 100%'),
+    })
+    .passthrough(),
+  inventory: z
+    .object({
+      allow_negative_stock: z.boolean().nullable().optional(),
+      low_stock_threshold: z.coerce.number().min(0, 'Tidak boleh negatif'),
+    })
+    .passthrough(),
+  user_session: z
+    .object({
+      session_timeout_minutes: z.coerce
+        .number()
+        .int('Harus bilangan bulat')
+        .min(1, 'Minimal 1 menit')
+        .max(10080, 'Maksimal 10080 menit (7 hari)'),
+    })
+    .passthrough(),
+  invoice: z
+    .object({
+      prefix: z
+        .string()
+        .trim()
+        .min(1, 'Prefix wajib diisi')
+        .max(10)
+        .regex(/^[A-Z0-9]+$/, 'Hanya huruf kapital dan angka'),
+    })
+    .passthrough(),
 });

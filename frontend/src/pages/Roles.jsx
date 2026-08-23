@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus, Pencil, Trash2, ShieldCheck } from 'lucide-react';
 import { rolesApi, permissionsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
+import { roleSchema } from '../schemas/index.js';
+import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
@@ -28,6 +30,8 @@ export default function Roles() {
 
   const roles = useApi(() => rolesApi.list({ page, pageSize, search: debounced || undefined }).then((r) => r.data), [page, pageSize, debounced]);
   const permissions = useApi(() => permissionsApi.list().then((r) => r.data), []);
+
+  const { isValid, errors } = useMemo(() => validateSchema(roleSchema, form), [form]);
 
   const openCreate = () => {
     setEditing(null);
@@ -82,8 +86,8 @@ export default function Roles() {
   };
 
   const save = async () => {
-    if (!form.name.trim() || !form.code.trim()) {
-      setFormError('Nama dan kode role wajib diisi');
+    if (!isValid) {
+      setFormError(errors.name || errors.code || 'Data belum lengkap');
       return;
     }
     setSaving(true);
@@ -220,16 +224,16 @@ export default function Roles() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setModalOpen(false)}>Batal</Button>
-            <Button onClick={save} loading={saving}>Simpan</Button>
+            <Button onClick={save} loading={saving} disabled={!isValid}>Simpan</Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Field label="Nama Role" required error={formError}>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="cth: Manager Toko" />
+          <Field label="Nama Role" required error={errors.name || formError}>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="cth: Manager Toko" error={!!errors.name || !!formError} />
           </Field>
-          <Field label="Kode Role" required hint="Huruf kecil, angka, underscore — unik" error={formError}>
-            <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="cth: manager" disabled={editing?.is_system} />
+          <Field label="Kode Role" required hint="Huruf kecil, angka, underscore — unik" error={errors.code}>
+            <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toLowerCase() })} placeholder="cth: manager" disabled={editing?.is_system} error={!!errors.code} />
           </Field>
           <Field label="Deskripsi">
             <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />

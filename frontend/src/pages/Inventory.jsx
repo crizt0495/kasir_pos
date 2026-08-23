@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { SlidersHorizontal, Boxes } from 'lucide-react';
 import { inventoryApi, categoriesApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
+import { adjustStockSchema } from '../schemas/index.js';
+import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { DataTable, SearchInput, Select, Button, Modal, Field, Input, Textarea, Badge, ConfirmDialog, PageHeader } from '../components/ui/index.jsx';
@@ -33,14 +35,15 @@ export default function Inventory() {
     setForm({ quantity: 0, reason: '' });
   };
 
+  const adjustValidation = useMemo(
+    () => validateSchema(adjustStockSchema, { product_id: adjusting?.id, ...form }),
+    [adjusting, form]
+  );
+
   // Validasi lalu tampilkan dialog konfirmasi sebelum stok benar-benar diubah
   const requestAdjust = () => {
-    if (!form.quantity) {
-      toast.error('Jumlah penyesuaian tidak boleh 0');
-      return;
-    }
-    if (form.reason.trim().length < 3) {
-      toast.error('Alasan minimal 3 karakter');
+    if (!adjustValidation.isValid) {
+      toast.error(Object.values(adjustValidation.errors)[0]);
       return;
     }
     setConfirming({
@@ -158,7 +161,7 @@ export default function Inventory() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setAdjusting(null)}>Batal</Button>
-            <Button onClick={requestAdjust}>Simpan Penyesuaian</Button>
+            <Button onClick={requestAdjust} disabled={!adjustValidation.isValid}>Simpan Penyesuaian</Button>
           </>
         }
       >
@@ -169,11 +172,11 @@ export default function Inventory() {
               Masukkan angka <b>positif</b> untuk menambah stok, <b>negatif</b> untuk mengurangi. Perubahan tercatat di pergerakan stok.
             </p>
           </div>
-          <Field label="Jumlah penyesuaian" required>
-            <Input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} placeholder="cth: 10 atau -5" />
+          <Field label="Jumlah penyesuaian" required error={adjustValidation.errors.quantity}>
+            <Input type="number" step="any" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value === '' ? 0 : Number(e.target.value) })} placeholder="cth: 10 atau -5" error={!!adjustValidation.errors.quantity} />
           </Field>
-          <Field label="Alasan" required>
-            <Textarea rows={2} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="cth: barang rusak / stok fisik berbeda" />
+          <Field label="Alasan" required error={adjustValidation.errors.reason} hint="Minimal 3 karakter">
+            <Textarea rows={2} maxLength={500} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="cth: barang rusak / stok fisik berbeda" error={!!adjustValidation.errors.reason} />
           </Field>
         </div>
       </Modal>

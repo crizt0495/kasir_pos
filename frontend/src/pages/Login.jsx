@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,8 +20,17 @@ export default function Login() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm({ resolver: zodResolver(loginSchema), defaultValues: { username: '', password: '', rememberMe: false } });
+    trigger,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { username: '', password: '', rememberMe: false },
+    mode: 'onChange',
+  });
+
+  useEffect(() => {
+    trigger();
+  }, [trigger]);
 
   const onSubmit = async (values) => {
     setSubmitting(true);
@@ -94,7 +103,13 @@ export default function Login() {
             <Checkbox label="Ingat saya" {...register('rememberMe')} />
           </div>
 
-          <Button type="submit" loading={submitting} className="w-full shadow-lg shadow-primary-600/25" size="lg">
+          <Button
+            type="submit"
+            loading={submitting}
+            disabled={!isValid || submitting}
+            className="w-full shadow-lg shadow-primary-600/25"
+            size="lg"
+          >
             Login
           </Button>
 

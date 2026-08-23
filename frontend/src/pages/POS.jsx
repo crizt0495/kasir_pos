@@ -556,7 +556,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Batal</Button>
-          <Button onClick={submit} loading={submitting} disabled={!paidValid && isCash}>
+          <Button onClick={submit} loading={submitting} disabled={!paidValid}>
             <Banknote className="h-4 w-4" /> Proses Pembayaran
           </Button>
         </>
@@ -571,8 +571,9 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
             <span className="text-slate-500">Biaya tambahan</span>
             <input
               type="number"
+              min="0"
               value={additionalCost || ''}
-              onChange={(e) => setAdditionalCost(Number(e.target.value) || 0)}
+              onChange={(e) => setAdditionalCost(Math.max(Number(e.target.value) || 0, 0))}
               className="w-28 rounded-lg border border-slate-200 py-1 px-2 text-right text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
             />
           </div>
@@ -600,8 +601,8 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
 
         {isCash && (
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Jumlah Bayar">
-              <Input type="number" value={paid} onChange={(e) => setPaid(e.target.value)} placeholder="0" data-testid="cash-received" />
+            <Field label="Jumlah Bayar" error={!paidValid ? 'Jumlah bayar kurang dari total transaksi' : ''}>
+              <Input type="number" min="0" value={paid} onChange={(e) => setPaid(e.target.value)} placeholder="0" data-testid="cash-received" error={!paidValid} />
             </Field>
             <Field label="Kembalian">
               <div className={`rounded-lg border px-3 py-2 text-sm font-semibold ${change >= 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-600'}`}>
@@ -618,7 +619,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
         )}
 
         <Field label="Catatan (opsional)">
-          <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Catatan transaksi..." />
+          <Textarea rows={2} maxLength={1000} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Catatan transaksi..." />
         </Field>
 
         {error && <p className="text-sm text-red-600">{error}</p>}

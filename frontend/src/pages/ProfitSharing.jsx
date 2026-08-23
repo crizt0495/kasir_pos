@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { HandCoins, RefreshCw, Plus, Users, Wallet, PiggyBank, CheckCircle2, Clock } from 'lucide-react';
-import { profitApi } from '../api/index.js';
+import { HandCoins, RefreshCw, Plus, Users, Wallet, PiggyBank, CheckCircle2, Clock } from 'lucide-react';import { profitApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
@@ -67,14 +66,22 @@ export default function ProfitSharing() {
     setNote('');
   };
 
+  const amountNum = Number(amount);
+  const distributeErrors = {
+    amount:
+      amount === '' || !Number.isFinite(amountNum)
+        ? 'Nominal wajib diisi'
+        : amountNum <= 0
+          ? 'Nominal harus lebih dari 0'
+          : distributing && amountNum > distributing.remaining + 0.001
+            ? 'Nominal melebihi sisa hak bagi hasil'
+            : '',
+  };
+  const distributeValid = !distributeErrors.amount;
+
   const doDistribute = async () => {
-    const amt = Number(amount);
-    if (!amt || amt <= 0) {
-      toast.error('Nominal harus lebih dari 0');
-      return;
-    }
-    if (amt > distributing.remaining + 0.001) {
-      toast.error('Nominal melebihi sisa hak bagi hasil');
+    if (!distributeValid) {
+      toast.error(distributeErrors.amount);
       return;
     }
     setSubmitting(true);
@@ -82,7 +89,7 @@ export default function ProfitSharing() {
       await profitApi.distribute({
         period_id: distributing.period_id,
         customer_id: distributing.customer_id,
-        amount: amt,
+        amount: amountNum,
         note: note || null,
       });
       toast.success(`Bagi hasil ${formatRupiah(amt)} berhasil dibagikan`);
@@ -310,7 +317,7 @@ export default function ProfitSharing() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setDistributing(null)}>Batal</Button>
-            <Button variant="primary" icon={HandCoins} onClick={() => setConfirmDistribute(true)}>
+            <Button variant="primary" icon={HandCoins} onClick={() => setConfirmDistribute(true)} disabled={!distributeValid}>
               Simpan
             </Button>
           </>
@@ -323,11 +330,11 @@ export default function ProfitSharing() {
               <div className="flex justify-between"><span className="text-slate-500">Sudah dibagikan</span><span>{formatRupiah(distributing.distributed)}</span></div>
               <div className="flex justify-between border-t border-slate-200 pt-1"><span className="text-slate-500">Sisa</span><span className="font-semibold text-amber-600">{formatRupiah(distributing.remaining)}</span></div>
             </div>
-            <Field label="Jumlah Dibagikan (Rp)" required>
-              <Input type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" />
+            <Field label="Jumlah Dibagikan (Rp)" required error={distributeErrors.amount}>
+              <Input type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" error={!!distributeErrors.amount} />
             </Field>
             <Field label="Catatan">
-              <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="cth: dibagikan tunai saat kunjungan pelanggan" />
+              <Textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="cth: dibagikan tunai saat kunjungan pelanggan (opsional)" />
             </Field>
           </div>
         )}

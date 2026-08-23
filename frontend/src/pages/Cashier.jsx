@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Wallet, Plus, ArrowDownCircle, ArrowUpCircle, X } from 'lucide-react';
 import { cashierApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
@@ -7,6 +7,12 @@ import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { Card, Button, Field, Input, Modal, ConfirmDialog, StatusBadge, Skeleton, EmptyState, Badge, PageHeader, Pagination } from '../components/ui/index.jsx';
 import { formatRupiah, formatDateTime, formatNumber } from '../utils/format.js';
+
+const parseAmount = (v) => {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
 
 export default function Cashier() {
   const { can } = usePermission();
@@ -32,7 +38,17 @@ export default function Cashier() {
 
   const s = session.data;
 
+  const openingValid = useMemo(() => {
+    if (openingBalance === '') return true;
+    const n = parseAmount(openingBalance);
+    return n !== null && n >= 0;
+  }, [openingBalance]);
+
   const open = async () => {
+    if (!openingValid) {
+      toast.error('Saldo awal tidak boleh negatif');
+      return;
+    }
     setOpening(true);
     try {
       await cashierApi.open({ opening_balance: Number(openingBalance) || 0 });
@@ -46,13 +62,14 @@ export default function Cashier() {
   };
 
   const addTx = async () => {
-    if (!Number(txForm.amount)) {
-      toast.error('Nominal wajib diisi');
+    const amountNum = parseAmount(txForm.amount);
+    if (amountNum === null || amountNum <= 0) {
+      toast.error('Nominal harus lebih dari 0');
       return;
     }
     setAddingTx(true);
     try {
-      await cashierApi.addTransaction({ session_id: s.id, type: txForm.type, amount: Number(txForm.amount), notes: txForm.notes || null });
+      await cashierApi.addTransaction({ session_id: s.id, type: txForm.type, amount: amountNum, notes: txForm.notes || null });
       toast.success('Transaksi kas ditambahkan');
       setShowAddTx(false);
       setTxForm({ type: 'IN', amount: '', notes: '' });
@@ -66,8 +83,8 @@ export default function Cashier() {
 
   // Validasi lalu tampilkan dialog konfirmasi sebelum sesi benar-benar ditutup
   const requestClose = () => {
-    if (Math.abs(Number(actualCash || 0) - expected) > 0 && !closeNote.trim()) {
-      toast.error('Ada selisih kas — catatan wajib diisi');
+    if (!closeValid) {
+      toast.error(closeErrors.actual_cash || closeErrors.note || 'Data belum lengkap');
       return;
     }
     setConfirmClose(true);
@@ -105,10 +122,10 @@ export default function Cashier() {
                 </div>
                 <p className="text-sm text-slate-500">Masukkan saldo awal kas Anda</p>
               </div>
-              <Field label="Saldo Awal (Rp)">
-                <Input type="number" value={openingBalance} onChange={(e) => setOpeningBalance(e.target.value)} placeholder="0" autoFocus />
+              <Field label="Saldo Awal (Rp)" error={!openingValid ? 'Saldo awal tidak boleh negatif' : ''}>
+                <Input type="number" min="0" value={openingBalance} onChange={(e) => setOpeningBalance(e.target.value)} placeholder="0" autoFocus error={!openingValid} />
               </Field>
-              <Button className="w-full" size="lg" onClick={open} loading={opening}>
+              <Button className="w-full" size="lg" onClick={open} loading={opening} disabled={!openingValid}>
                 Buka Kas
               </Button>
             </div>
@@ -121,6 +138,17 @@ export default function Cashier() {
   const expected = s ? Number(s.opening_balance) + (transactions.data?.items || []).reduce((sum, t) => sum + Number(t.amount), 0) : 0;
   const cashIn = (transactions.data?.items || []).filter((t) => Number(t.amount) > 0).reduce((sum, t) => sum + Number(t.amount), 0);
   const cashOut = (transactions.data?.items || []).filter((t) => Number(t.amount) < 0).reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
+
+  const actualNum = parseAmount(actualCash);
+  const cashDiff = actualNum !== null ? actualNum - expected : null;
+  const hasDiff = actualNum !== null && Math.abs(cashDiff) > 0;
+  const closeErrors = {
+    actual_cash: actualNum === null ? 'Kas aktual wajib diisi' : actualNum < 0 ? 'Kas aktual tidak boleh negatif' : '',
+    note: hasDiff && !closeNote.trim() ? 'Ada selisih kas — catatan wajib diisi' : '',
+  };
+  const closeValid = !closeErrors.actual_cash && !closeErrors.note;
+  const txAmount = parseAmount(txForm.amount);
+  const txValid = txAmount !== null && txAmount > 0;
 
   return (
     <div className="space-y-4">
@@ -213,7 +241,7 @@ export default function Cashier() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowClose(false)}>Batal</Button>
-            <Button onClick={requestClose}>Tutup Kas</Button>
+            <Button onClick={requestClose} disabled={!closeValid}>Tutup Kas</Button>
           </>
         }
       >
@@ -227,16 +255,16 @@ export default function Cashier() {
               <span>{formatRupiah(expected)}</span>
             </div>
           </div>
-          <Field label="Kas Aktual (hasil hitung fisik)" required>
-            <Input type="number" value={actualCash} onChange={(e) => setActualCash(e.target.value)} autoFocus />
+          <Field label="Kas Aktual (hasil hitung fisik)" required error={closeErrors.actual_cash}>
+            <Input type="number" min="0" value={actualCash} onChange={(e) => setActualCash(e.target.value)} autoFocus error={!!closeErrors.actual_cash} />
           </Field>
-          {Number(actualCash || 0) !== expected && (
-            <div className={`rounded-lg p-3 text-sm ${Math.abs(Number(actualCash || 0) - expected) > 0 ? 'bg-amber-50 text-amber-700' : ''}`}>
-              Selisih: <b>{formatRupiah(Number(actualCash || 0) - expected)}</b>. Jika ada selisih, catatan wajib diisi.
+          {actualNum !== null && actualNum !== expected && (
+            <div className={`rounded-lg p-3 text-sm ${Math.abs(cashDiff) > 0 ? 'bg-amber-50 text-amber-700' : ''}`}>
+              Selisih: <b>{formatRupiah(cashDiff)}</b>. Jika ada selisih, catatan wajib diisi.
             </div>
           )}
-          <Field label="Catatan" required={Math.abs(Number(actualCash || 0) - expected) > 0}>
-            <Input value={closeNote} onChange={(e) => setCloseNote(e.target.value)} placeholder="cth: selisih karena uang pas" />
+          <Field label="Catatan" required={hasDiff} error={closeErrors.note} hint={hasDiff ? undefined : 'Opsional'}>
+            <Input value={closeNote} onChange={(e) => setCloseNote(e.target.value)} placeholder="cth: selisih karena uang pas" maxLength={1000} error={!!closeErrors.note} />
           </Field>
         </div>
       </Modal>
@@ -259,7 +287,7 @@ export default function Cashier() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowAddTx(false)}>Batal</Button>
-            <Button onClick={addTx} loading={addingTx}>Simpan</Button>
+            <Button onClick={addTx} loading={addingTx} disabled={!txValid}>Simpan</Button>
           </>
         }
       >
@@ -268,6 +296,7 @@ export default function Cashier() {
             {['IN', 'OUT'].map((t) => (
               <button
                 key={t}
+                type="button"
                 onClick={() => setTxForm({ ...txForm, type: t })}
                 className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
                   txForm.type === t
@@ -279,11 +308,11 @@ export default function Cashier() {
               </button>
             ))}
           </div>
-          <Field label="Nominal (Rp)">
-            <Input type="number" value={txForm.amount} onChange={(e) => setTxForm({ ...txForm, amount: e.target.value })} />
+          <Field label="Nominal (Rp)" required error={txAmount !== null && txAmount <= 0 ? 'Nominal harus lebih dari 0' : txAmount === null && txForm.amount !== '' ? 'Nominal tidak valid' : ''}>
+            <Input type="number" min="0" value={txForm.amount} onChange={(e) => setTxForm({ ...txForm, amount: e.target.value })} placeholder="0" />
           </Field>
           <Field label="Catatan">
-            <Input value={txForm.notes} onChange={(e) => setTxForm({ ...txForm, notes: e.target.value })} placeholder="cth: ambil uang untuk belanja" />
+            <Input value={txForm.notes} onChange={(e) => setTxForm({ ...txForm, notes: e.target.value })} placeholder="cth: ambil uang untuk belanja (opsional)" maxLength={500} />
           </Field>
         </div>
       </Modal>
