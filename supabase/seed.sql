@@ -100,7 +100,9 @@ select r.id, p.id from public.roles r, public.permissions p
 where r.code = 'kasir' and (
   p.code in ('dashboard.view', 'pos.access', 'sales.view', 'sales.create',
              'customers.view', 'customers.create', 'customers.update',
-             'cashier.open', 'cashier.close', 'products.view')
+             'cashier.open', 'cashier.close', 'products.view',
+             'stock_opname.view', 'stock_opname.create', 'inventory.view',
+             'inventory.adjust')
 )
 on conflict do nothing;
 
