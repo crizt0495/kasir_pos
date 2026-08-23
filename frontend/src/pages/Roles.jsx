@@ -31,7 +31,13 @@ export default function Roles() {
   const roles = useApi(() => rolesApi.list({ page, pageSize, search: debounced || undefined }).then((r) => r.data), [page, pageSize, debounced]);
   const permissions = useApi(() => permissionsApi.list().then((r) => r.data), []);
 
-  const { isValid, errors } = useMemo(() => validateSchema(roleSchema, form), [form]);
+  // Kode role sistem terkunci (disabled) dan diabaikan backend saat update —
+  // jangan divalidasi agar tidak memblokir penyimpanan
+  const activeSchema = useMemo(
+    () => (editing?.is_system ? roleSchema.omit({ code: true }) : roleSchema),
+    [editing]
+  );
+  const { isValid, errors } = useMemo(() => validateSchema(activeSchema, form), [activeSchema, form]);
 
   const openCreate = () => {
     setEditing(null);

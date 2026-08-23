@@ -25,15 +25,16 @@ export default function Settings() {
 
   const [form, setForm] = useState(null);
 
-  // Inisialisasi form dari data settings
-  if (!form && s.store) {
+  // Inisialisasi form dari data settings dengan default agar section
+  // yang belum tersimpan di DB tidak membuat form selalu invalid
+  if (!form && !settings.loading) {
     setForm({
-      store: { ...s.store },
-      pos: { ...s.pos },
-      tax: { ...s.tax },
-      inventory: { ...s.inventory },
-      user_session: { ...s.user_session },
-      invoice: { prefix: s.invoice?.prefix || 'INV' },
+      store: { name: '', phone: '', address: '', logo_url: '', npwp: '', ...(s.store || {}) },
+      pos: { default_payment_method: 'CASH', receipt_width: '58mm', auto_print_receipt: false, ...(s.pos || {}) },
+      tax: { enabled: false, percentage: 0, ...(s.tax || {}) },
+      inventory: { allow_negative_stock: false, low_stock_threshold: 0, ...(s.inventory || {}) },
+      user_session: { session_timeout_minutes: 480, ...(s.user_session || {}) },
+      invoice: { prefix: 'INV', ...(s.invoice || {}) },
     });
   }
 
@@ -66,7 +67,7 @@ export default function Settings() {
     }
   };
 
-  if (!form) {
+  if (settings.loading || !form) {
     return <Card bodyClassName="p-6"><p className="text-sm text-slate-400">Memuat pengaturan...</p></Card>;
   }
 
