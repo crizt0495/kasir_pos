@@ -7,7 +7,7 @@ import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Button, Card, Input, Field, Select, Textarea, SearchInput, ConfirmDialog, StatusBadge, Badge, StatCard, ProgressBar, EmptyState, Skeleton, Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/index.jsx';
+import { Button, Card, Input, Field, Select, Textarea, SearchInput, ConfirmDialog, StatusBadge, Badge, StatCard, ProgressBar, EmptyState, Skeleton } from '../components/ui/index.jsx';
 import { dateTimeInput, formatDateTime, formatQty, formatRupiah } from '../utils/format.js';
 
 const STATUS_OPTIONS = [
@@ -409,6 +409,33 @@ export default function OpnameForm() {
         </Card>
       )}
 
+      {/* Tanggal & jam opname */}
+      {!isReadOnly && (
+        <Card bodyClassName="p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <Field
+              label="Tanggal & Jam Opname"
+              required
+              error={!dateValid ? 'Tanggal dan jam wajib diisi' : ''}
+              hint="Waktu saat penghitungan stok fisik dilakukan"
+              className="sm:w-72"
+            >
+              <Input
+                type="datetime-local"
+                value={opnameDate}
+                max={dateTimeInput()}
+                onChange={(e) => setOpnameDate(e.target.value)}
+                error={!dateValid}
+              />
+            </Field>
+            <p className="text-sm text-slate-500 sm:pb-2.5">
+              Tercatat sebagai:{' '}
+              <b className="text-slate-700">{dateValid ? formatDateTime(opnameDate) : '-'}</b>
+            </p>
+          </div>
+        </Card>
+      )}
+
       {/* Filter dan Search */}
       {!isReadOnly && (
         <Card bodyClassName="p-4">
@@ -715,6 +742,11 @@ function ReviewModal({ open, onClose, items, stats, opnameDate, notes }) {
               <XIcon className="h-4 w-4" />
             </button>
           </div>
+          {opnameDate && (
+            <p className="mt-0.5 text-sm text-slate-500">
+              Tanggal & Jam: <b className="font-medium text-slate-700">{formatDateTime(opnameDate)}</b>
+            </p>
+          )}
         </div>
         <div className="max-h-[80vh] overflow-y-auto p-4">
           <div className="mb-4 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
