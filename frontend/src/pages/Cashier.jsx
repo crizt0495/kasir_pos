@@ -233,18 +233,20 @@ export default function Cashier() {
         )}
       </Card>
 
-      {/* Modal tutup kas */}
-      <Modal
-        open={showClose}
-        onClose={() => setShowClose(false)}
-        title="Tutup Sesi Kas"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setShowClose(false)}>Batal</Button>
-            <Button onClick={requestClose} disabled={!closeValid}>Tutup Kas</Button>
-          </>
-        }
-      >
+      {/* Modal tutup kas — hanya dirender saat sesi ada; children Modal
+          dievaluasi eager meski open=false, jadi wajib di-guard s */}
+      {s && (
+        <Modal
+          open={showClose}
+          onClose={() => setShowClose(false)}
+          title="Tutup Sesi Kas"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setShowClose(false)}>Batal</Button>
+              <Button onClick={requestClose} disabled={!closeValid}>Tutup Kas</Button>
+            </>
+          }
+        >
         <div className="space-y-4">
           <div className="space-y-1.5 rounded-lg bg-slate-50 p-4 text-sm">
             <div className="flex justify-between"><span className="text-slate-500">Saldo Awal</span><span>{formatRupiah(s.opening_balance)}</span></div>
@@ -267,17 +269,20 @@ export default function Cashier() {
             <Input value={closeNote} onChange={(e) => setCloseNote(e.target.value)} placeholder="cth: selisih karena uang pas" maxLength={1000} error={!!closeErrors.note} />
           </Field>
         </div>
-      </Modal>
+        </Modal>
+      )}
 
-      <ConfirmDialog
-        open={confirmClose}
-        onClose={() => setConfirmClose(false)}
-        onConfirm={close}
-        loading={closing}
-        title="Tutup sesi kas?"
-        message={`Kas diharapkan ${formatRupiah(expected)} · Kas aktual ${formatRupiah(Number(actualCash || 0))} · Selisih ${formatRupiah(Number(actualCash || 0) - expected)}. Setelah ditutup, sesi tidak dapat dibuka kembali.`}
-        confirmText="Ya, tutup kas"
-      />
+      {s && (
+        <ConfirmDialog
+          open={confirmClose}
+          onClose={() => setConfirmClose(false)}
+          onConfirm={close}
+          loading={closing}
+          title="Tutup sesi kas?"
+          message={`Kas diharapkan ${formatRupiah(expected)} · Kas aktual ${formatRupiah(Number(actualCash || 0))} · Selisih ${formatRupiah(Number(actualCash || 0) - expected)}. Setelah ditutup, sesi tidak dapat dibuka kembali.`}
+          confirmText="Ya, tutup kas"
+        />
+      )}
 
       {/* Modal tambah transaksi */}
       <Modal
