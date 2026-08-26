@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, ClipboardCheck, TrendingUp, TrendingDown, CheckCircle, AlertTriangle, Package, Plus, Trash2, Barcode, X as XIcon } from 'lucide-react';
+import { ArrowLeft, Save, ClipboardCheck, TrendingUp, CheckCircle, AlertTriangle, Package, Plus, Trash2, Barcode, X as XIcon } from 'lucide-react';
 import { inventoryApi, productsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Button, Card, Input, SearchInput, ConfirmDialog, Badge, StatCard, ProgressBar, Skeleton } from '../components/ui/index.jsx';
-import { formatDateTime, formatQty, formatRupiah } from '../utils/format.js';
+import { Button, Card, Input, SearchInput, ConfirmDialog, Badge, Skeleton } from '../components/ui/index.jsx';
+import { formatDateTime, formatQty } from '../utils/format.js';
 
 export default function OpnameForm() {
   const { id } = useParams();
@@ -148,9 +148,7 @@ export default function OpnameForm() {
     const total = items.length;
     const completed = items.filter((i) => i.status === 'completed').length;
     const mismatch = items.filter((i) => i.status === 'mismatch').length;
-    const less = items.filter((i) => Number(i.physical_stock) < Number(i.system_stock)).length;
-    const totalValue = items.reduce((s, i) => s + (Number(i.physical_stock) - Number(i.system_stock)) * (i.product?.sale_price || 0), 0);
-    return { total, completed, mismatch, less, totalValue };
+    return { total, completed, mismatch };
   }, [items]);
 
   const invalidItems = useMemo(
@@ -176,7 +174,7 @@ export default function OpnameForm() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-4xl space-y-4">
+      <div className="mx-auto max-w-5xl space-y-4">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/inventory/opname')} className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:bg-slate-50">
             <ArrowLeft className="h-4 w-4" />
@@ -189,7 +187,7 @@ export default function OpnameForm() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4">
+    <div className="mx-auto max-w-5xl space-y-3">
       <div className="flex items-center gap-3">
         <button onClick={() => navigate('/inventory/opname')} className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:bg-slate-50">
           <ArrowLeft className="h-4 w-4" />
@@ -204,50 +202,40 @@ export default function OpnameForm() {
         </div>
       </div>
 
-      {items.length > 0 && !isReadOnly && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="Total" value={stats.total} icon={Package} color="bg-primary-50 text-primary-600" className="p-3" />
-          <StatCard label="Sesuai" value={stats.completed} icon={CheckCircle} color="bg-success-50 text-success-600" className="p-3" />
-          <StatCard label="Selisih" value={stats.mismatch} icon={AlertTriangle} color="bg-warning-50 text-warning-600" className="p-3" />
-          <StatCard label="Nilai Selisih" value={formatRupiah(stats.totalValue)} icon={TrendingUp} color="bg-info-50 text-info-600" className="p-3" />
+      {!isReadOnly && (
+        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
+          <div className="flex-1">
+            <SearchInput value={search} onChange={setSearch} placeholder="Cari produk untuk ditambahkan..." />
+          </div>
+          <button onClick={handleScan} title="Scan Barcode" className="shrink-0 rounded-lg border border-slate-200 p-2 text-slate-600 hover:border-primary-400 hover:bg-primary-50 transition-colors">
+            <Barcode className="h-5 w-5" />
+          </button>
         </div>
       )}
 
-      {!isReadOnly && (
-        <Card bodyClassName="p-3">
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <SearchInput value={search} onChange={setSearch} placeholder="Cari produk untuk ditambahkan..." />
-            </div>
-            <button onClick={handleScan} title="Scan Barcode" className="shrink-0 rounded-lg border border-slate-200 p-2 text-slate-600 hover:border-primary-400 hover:bg-primary-50 transition-colors">
-              <Barcode className="h-5 w-5" />
-            </button>
-          </div>
-          {(products.data?.items || []).length > 0 && (
-            <div className="mt-2 grid max-h-32 grid-cols-2 gap-1 overflow-y-auto sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {(products.data.items || []).map((p) => {
-                const added = items.some((i) => i.product_id === p.id);
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => addProduct(p)}
-                    disabled={added}
-                    className="flex items-center justify-between rounded-lg border border-slate-200 px-2.5 py-1.5 text-left text-xs hover:border-primary-400 hover:bg-primary-50 disabled:opacity-35 disabled:cursor-not-allowed transition-all"
-                  >
-                    <span className="min-w-0 flex-1 truncate">
-                      <span className="font-medium text-slate-800">{p.name}</span>
-                      <span className="ml-1 text-slate-400">({formatQty(p.stock)})</span>
-                    </span>
-                    <Plus className="h-3 w-3 shrink-0 ml-1 text-primary-500" />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          {debounced && (products.data?.items || []).length === 0 && !products.loading && (
-            <p className="mt-2 text-center text-xs text-slate-400">Produk tidak ditemukan</p>
-          )}
-        </Card>
+      {!isReadOnly && (products.data?.items || []).length > 0 && (
+        <div className="grid max-h-36 grid-cols-2 gap-1 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {(products.data.items || []).map((p) => {
+            const added = items.some((i) => i.product_id === p.id);
+            return (
+              <button
+                key={p.id}
+                onClick={() => addProduct(p)}
+                disabled={added}
+                className="flex items-center justify-between rounded-lg border border-slate-100 px-2.5 py-1.5 text-left text-xs hover:border-primary-400 hover:bg-primary-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <span className="min-w-0 flex-1 truncate">
+                  <span className="font-medium text-slate-800">{p.name}</span>
+                  <span className="ml-1 text-slate-400">({formatQty(p.stock)})</span>
+                </span>
+                <Plus className="h-3 w-3 shrink-0 ml-1 text-primary-500" />
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {!isReadOnly && debounced && (products.data?.items || []).length === 0 && !products.loading && (
+        <p className="text-center text-xs text-slate-400">Produk tidak ditemukan</p>
       )}
 
       {items.length > 0 && (
@@ -392,11 +380,10 @@ function ReviewModal({ open, onClose, items, stats, opnameDate }) {
           </button>
         </div>
         <div className="max-h-[65vh] overflow-y-auto p-4">
-          <div className="mb-3 grid grid-cols-4 gap-2 text-center text-xs">
+          <div className="mb-3 grid grid-cols-3 gap-2 text-center text-xs">
             <div className="rounded-lg bg-primary-50 p-2"><p className="text-primary-600">Total</p><p className="text-base font-bold text-primary-900">{stats.total}</p></div>
             <div className="rounded-lg bg-success-50 p-2"><p className="text-success-600">Sesuai</p><p className="text-base font-bold text-success-900">{stats.completed}</p></div>
             <div className="rounded-lg bg-warning-50 p-2"><p className="text-warning-600">Selisih</p><p className="text-base font-bold text-warning-900">{stats.mismatch}</p></div>
-            <div className="rounded-lg bg-danger-50 p-2"><p className="text-danger-600">Kurang</p><p className="text-base font-bold text-danger-900">{stats.less}</p></div>
           </div>
 
           {mismatchItems.length > 0 ? (
