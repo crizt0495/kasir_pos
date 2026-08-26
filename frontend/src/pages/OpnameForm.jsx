@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, ClipboardCheck, TrendingUp, Plus, Trash2, Barcode, X as XIcon } from 'lucide-react';
+import { ArrowLeft, Save, ClipboardCheck, Plus, Trash2, Barcode, X as XIcon } from 'lucide-react';
 import { inventoryApi, productsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Button, Card, Input, SearchInput, ConfirmDialog, Badge, Skeleton } from '../components/ui/index.jsx';
+import { Button, Input, SearchInput, ConfirmDialog, Badge, Skeleton } from '../components/ui/index.jsx';
 import { formatDateTime, formatQty } from '../utils/format.js';
 
 export default function OpnameForm() {
@@ -18,7 +18,6 @@ export default function OpnameForm() {
   const { can } = usePermission();
   const [search, setSearch] = useState('');
   const debounced = useDebounce(search, 300);
-  const [items, setItems] = useState([]);
   const [notes, setNotes] = useState('');
   const [opnameDate] = useState(() => new Date().toISOString());
   const [saving, setSaving] = useState(false);
@@ -26,69 +25,57 @@ export default function OpnameForm() {
   const [existing, setExisting] = useState(null);
   const [confirmComplete, setConfirmComplete] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [itemStocks, setItemStocks] = useState({});
+  const [itemReasons, setItemReasons] = useState({});
 
   const products = useApi(
-    () => productsApi.list({ search: debounced || undefined, pageSize: 50, sort: 'name' }).then((r) => r.data),
+    () => productsApi.list({ search: debounced || undefined, pageSize: 200, sort: 'name' }).then((r) => r.data),
     [debounced]
   );
 
   useEffect(() => {
     if (!isView) return;
     let cancelled = false;
-    inventoryApi
-      .opname(id)
-      .then((res) => {
-        if (cancelled) return;
-        setExisting(res.data);
-        setNotes(res.data.notes || '');
-        setItems(
-          res.data.items.map((i) => ({
-            product_id: i.product_id,
-            product: i.product,
-            system_stock: i.system_stock,
-            physical_stock: i.physical_stock,
-            reason: i.reason || '',
-            status: i.status || 'pending',
-          }))
-        );
-      })
-      .catch((e) => toast.error(getErrorMessage(e)))
-      .finally(() => !cancelled && setLoading(false));
+    inventoryApi.opname(id).then((res) => {
+      if (cancelled) return;
+      setExisting(res.data);
+      setNotes(res.data.notes || '');
+      const stocks = {};
+      const reasons = {};
+      res.data.items.forEach((i) => {
+        stocks[i.product_id] = i.physical_stock;
+        reasons[i.product_id] = i.reason || '';
+      });
+      setItemStocks(stocks);
+      setItemReasons(reasons);
+    }).catch((e) => toast.error(getErrorMessage(e))).finally(() => !cancelled && setLoading(false));
     return () => { cancelled = true; };
   }, [id, isView]);
 
-  const addProduct = (product) => {
-    if (items.some((i) => i.product_id === product.id)) {
-      toast.info('Produk sudah ditambahkan');
-      return;
-    }
-    setItems((prev) => [
-      ...prev,
-      {
-        product_id: product.id,
-        product,
-        system_stock: Number(product.stock),
-        physical_stock: Number(product.stock),
-        reason: '',
-        status: 'pending',
-      },
-    ]);
+  const itemPhysicalStock = (productId) => itemStocks[productId] ?? null;
+  const itemReason = (productId) => itemReasons[productId] ?? '';
+
+  const updateStock = (productId, value) => {
+    setItemStocks((prev) => ({ ...prev, [productId]: value }));
   };
 
-  const updateItem = (productId, patch) => {
-    setItems((prev) =>
-      prev.map((i) => {
-        if (i.product_id !== productId) return i;
-        const updated = { ...i, ...patch };
-        const diff = Number(updated.physical_stock) - Number(updated.system_stock);
-        updated.status = diff !== 0 ? 'mismatch' : (i.status !== 'pending' ? 'completed' : 'pending');
-        return updated;
-      })
-    );
+  const updateReason = (productId, value) => {
+    setItemReasons((prev) => ({ ...prev, [productId]: value }));
   };
 
-  const removeItem = (productId) => {
-    setItems((prev) => prev.filter((i) => i.product_id !== productId));
+  const selectedItems = useMemo(() => {
+    if (!products.data?.items) return [];
+    return products.data.items.filter((p) => {
+      const v = itemStocks[p.id];
+      const hasValue = v !== null && v !== '' && !isNaN(Number(v));
+      return hasValue;
+    });
+  }, [products.data, itemStocks]);
+
+  const getItemDiff = (product) => {
+    const physical = Number(itemStocks[product.id]);
+    if (isNaN(physical)) return null;
+    return physical - Number(product.stock);
   };
 
   const handleScan = async () => {
@@ -97,8 +84,10 @@ export default function OpnameForm() {
       if (!code) return;
       const { data } = await productsApi.list({ search: code, pageSize: 1 });
       if (data.items?.length > 0) {
-        addProduct(data.items[0]);
-        toast.success(`Ditemukan: ${data.items[0].name}`);
+        const p = data.items[0];
+        updateStock(p.id, Number(p.stock));
+        setSearch('');
+        toast.success(`Ditemukan: ${p.name}`);
       } else {
         toast.error('Produk tidak ditemukan');
       }
@@ -108,18 +97,17 @@ export default function OpnameForm() {
   };
 
   const save = async (complete = false) => {
-    if (!items.length) { toast.error('Minimal satu produk'); return; }
-    if (invalidItems.length) { toast.error(invalidItems[0].issue); return; }
+    if (!selectedItems.length) { toast.error('Minimal isi stok fisik satu produk'); return; }
     setSaving(true);
     try {
       const payload = {
         opname_date: new Date(opnameDate).toISOString(),
         notes: notes || null,
-        items: items.map((i) => ({
-          product_id: i.product_id,
-          system_stock: i.system_stock,
-          physical_stock: i.physical_stock,
-          reason: i.reason || null,
+        items: selectedItems.map((p) => ({
+          product_id: p.id,
+          system_stock: Number(p.stock),
+          physical_stock: Number(itemStocks[p.id]),
+          reason: itemReasons[p.id] || null,
         })),
       };
       if (isNew) {
@@ -145,49 +133,43 @@ export default function OpnameForm() {
   };
 
   const stats = useMemo(() => {
-    const total = items.length;
-    const completed = items.filter((i) => i.status === 'completed').length;
-    const mismatch = items.filter((i) => i.status === 'mismatch').length;
-    return { total, completed, mismatch };
-  }, [items]);
-
-  const invalidItems = useMemo(
-    () => items
-      .map((i, idx) => ({
-        idx,
-        issue: i.physical_stock === '' || !Number.isFinite(Number(i.physical_stock))
-          ? 'Stok fisik wajib diisi'
-          : Number(i.physical_stock) < 0 ? 'Stok fisik tidak boleh negatif' : '',
-      }))
-      .filter((x) => x.issue),
-    [items]
-  );
-
-  const filteredItems = useMemo(() => {
-    if (!search) return items;
-    const q = search.toLowerCase();
-    return items.filter((i) => i.product?.name.toLowerCase().includes(q) || i.product?.sku.toLowerCase().includes(q));
-  }, [items, search]);
+    let sesuai = 0, kurang = 0, lebih = 0;
+    selectedItems.forEach((p) => {
+      const diff = getItemDiff(p);
+      if (diff === null) return;
+      if (diff === 0) sesuai++;
+      else if (diff < 0) kurang++;
+      else lebih++;
+    });
+    return { total: selectedItems.length, sesuai, kurang, lebih, selisih: kurang + lebih };
+  }, [selectedItems, itemStocks]);
 
   const isReadOnly = isView && existing?.status !== 'draft';
-  const canSave = items.length > 0 && invalidItems.length === 0;
+  const canSave = selectedItems.length > 0;
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl space-y-4">
+      <div className="mx-auto max-w-6xl space-y-4">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/inventory/opname')} className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:bg-slate-50">
             <ArrowLeft className="h-4 w-4" />
           </button>
           <h1 className="text-xl font-bold text-slate-900">Memuat...</h1>
         </div>
-        <Card bodyClassName="p-6"><Skeleton className="h-40 w-full" /></Card>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-36 w-full" />)}
+        </div>
       </div>
     );
   }
 
+  const mismatchItems = selectedItems.filter((p) => {
+    const d = getItemDiff(p);
+    return d !== null && d !== 0;
+  });
+
   return (
-    <div className="mx-auto max-w-5xl space-y-3">
+    <div className="mx-auto max-w-6xl space-y-3">
       <div className="flex items-center gap-3">
         <button onClick={() => navigate('/inventory/opname')} className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:bg-slate-50">
           <ArrowLeft className="h-4 w-4" />
@@ -205,7 +187,7 @@ export default function OpnameForm() {
       {!isReadOnly && (
         <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
           <div className="flex-1">
-            <SearchInput value={search} onChange={setSearch} placeholder="Cari produk untuk ditambahkan..." />
+            <SearchInput value={search} onChange={setSearch} placeholder="Cari produk..." />
           </div>
           <button onClick={handleScan} title="Scan Barcode" className="shrink-0 rounded-lg border border-slate-200 p-2 text-slate-600 hover:border-primary-400 hover:bg-primary-50 transition-colors">
             <Barcode className="h-5 w-5" />
@@ -213,117 +195,119 @@ export default function OpnameForm() {
         </div>
       )}
 
-      {!isReadOnly && (products.data?.items || []).length > 0 && (
-        <div className="grid max-h-36 grid-cols-2 gap-1 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {(products.data.items || []).map((p) => {
-            const added = items.some((i) => i.product_id === p.id);
-            return (
-              <button
-                key={p.id}
-                onClick={() => addProduct(p)}
-                disabled={added}
-                className="flex items-center justify-between rounded-lg border border-slate-100 px-2.5 py-1.5 text-left text-xs hover:border-primary-400 hover:bg-primary-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                <span className="min-w-0 flex-1 truncate">
-                  <span className="font-medium text-slate-800">{p.name}</span>
-                  <span className="ml-1 text-slate-400">({formatQty(p.stock)})</span>
-                </span>
-                <Plus className="h-3 w-3 shrink-0 ml-1 text-primary-500" />
-              </button>
-            );
-          })}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-5">
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center">
+          <p className="text-xs text-slate-500">Total</p>
+          <p className="text-lg font-bold text-slate-800">{selectedItems.length}</p>
         </div>
-      )}
-      {!isReadOnly && debounced && (products.data?.items || []).length === 0 && !products.loading && (
-        <p className="text-center text-xs text-slate-400">Produk tidak ditemukan</p>
-      )}
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center">
+          <p className="text-xs text-slate-500">Sesuai</p>
+          <p className="text-lg font-bold text-success-600">{stats.sesuai}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center">
+          <p className="text-xs text-slate-500">Selisih</p>
+          <p className="text-lg font-bold text-warning-600">{stats.selisih}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center">
+          <p className="text-xs text-slate-500">Kurang</p>
+          <p className="text-lg font-bold text-danger-600">{stats.kurang}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center hidden sm:block">
+          <p className="text-xs text-slate-500">Lebih</p>
+          <p className="text-lg font-bold text-emerald-600">{stats.lebih}</p>
+        </div>
+      </div>
 
-      {items.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-slate-500">Item Opname ({items.length})</p>
-          {filteredItems.map((item) => {
-            const diff = Number(item.physical_stock) - Number(item.system_stock);
-            return (
-              <div key={item.product_id} className="rounded-lg border border-slate-200 bg-white p-3">
-                <div className="flex items-start justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-800 truncate">{item.product?.name}</p>
-                    <p className="text-xs text-slate-400">{item.product?.sku}</p>
-                  </div>
-                  {!isReadOnly && (
-                    <button onClick={() => removeItem(item.product_id)} className="shrink-0 rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  )}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {(products.data?.items || []).map((p) => {
+          const physical = itemPhysicalStock(p.id);
+          const diff = getItemDiff(p);
+          const isFilled = physical !== null && physical !== '' && !isNaN(Number(physical));
+
+          return (
+            <div
+              key={p.id}
+              className={`rounded-xl border-2 bg-white p-3 transition-all ${
+                isFilled
+                  ? diff === 0 ? 'border-success-300 shadow-sm shadow-success-100'
+                    : diff !== null ? 'border-warning-300 shadow-sm shadow-warning-100'
+                    : 'border-slate-200'
+                  : 'border-slate-200'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="min-w-0 flex-1 pr-2">
+                  <p className="text-sm font-semibold text-slate-800 leading-tight">{p.name}</p>
+                  <p className="mt-0.5 text-xs text-slate-400">{p.sku}</p>
                 </div>
-                {item.product?.barcode && (
-                  <div className="mt-2 flex items-center gap-2 rounded bg-slate-50 px-2 py-1">
-                    <Barcode className="h-4 w-4 shrink-0 text-slate-400" />
-                    <span className="font-mono text-xs tracking-widest text-slate-600">{item.product.barcode}</span>
-                  </div>
-                )}
-                <div className="mt-2 flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <span className="text-slate-500">Sistem</span>
-                    <span className="tabular-nums font-medium text-slate-700">{formatQty(item.system_stock)}</span>
-                  </div>
-                  <span className="text-slate-300">→</span>
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <span className="text-slate-500">Fisik</span>
-                    {isReadOnly ? (
-                      <span className="tabular-nums font-medium text-slate-800">{formatQty(item.physical_stock)}</span>
-                    ) : (
-                      <Input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={item.physical_stock}
-                        onChange={(e) => updateItem(item.product_id, { physical_stock: e.target.value === '' ? '' : Number(e.target.value) })}
-                        className="h-6 w-16 text-center text-xs"
-                        error={item.physical_stock === '' || Number(item.physical_stock) < 0}
-                      />
-                    )}
-                  </div>
-                  <div className="ml-auto">
-                    {diff === 0 ? (
-                      <Badge color="bg-success-50 text-success-700">OK</Badge>
-                    ) : (
-                      <Badge color={diff > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-danger-50 text-danger-700'}>
-                        {diff > 0 ? '+' : ''}{formatQty(diff)}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                {!isReadOnly && (
-                  <div className="mt-2">
-                    <Input
-                      value={item.reason}
-                      onChange={(e) => updateItem(item.product_id, { reason: e.target.value })}
-                      placeholder="Alasan selisih..."
-                      className="h-6 text-xs"
-                    />
-                  </div>
+                {isFilled && (
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${
+                    diff === 0 ? 'bg-success-100 text-success-700' : diff !== null ? 'bg-warning-100 text-warning-700' : ''
+                  }`}>
+                    {diff === 0 ? 'OK' : diff !== null ? `${diff > 0 ? '+' : ''}${diff}` : ''}
+                  </span>
                 )}
               </div>
-            );
-          })}
-          {filteredItems.length === 0 && items.length > 0 && (
-            <div className="py-6 text-center text-xs text-slate-400">Tidak ada item cocok</div>
-          )}
+
+              {p.barcode && (
+                <div className="mt-2 flex items-center gap-1.5 rounded bg-slate-50 px-2 py-1">
+                  <Barcode className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <span className="font-mono text-[11px] tracking-widest text-slate-500">{p.barcode}</span>
+                </div>
+              )}
+
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+                <span>Stok Sistem:</span>
+                <span className="font-semibold text-slate-700">{formatQty(p.stock)}</span>
+              </div>
+
+              {!isReadOnly && (
+                <div className="mt-1.5">
+                  <label className="text-xs text-slate-500">Stok Fisik</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={physical ?? ''}
+                    onChange={(e) => updateStock(p.id, e.target.value === '' ? null : Number(e.target.value))}
+                    placeholder="0"
+                    className="mt-0.5 h-8 text-sm"
+                  />
+                </div>
+              )}
+
+              {!isReadOnly && (
+                <div className="mt-1.5">
+                  <Input
+                    value={itemReason(p.id)}
+                    onChange={(e) => updateReason(p.id, e.target.value)}
+                    placeholder="Alasan..."
+                    className="h-6 text-xs"
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {(products.data?.items || []).length === 0 && !products.loading && (
+        <div className="py-12 text-center text-sm text-slate-400">
+          {debounced ? 'Produk tidak ditemukan' : 'Tidak ada produk'}
         </div>
       )}
 
-      {!isReadOnly && items.length > 0 && stats.mismatch > 0 && (
+      {!isReadOnly && mismatchItems.length > 0 && (
         <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm">
-          <span className="text-amber-700">{stats.mismatch} produk selisih stok</span>
+          <span className="text-amber-700">{mismatchItems.length} produk selisih stok</span>
           <button onClick={() => setReviewOpen(true)} className="font-medium text-amber-800 hover:underline">Lihat Detail</button>
         </div>
       )}
 
       {!isReadOnly && (
         <div className="flex items-center justify-end gap-2 pb-4">
-          {!canSave && items.length > 0 && (
-            <p className="mr-auto text-xs text-slate-400">{invalidItems.length} stok fisik tidak valid</p>
+          {!canSave && (
+            <p className="mr-auto text-xs text-slate-400">Isi stok fisik minimal satu produk</p>
           )}
           {isView && existing?.status === 'draft' && (
             <>
@@ -351,7 +335,8 @@ export default function OpnameForm() {
         <ReviewModal
           open={reviewOpen}
           onClose={() => setReviewOpen(false)}
-          items={items}
+          items={selectedItems}
+          itemStocks={itemStocks}
           stats={stats}
           opnameDate={opnameDate}
         />
@@ -360,8 +345,13 @@ export default function OpnameForm() {
   );
 }
 
-function ReviewModal({ open, onClose, items, stats, opnameDate }) {
-  const mismatchItems = items.filter((i) => i.status === 'mismatch');
+function ReviewModal({ open, onClose, items, itemStocks, stats, opnameDate }) {
+  const mismatchItems = items.filter((p) => {
+    const physical = Number(itemStocks[p.id]);
+    if (isNaN(physical)) return false;
+    const diff = physical - Number(p.stock);
+    return diff !== 0;
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -378,41 +368,33 @@ function ReviewModal({ open, onClose, items, stats, opnameDate }) {
         <div className="max-h-[65vh] overflow-y-auto p-4">
           <div className="mb-3 grid grid-cols-3 gap-2 text-center text-xs">
             <div className="rounded-lg bg-primary-50 p-2"><p className="text-primary-600">Total</p><p className="text-base font-bold text-primary-900">{stats.total}</p></div>
-            <div className="rounded-lg bg-success-50 p-2"><p className="text-success-600">Sesuai</p><p className="text-base font-bold text-success-900">{stats.completed}</p></div>
-            <div className="rounded-lg bg-warning-50 p-2"><p className="text-warning-600">Selisih</p><p className="text-base font-bold text-warning-900">{stats.mismatch}</p></div>
+            <div className="rounded-lg bg-success-50 p-2"><p className="text-success-600">Sesuai</p><p className="text-base font-bold text-success-900">{stats.sesuai}</p></div>
+            <div className="rounded-lg bg-warning-50 p-2"><p className="text-warning-600">Selisih</p><p className="text-base font-bold text-warning-900">{stats.selisih}</p></div>
           </div>
 
           {mismatchItems.length > 0 ? (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-xs font-medium text-slate-500 uppercase">
-                  <th className="pb-1.5">Produk</th>
-                  <th className="pb-1.5 text-center w-16">Sistem</th>
-                  <th className="pb-1.5 text-center w-16">Fisik</th>
-                  <th className="pb-1.5 text-center w-16">Selisih</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {mismatchItems.map((item) => {
-                  const diff = Number(item.physical_stock) - Number(item.system_stock);
-                  return (
-                    <tr key={item.product_id}>
-                      <td className="py-1.5">
-                        <p className="font-medium text-slate-800">{item.product?.name}</p>
-                        <p className="text-xs text-slate-400">{item.product?.sku}</p>
-                      </td>
-                      <td className="py-1.5 text-center text-slate-600">{formatQty(item.system_stock)}</td>
-                      <td className="py-1.5 text-center font-medium text-slate-800">{formatQty(item.physical_stock)}</td>
-                      <td className="py-1.5 text-center">
-                        <Badge color={diff > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-danger-50 text-danger-700'}>
-                          {diff > 0 ? '+' : ''}{formatQty(diff)}
-                        </Badge>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="space-y-2">
+              {mismatchItems.map((p) => {
+                const physical = Number(itemStocks[p.id]);
+                const diff = physical - Number(p.stock);
+                return (
+                  <div key={p.id} className="flex items-center justify-between rounded-lg border border-slate-100 bg-white p-2">
+                    <div className="min-w-0 flex-1 pr-2">
+                      <p className="truncate text-sm font-medium text-slate-800">{p.name}</p>
+                      <p className="text-xs text-slate-400">{p.sku}</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-slate-500">{formatQty(p.stock)}</span>
+                      <span className="text-slate-300">→</span>
+                      <span className="font-semibold text-slate-800">{formatQty(physical)}</span>
+                      <Badge color={diff > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-danger-50 text-danger-700'}>
+                        {diff > 0 ? '+' : ''}{diff}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           ) : (
             <p className="py-6 text-center text-sm text-slate-400">Semua stok sesuai</p>
           )}
