@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, ClipboardCheck, TrendingUp, CheckCircle, AlertTriangle, Package, Plus, Trash2, Barcode, X as XIcon } from 'lucide-react';
+import { ArrowLeft, Save, ClipboardCheck, TrendingUp, Plus, Trash2, Barcode, X as XIcon } from 'lucide-react';
 import { inventoryApi, productsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
@@ -239,82 +239,72 @@ export default function OpnameForm() {
       )}
 
       {items.length > 0 && (
-        <Card title={`Item Opname (${items.length})`} bodyClassName="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  <th className="px-3 py-2 text-center w-8">#</th>
-                  <th className="px-3 py-2 text-left">Produk</th>
-                  <th className="px-3 py-2 text-center w-20">Sistem</th>
-                  <th className="px-3 py-2 text-center w-20">Fisik</th>
-                  <th className="px-3 py-2 text-center w-28">Selisih</th>
-                  {!isReadOnly && <th className="px-3 py-2 text-left w-36">Alasan</th>}
-                  {!isReadOnly && <th className="px-3 py-2 w-8"></th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredItems.map((item, idx) => {
-                  const diff = Number(item.physical_stock) - Number(item.system_stock);
-                  return (
-                    <tr key={item.product_id} className="hover:bg-slate-50/50">
-                      <td className="px-3 py-2 text-center text-xs text-slate-400">{idx + 1}</td>
-                      <td className="px-3 py-2">
-                        <span className="font-medium text-slate-800">{item.product?.name}</span>
-                        <span className="ml-1.5 text-xs text-slate-400">{item.product?.sku}</span>
-                      </td>
-                      <td className="px-3 py-2 text-center tabular-nums text-slate-600">{formatQty(item.system_stock)}</td>
-                      <td className="px-3 py-2 text-center">
-                        {isReadOnly ? (
-                          <span className="tabular-nums font-medium text-slate-800">{formatQty(item.physical_stock)}</span>
-                        ) : (
-                          <Input
-                            type="number"
-                            min="0"
-                            step="any"
-                            value={item.physical_stock}
-                            onChange={(e) => updateItem(item.product_id, { physical_stock: e.target.value === '' ? '' : Number(e.target.value) })}
-                            className="h-7 w-16 text-center text-xs mx-auto"
-                            error={item.physical_stock === '' || Number(item.physical_stock) < 0}
-                          />
-                        )}
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        {diff === 0 ? (
-                          <Badge color="bg-success-50 text-success-700">OK</Badge>
-                        ) : (
-                          <Badge color={diff > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-danger-50 text-danger-700'}>
-                            {diff > 0 ? '+' : ''}{formatQty(diff)}
-                          </Badge>
-                        )}
-                      </td>
-                      {!isReadOnly && (
-                        <td className="px-3 py-2">
-                          <Input
-                            value={item.reason}
-                            onChange={(e) => updateItem(item.product_id, { reason: e.target.value })}
-                            placeholder="Alasan"
-                            className="h-7 text-xs"
-                          />
-                        </td>
-                      )}
-                      {!isReadOnly && (
-                        <td className="px-3 py-2">
-                          <button onClick={() => removeItem(item.product_id)} className="rounded p-0.5 text-red-400 hover:bg-red-50 hover:text-red-600">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-slate-500">Item Opname ({items.length})</p>
+          {filteredItems.map((item) => {
+            const diff = Number(item.physical_stock) - Number(item.system_stock);
+            return (
+              <div key={item.product_id} className="rounded-lg border border-slate-200 bg-white p-3">
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-slate-800 truncate">{item.product?.name}</p>
+                    <p className="text-xs text-slate-400">{item.product?.sku}</p>
+                  </div>
+                  {!isReadOnly && (
+                    <button onClick={() => removeItem(item.product_id)} className="shrink-0 rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                <div className="mt-2 flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className="text-slate-500">Sistem</span>
+                    <span className="tabular-nums font-medium text-slate-700">{formatQty(item.system_stock)}</span>
+                  </div>
+                  <span className="text-slate-300">→</span>
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className="text-slate-500">Fisik</span>
+                    {isReadOnly ? (
+                      <span className="tabular-nums font-medium text-slate-800">{formatQty(item.physical_stock)}</span>
+                    ) : (
+                      <Input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={item.physical_stock}
+                        onChange={(e) => updateItem(item.product_id, { physical_stock: e.target.value === '' ? '' : Number(e.target.value) })}
+                        className="h-6 w-16 text-center text-xs"
+                        error={item.physical_stock === '' || Number(item.physical_stock) < 0}
+                      />
+                    )}
+                  </div>
+                  <div className="ml-auto">
+                    {diff === 0 ? (
+                      <Badge color="bg-success-50 text-success-700">OK</Badge>
+                    ) : (
+                      <Badge color={diff > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-danger-50 text-danger-700'}>
+                        {diff > 0 ? '+' : ''}{formatQty(diff)}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                {!isReadOnly && (
+                  <div className="mt-2">
+                    <Input
+                      value={item.reason}
+                      onChange={(e) => updateItem(item.product_id, { reason: e.target.value })}
+                      placeholder="Alasan selisih..."
+                      className="h-6 text-xs"
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {filteredItems.length === 0 && items.length > 0 && (
             <div className="py-6 text-center text-xs text-slate-400">Tidak ada item cocok</div>
           )}
-        </Card>
+        </div>
       )}
 
       {!isReadOnly && items.length > 0 && stats.mismatch > 0 && (
