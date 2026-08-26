@@ -195,29 +195,6 @@ export default function OpnameForm() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-5">
-        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center">
-          <p className="text-xs text-slate-500">Total</p>
-          <p className="text-lg font-bold text-slate-800">{selectedItems.length}</p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center">
-          <p className="text-xs text-slate-500">Sesuai</p>
-          <p className="text-lg font-bold text-success-600">{stats.sesuai}</p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center">
-          <p className="text-xs text-slate-500">Selisih</p>
-          <p className="text-lg font-bold text-warning-600">{stats.selisih}</p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center">
-          <p className="text-xs text-slate-500">Kurang</p>
-          <p className="text-lg font-bold text-danger-600">{stats.kurang}</p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center hidden sm:block">
-          <p className="text-xs text-slate-500">Lebih</p>
-          <p className="text-lg font-bold text-emerald-600">{stats.lebih}</p>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {(products.data?.items || []).map((p) => {
           const physical = itemPhysicalStock(p.id);
