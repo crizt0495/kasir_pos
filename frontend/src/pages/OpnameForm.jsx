@@ -256,6 +256,12 @@ export default function OpnameForm() {
                     </button>
                   )}
                 </div>
+                {item.product?.barcode && (
+                  <div className="mt-2 flex items-center gap-2 rounded bg-slate-50 px-2 py-1">
+                    <Barcode className="h-4 w-4 shrink-0 text-slate-400" />
+                    <span className="font-mono text-xs tracking-widest text-slate-600">{item.product.barcode}</span>
+                  </div>
+                )}
                 <div className="mt-2 flex items-center gap-3">
                   <div className="flex items-center gap-1.5 text-xs">
                     <span className="text-slate-500">Sistem</span>
