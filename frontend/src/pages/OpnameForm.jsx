@@ -7,7 +7,7 @@ import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Button, Input, SearchInput, ConfirmDialog, Badge, Skeleton } from '../components/ui/index.jsx';
+import { Button, Input, SearchInput, ConfirmDialog, Badge, Skeleton, BarcodeScanner } from '../components/ui/index.jsx';
 import { formatDateTime, formatQty } from '../utils/format.js';
 
 export default function OpnameForm() {
@@ -25,6 +25,7 @@ export default function OpnameForm() {
   const [existing, setExisting] = useState(null);
   const [confirmComplete, setConfirmComplete] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [itemStocks, setItemStocks] = useState({});
   const [itemReasons, setItemReasons] = useState({});
 
@@ -78,10 +79,10 @@ export default function OpnameForm() {
     return physical - Number(product.stock);
   };
 
-  const handleScan = async () => {
+  const handleScan = async (code) => {
+    if (!code) return;
+    setScannerOpen(false);
     try {
-      const code = prompt('Masukkan kode barcode:');
-      if (!code) return;
       const { data } = await productsApi.list({ search: code, pageSize: 1 });
       if (data.items?.length > 0) {
         const p = data.items[0];
@@ -189,7 +190,7 @@ export default function OpnameForm() {
           <div className="flex-1">
             <SearchInput value={search} onChange={setSearch} placeholder="Cari produk..." />
           </div>
-          <button onClick={handleScan} title="Scan Barcode" className="shrink-0 rounded-lg border border-slate-200 p-2 text-slate-600 hover:border-primary-400 hover:bg-primary-50 transition-colors">
+          <button onClick={() => setScannerOpen(true)} title="Scan Barcode" className="shrink-0 rounded-lg border border-slate-200 p-2 text-slate-600 hover:border-primary-400 hover:bg-primary-50 transition-colors">
             <Barcode className="h-5 w-5" />
           </button>
         </div>
@@ -306,6 +307,12 @@ export default function OpnameForm() {
         title="Selesaikan stock opname?"
         message="Stok sistem akan disesuaikan menjadi stok fisik. Selisih tercatat di pergerakan stok."
         confirmText="Ya, selesaikan"
+      />
+
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleScan}
       />
 
       {reviewOpen && (
