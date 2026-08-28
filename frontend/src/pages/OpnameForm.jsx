@@ -83,17 +83,27 @@ export default function OpnameForm() {
     if (!code) return;
     setScannerOpen(false);
     try {
-      const { data } = await productsApi.list({ search: code, pageSize: 1 });
-      if (data.items?.length > 0) {
-        const p = data.items[0];
-        updateStock(p.id, Number(p.stock));
-        setSearch('');
-        toast.success(`Ditemukan: ${p.name}`);
-      } else {
+      const { data } = await productsApi.byBarcode(code);
+      if (!data) {
         toast.error('Produk tidak ditemukan');
+        return;
       }
+      const current = itemStocks[data.id];
+      const next = (current === null || current === undefined || current === '' || isNaN(Number(current)))
+        ? 1
+        : Number(current) + 1;
+      updateStock(data.id, next);
+      setSearch('');
+      toast.success(`${data.name} (${next})`);
+      window.requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-physical-stock-input="${data.id}"]`);
+        if (el) {
+          el.focus();
+          el.select();
+        }
+      });
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Gagal memproses scan'));
+      toast.error(getErrorMessage(error, 'Produk tidak ditemukan'));
     }
   };
 
@@ -250,6 +260,7 @@ export default function OpnameForm() {
                     onChange={(e) => updateStock(p.id, e.target.value === '' ? null : Number(e.target.value))}
                     placeholder="0"
                     className="mt-0.5 h-8 text-sm"
+                    data-physical-stock-input={p.id}
                   />
                 </div>
               )}
