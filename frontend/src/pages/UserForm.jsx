@@ -87,10 +87,10 @@ export default function UserForm() {
     if (!isEdit) {
       payload.username = values.username;
       payload.password = values.password;
-      payload.must_change_password = true;
+      payload.must_change_password = true; // user baru wajib ganti password pertama kali
     } else if (values.password) {
       payload.password = values.password;
-      payload.must_change_password = true;
+      payload.must_change_password = false; // admin reset password: user bisa pakai langsung tanpa forced change
     }
 
     try {
@@ -152,7 +152,7 @@ export default function UserForm() {
                 <Input type="password" {...register('password')} error={errors.password} />
               </Field>
             ) : (
-              <Field label="Reset Password (opsional)" error={errors.password?.message} hint="Kosongkan jika tidak ingin mengubah">
+              <Field label="Reset Password (opsional)" error={errors.password?.message} hint="Kosongkan jika tidak ingin mengubah. Jika diisi, user akan langsung dapat menggunakan password baru.">
                 <Input type="password" {...register('password')} error={errors.password} />
               </Field>
             )}
