@@ -110,8 +110,8 @@ on conflict do nothing;
 -- USERS (password di-hash bcrypt)
 -- ------------------------------------------------------------
 insert into public.users (username, password_hash, is_active, must_change_password) values
-  ('admin', crypt('Admin123!', gen_salt('bf', 10)), true, true),
-  ('kasir', crypt('Kasir123!', gen_salt('bf', 10)), true, true)
+  ('admin', crypt('Admin123!', gen_salt('bf', 10)), true, false),
+  ('kasir', crypt('Kasir123!', gen_salt('bf', 10)), true, false)
 on conflict (username) do nothing;
 
 insert into public.profiles (id, full_name, email) values

@@ -1,4 +1,5 @@
 import { AppError, extractPgMessage } from '../utils/errors.js';
+import { env } from '../config/env.js';
 
 export function notFound(req, res) {
   return res.status(404).json({
@@ -37,7 +38,17 @@ export function errorHandler(err, req, res, next) {
   }
 
   // Error tak terduga — jangan tampilkan stack trace ke user
-  console.error('[ERROR]', err);
+  console.error('[ERROR]', err && err.stack ? err.stack : err);
+  if (env && env.NODE_ENV === 'production') {
+    // Log error untuk debugging di Vercel logs
+    console.error('[ERROR_DETAIL]', JSON.stringify({
+      message: err && err.message,
+      code: err && err.code,
+      url: req && req.originalUrl,
+      method: req && req.method,
+      stack: err && err.stack && err.stack.split('\n').slice(0, 5).join('\n'),
+    }));
+  }
   return res.status(500).json({
     success: false,
     message: 'Terjadi kesalahan, silakan coba lagi',

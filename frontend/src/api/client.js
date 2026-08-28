@@ -20,6 +20,14 @@ api.interceptors.response.use(
     if ((status === 401) && !path.startsWith('/login') && !path.startsWith('/change-password')) {
       window.dispatchEvent(new CustomEvent('auth:expired'));
     }
+    // 500 pada auth endpoint = sesi corrupt/expired → clear cookie, redirect login
+    if (status === 500 && (path.startsWith('/login') || error.config?.url?.includes('/auth/'))) {
+      // Hapus cookie pos_token (server akan ignore tapi bersihkan lokal)
+      document.cookie = 'pos_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+      if (!path.startsWith('/login')) {
+        window.location.href = '/login';
+      }
+    }
     return Promise.reject(error);
   }
 );
