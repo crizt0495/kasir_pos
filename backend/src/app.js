@@ -6,12 +6,6 @@ import { env } from './config/env.js';
 import routes from './routes/index.js';
 import { globalLimiter } from './middleware/rateLimiter.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
-import { startCacheCleanup } from './middleware/cache.js';
-
-const app = express();
-
-// Start cache cleanup timer (setiap 5 menit hapus entry expired)
-startCacheCleanup(5 * 60 * 1000);
 
 const app = express();
 
