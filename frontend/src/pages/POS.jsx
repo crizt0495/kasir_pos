@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, User, Users, PauseCircle, PlayCircle,
-  Package, ScanLine, Banknote, X, Percent,
+  Package, ScanLine, Banknote, X, Percent, Camera,
 } from 'lucide-react';
 import { productsApi, categoriesApi, customersApi, salesApi, settingsApi, cashierApi } from '../api/index.js';
 import { useCartStore } from '../stores/cartStore.js';
@@ -12,7 +12,7 @@ import { getErrorMessage } from '../api/client.js';
 import { computeTotals, computeTax, computeChange } from '../utils/cart.js';
 import { formatRupiah, formatNumber, formatQty, formatDateTime, paymentMethodLabel } from '../utils/format.js';
 import {
-  Button, Modal, ConfirmDialog, Input, Select, Field, Textarea, Skeleton, EmptyState, ErrorState, Badge,
+  Button, Modal, ConfirmDialog, Input, Select, Field, Textarea, Skeleton, EmptyState, ErrorState, Badge, BarcodeScanner,
 } from '../components/ui/index.jsx';
 import ReceiptModal from '../components/pos/ReceiptModal.jsx';
 import ProductImage from '../components/ProductImage.jsx';
@@ -25,6 +25,7 @@ export default function POS() {
   const debouncedSearch = useDebounce(search, 300);
   const [categoryId, setCategoryId] = useState('');
   const [barcode, setBarcode] = useState('');
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showHeld, setShowHeld] = useState(false);
   const [showCustomer, setShowCustomer] = useState(false);
@@ -90,6 +91,9 @@ export default function POS() {
       if (e.key === 'F2') {
         e.preventDefault();
         searchRef.current?.focus();
+      } else if (e.key === 'F3') {
+        e.preventDefault();
+        barcodeRef.current?.focus();
       } else if (e.key === 'F4') {
         e.preventDefault();
         setShowCustomer(true);
@@ -102,8 +106,7 @@ export default function POS() {
     return () => window.removeEventListener('keydown', handler);
   }, [cart.items.length]);
 
-  const handleBarcode = useCallback(async () => {
-    const code = barcode.trim();
+  const addProductByCode = useCallback(async (code) => {
     if (!code) return;
     try {
       const res = await productsApi.byBarcode(code);
@@ -118,7 +121,16 @@ export default function POS() {
     }
     setBarcode('');
     barcodeRef.current?.focus();
-  }, [barcode, cart]);
+  }, [cart]);
+
+  const handleBarcode = useCallback(() => {
+    addProductByCode(barcode.trim());
+  }, [barcode, addProductByCode]);
+
+  const handleScan = useCallback((code) => {
+    setScannerOpen(false);
+    addProductByCode(code);
+  }, [addProductByCode]);
 
   const handleCheckout = async (payload) => {
     try {
@@ -173,13 +185,23 @@ export default function POS() {
                 value={barcode}
                 onChange={(e) => setBarcode(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleBarcode()}
-                placeholder="Scan barcode..."
-                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150 sm:w-52"
+                placeholder="Scan barcode (F3)..."
+                className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-10 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150 sm:w-52"
               />
+              <button
+                type="button"
+                onClick={() => setScannerOpen(true)}
+                title="Scan barcode (kamera)"
+                aria-label="Scan barcode dengan kamera"
+                className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-all duration-150 hover:bg-primary-50 hover:text-primary-600"
+              >
+                <Camera className="h-4 w-4" />
+              </button>
             </div>
           </div>
           <div className="hidden shrink-0 items-center gap-3 text-[0.65rem] text-slate-400 lg:flex">
             <span className="flex items-center gap-1.5"><kbd className="kbd">F2</kbd> Cari</span>
+            <span className="flex items-center gap-1.5"><kbd className="kbd">F3</kbd> Barcode</span>
             <span className="flex items-center gap-1.5"><kbd className="kbd">F4</kbd> Pelanggan</span>
             <span className="flex items-center gap-1.5"><kbd className="kbd">F8</kbd> Bayar</span>
           </div>
@@ -497,6 +519,12 @@ export default function POS() {
       />
 
       <ReceiptModal open={showReceipt} onClose={() => setShowReceipt(false)} sale={lastSale} settings={settings} />
+
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleScan}
+      />
     </div>
   );
 }

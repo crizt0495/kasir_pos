@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Save, ArrowLeft, Plus } from 'lucide-react';
+import { Save, ArrowLeft, Plus, Camera } from 'lucide-react';
 import { productsApi, categoriesApi, unitsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
@@ -10,7 +10,7 @@ import { productSchema, categorySchema, unitSchema } from '../schemas/index.js';
 import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Button, Field, Input, Select, Textarea, CurrencyInput, Card, Modal, Skeleton, ErrorState } from '../components/ui/index.jsx';
+import { Button, Field, Input, Select, Textarea, CurrencyInput, Card, Modal, Skeleton, ErrorState, BarcodeScanner } from '../components/ui/index.jsx';
 import ProductImage from '../components/ProductImage.jsx';
 
 export default function ProductForm() {
@@ -30,6 +30,7 @@ export default function ProductForm() {
   const [unitModal, setUnitModal] = useState(false);
   const [unitForm, setUnitForm] = useState({ name: '', short_name: '' });
   const [unitSaving, setUnitSaving] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const {
     register,
@@ -135,6 +136,12 @@ export default function ProductForm() {
     finally { setUnitSaving(false); }
   };
 
+  const handleScan = (code) => {
+    setScannerOpen(false);
+    setValue('barcode', code, { shouldValidate: true });
+    toast.success('Barcode terisi');
+  };
+
   if (loading) {
     return (
       <Card bodyClassName="p-6">
@@ -170,7 +177,18 @@ export default function ProductForm() {
               <Input {...register('sku')} error={errors.sku} placeholder="cth: BRG-0001" />
             </Field>
             <Field label="Barcode" error={errors.barcode?.message} hint="Scan barcode produk">
-              <Input {...register('barcode')} error={errors.barcode} placeholder="8991001000001" />
+              <div className="relative">
+                <Input {...register('barcode')} error={errors.barcode} placeholder="8991001000001" className="pr-10 font-mono tracking-wider" />
+                <button
+                  type="button"
+                  onClick={() => setScannerOpen(true)}
+                  title="Scan barcode dengan kamera"
+                  aria-label="Scan barcode dengan kamera"
+                  className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-all duration-150 hover:bg-primary-50 hover:text-primary-600"
+                >
+                  <Camera className="h-4 w-4" />
+                </button>
+              </div>
             </Field>
             <Field label="Kategori" error={errors.category_id?.message}>
               <div className="flex items-center gap-1">
@@ -297,6 +315,12 @@ export default function ProductForm() {
           </Field>
         </div>
       </Modal>
+
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleScan}
+      />
     </div>
   );
 }
