@@ -9,7 +9,7 @@ import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
-  DataTable, SearchInput, Button, Modal, Field, Input, Textarea, Select, ConfirmDialog, Badge, PageHeader,
+  DataTable, SearchInput, Button, Modal, Field, Input, Textarea, Select, ConfirmDialog, Badge, PageHeader, CurrencyInput,
 } from '../components/ui/index.jsx';
 import { formatRupiah, formatDate, paymentMethodLabel, paymentMethodColor, todayInput } from '../utils/format.js';
 
@@ -210,7 +210,7 @@ export default function Expenses() {
               </Select>
             </Field>
             <Field label="Nominal (Rp)" required error={errors.amount || formError}>
-              <Input type="number" min="0" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0" error={!!errors.amount || !!formError} />
+              <CurrencyInput value={form.amount} onChange={(num) => setForm({ ...form, amount: num })} placeholder="0" error={!!errors.amount || !!formError} />
             </Field>
             <Field label="Metode Pembayaran" required>
               <Select value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })}>
