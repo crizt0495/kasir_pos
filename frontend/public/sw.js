@@ -2,7 +2,7 @@
    - Cache app shell untuk offline & akses cepat
    - API tidak di-cache (selalu jaringan)
    - Push notification + click → buka aplikasi */
-const CACHE = 'pos-shell-v4';
+const CACHE = 'pos-shell-v5';
 const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 /** Hanya tangani request http(s) — abaikan chrome-extension://, data:, dll */
