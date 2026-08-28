@@ -66,8 +66,15 @@ function AppRoutes() {
           }
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="change-password" element={<ChangePassword />} />
-          <Route path="dashboard" element={<RequirePermission permission="dashboard.view"><Dashboard /></RequirePermission>} />
+        <Route path="change-password" element={<ChangePassword />} />
+        <Route
+          path="dashboard"
+          element={
+            <RequirePermission permission="dashboard.view" fallback="/pos">
+              <Dashboard />
+            </RequirePermission>
+          }
+        />
           <Route path="pos" element={<RequirePermission permission="pos.access"><POS /></RequirePermission>} />
           <Route path="products" element={<RequirePermission permission="products.view"><Products /></RequirePermission>} />
           <Route path="products/new" element={<RequirePermission permission="products.create"><ProductForm /></RequirePermission>} />

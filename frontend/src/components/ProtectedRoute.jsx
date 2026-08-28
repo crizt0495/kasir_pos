@@ -28,16 +28,12 @@ export function RequireAuth({ children }) {
   return children;
 }
 
-/** Wajib punya permission tertentu; selain itu tampilkan 403. */
-export function RequirePermission({ permission, children }) {
+/** Wajib punya permission tertentu; redirect ke fallback bila tidak punya. */
+export function RequirePermission({ permission, children, fallback = '/login' }) {
   const can = useAuthStore((s) => s.can);
+  const location = useLocation();
   if (!can(permission)) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 py-20 text-center">
-        <p className="text-5xl font-bold text-slate-300">403</p>
-        <p className="text-sm text-slate-500">Anda tidak memiliki akses ke halaman ini.</p>
-      </div>
-    );
+    return <Navigate to={fallback} state={{ from: location.pathname }} replace />;
   }
   return children;
 }
