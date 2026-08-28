@@ -56,6 +56,15 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Aset statis: cache-first (hanya http/https — sudah difilter di atas)
+  // API & rute dinamis (mis. /expenses ketika fetch ke API backend) selalu
+  // ke network; jika gagal, kirim error response agar tidak reject promise.
+  if (url.pathname.startsWith('/expenses')) {
+    event.respondWith(
+      fetch(req).catch(() => new Response('Network unavailable', { status: 503 }))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(req).then(
       (cached) =>
@@ -69,7 +78,7 @@ self.addEventListener('fetch', (event) => {
               .catch(() => {}); // cache gagal tidak boleh mengganggu respons
           }
           return res;
-        })
+        }).catch(() => caches.match('/index.html').then((cached) => cached || new Response('Offline', { status: 503 })))
     )
   );
 });
