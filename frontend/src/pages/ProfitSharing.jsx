@@ -6,7 +6,7 @@ import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
   Card, Button, StatCard, Select, Input, Field, Textarea, Modal, ConfirmDialog,
-  SkeletonRows, EmptyState, ErrorState, Badge, Spinner, PageHeader, Pagination,
+  SkeletonRows, EmptyState, ErrorState, Badge, Spinner, PageHeader, Pagination, DataTable,
 } from '../components/ui/index.jsx';
 import { formatRupiah, formatDateTime } from '../utils/format.js';
 
@@ -197,69 +197,60 @@ export default function ProfitSharing() {
               <ErrorState onRetry={shares.reload} />
             ) : !shares.data?.items?.length ? (
               <EmptyState title="Belum ada data" description="Penjualan ke pelanggan terdaftar akan otomatis masuk di sini" />
-            ) : (() => {
-              const pageItems = shares.data.items || [];
-              const total = shares.data.total || 0;
-              const totalPages = shares.data.totalPages || 1;
-              return (
-                <>
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[760px] text-left text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
-                          <th className="px-4 py-2.5 font-semibold">Pelanggan</th>
-                          <th className="px-4 py-2.5 text-right font-semibold">Total Pembelian</th>
-                          <th className="px-4 py-2.5 text-right font-semibold">Total Laba</th>
-                          <th className="px-4 py-2.5 text-right font-semibold">Hak 2,5%</th>
-                          <th className="px-4 py-2.5 text-right font-semibold">Dibagikan</th>
-                          <th className="px-4 py-2.5 text-right font-semibold">Sisa</th>
-                          <th className="px-4 py-2.5 text-center font-semibold">Status</th>
-                          {can('profit.distribute') && <th className="px-4 py-2.5 text-right font-semibold">Aksi</th>}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {pageItems.map((s) => (
-                      <tr key={s.id} className="hover:bg-slate-50/50">
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-slate-800">{s.customer?.name || '-'}</p>
-                          <p className="text-xs text-slate-400">{s.customer?.phone || ''}</p>
-                        </td>
-                        <td className="px-4 py-3 text-right">{formatRupiah(s.total_purchase)}</td>
-                        <td className="px-4 py-3 text-right font-medium text-emerald-600">{formatRupiah(s.total_profit)}</td>
-                        <td className="px-4 py-3 text-right font-semibold text-violet-700">{formatRupiah(s.share_amount)}</td>
-                        <td className="px-4 py-3 text-right text-slate-500">{formatRupiah(s.distributed)}</td>
-                        <td className="px-4 py-3 text-right">
-                          {s.remaining > 0 ? (
-                            <span className="font-medium text-amber-600">{formatRupiah(s.remaining)}</span>
-                          ) : (
-                            <span className="text-slate-400">0</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          {s.status === 'paid' ? (
-                            <Badge color="bg-emerald-100 text-emerald-700">Sudah Dibagikan</Badge>
-                          ) : (
-                            <Badge color="bg-amber-100 text-amber-700">Belum Dibagikan</Badge>
-                          )}
-                        </td>
-                        {can('profit.distribute') && (
-                          <td className="px-4 py-3 text-right">
-                            <Button size="sm" variant="outline" disabled={s.remaining <= 0} onClick={() => openDistribute(s)}>
-                              <HandCoins className="h-3.5 w-3.5" /> Bagikan
-                            </Button>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="border-t border-slate-200">
-                <Pagination page={sharesPage} totalPages={totalPages} total={total} pageSize={sharesPageSize} onPageChange={setSharesPage} onPageSizeChange={(size) => { setSharesPageSize(size); setSharesPage(1); }} />
-              </div>
-                </>
-              );
-            })()}
+            ) : (
+              <DataTable
+                columns={[
+                  { key: 'customer', headerLabel: 'Pelanggan', render: (row) => (
+                    <>
+                      <p className="font-medium text-slate-800">{row.customer?.name || '-'}</p>
+                      <p className="text-xs text-slate-400">{row.customer?.phone || ''}</p>
+                    </>
+                  )},
+                  { key: 'total_purchase', headerLabel: 'Total Pembelian', align: 'right', render: (row) => formatRupiah(row.total_purchase) },
+                  { key: 'total_profit', headerLabel: 'Total Laba', align: 'right', render: (row) => (
+                    <span className="font-medium text-emerald-600">{formatRupiah(row.total_profit)}</span>
+                  )},
+                  { key: 'share_amount', headerLabel: 'Hak 2,5%', align: 'right', render: (row) => (
+                    <span className="font-semibold text-violet-700">{formatRupiah(row.share_amount)}</span>
+                  )},
+                  { key: 'distributed', headerLabel: 'Dibagikan', align: 'right', render: (row) => formatRupiah(row.distributed) },
+                  { key: 'remaining', headerLabel: 'Sisa', align: 'right', render: (row) => (
+                    row.remaining > 0 ? (
+                      <span className="font-medium text-amber-600">{formatRupiah(row.remaining)}</span>
+                    ) : (
+                      <span className="text-slate-400">0</span>
+                    )
+                  )},
+                  { key: 'status', headerLabel: 'Status', align: 'center', render: (row) => (
+                    row.status === 'paid' ? (
+                      <Badge color="bg-emerald-100 text-emerald-700">Sudah Dibagikan</Badge>
+                    ) : (
+                      <Badge color="bg-amber-100 text-amber-700">Belum Dibagikan</Badge>
+                    )
+                  )},
+                  ...(can('profit.distribute') ? [{
+                    key: 'action',
+                    headerLabel: 'Aksi',
+                    align: 'right',
+                    hideable: false,
+                    render: (row) => (
+                      <Button size="sm" variant="outline" disabled={row.remaining <= 0} onClick={() => openDistribute(row)}>
+                        <HandCoins className="h-3.5 w-3.5" /> Bagikan
+                      </Button>
+                    )
+                  }] : [])
+                ]}
+                data={shares.data.items || []}
+                loading={shares.loading}
+                page={sharesPage}
+                totalPages={shares.data.totalPages || 1}
+                total={shares.data.total || 0}
+                pageSize={sharesPageSize}
+                onPageChange={setSharesPage}
+                onPageSizeChange={(size) => { setSharesPageSize(size); setSharesPage(1); }}
+                className="w-full"
+              />
+            )}
           </Card>
 
           <Card title="Riwayat Pembagian" bodyClassName="p-0">
@@ -272,32 +263,28 @@ export default function ProfitSharing() {
                 {!distributions.data?.items?.length ? (
                   <EmptyState title="Belum ada pembagian" />
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[640px] text-left text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
-                          <th className="px-4 py-2.5 font-semibold">Tanggal</th>
-                          <th className="px-4 py-2.5 font-semibold">Pelanggan</th>
-                          <th className="px-4 py-2.5 text-right font-semibold">Jumlah</th>
-                          <th className="px-4 py-2.5 font-semibold">Diproses Oleh</th>
-                          <th className="px-4 py-2.5 font-semibold">Catatan</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {distributions.data.items.map((d) => (
-                          <tr key={d.id} className="hover:bg-slate-50/50">
-                            <td className="px-4 py-3">{formatDateTime(d.distributed_at)}</td>
-                            <td className="px-4 py-3 font-medium text-slate-800">{d.customer?.name || '-'}</td>
-                            <td className="px-4 py-3 text-right font-semibold text-emerald-600">{formatRupiah(d.amount)}</td>
-                            <td className="px-4 py-3">
-                              {d.distributor?.profiles?.full_name || d.distributor?.username || '-'}
-                            </td>
-                            <td className="px-4 py-3 text-slate-500">{d.note || '-'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <DataTable
+                    columns={[
+                      { key: 'distributed_at', headerLabel: 'Tanggal', render: (row) => formatDateTime(row.distributed_at) },
+                      { key: 'customer', headerLabel: 'Pelanggan', render: (row) => (
+                        <span className="font-medium text-slate-800">{row.customer?.name || '-'}</span>
+                      )},
+                      { key: 'amount', headerLabel: 'Jumlah', align: 'right', render: (row) => (
+                        <span className="font-semibold text-emerald-600">{formatRupiah(row.amount)}</span>
+                      )},
+                      { key: 'distributor', headerLabel: 'Diproses Oleh', render: (row) =>
+                        row.distributor?.profiles?.full_name || row.distributor?.username || '-'
+                      },
+                      { key: 'note', headerLabel: 'Catatan', render: (row) => <span className="text-slate-500">{row.note || '-'}</span> }
+                    ]}
+                    data={distributions.data.items || []}
+                    page={distributionsPage}
+                    totalPages={distributions.data?.totalPages || 1}
+                    total={distributions.data?.total || 0}
+                    pageSize={distributions.data?.pageSize || 20}
+                    onPageChange={setDistributionsPage}
+                    className="w-full"
+                  />
                 )}
                 <div className="border-t border-slate-200">
                   <Pagination page={distributionsPage} totalPages={distributions.data?.totalPages || 1} total={distributions.data?.total || 0} pageSize={distributions.data?.pageSize || 20} onPageChange={setDistributionsPage} />

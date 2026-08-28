@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, ReceiptText, Banknote } from 'lucide-react';
 import { customersApi, salesApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
-import { Card, StatCard, Skeleton, ErrorState, EmptyState, StatusBadge, Pagination } from '../components/ui/index.jsx';
+import { Card, StatCard, Skeleton, ErrorState, EmptyState, StatusBadge, Pagination, DataTable } from '../components/ui/index.jsx';
 import { formatRupiah, formatDateTime, paymentMethodLabel } from '../utils/format.js';
 
 export default function CustomerDetail() {
@@ -58,39 +58,24 @@ export default function CustomerDetail() {
             ) : !transactions.data?.items?.length ? (
               <EmptyState title="Belum ada transaksi" />
             ) : (
-              <>
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
-                      <th className="px-4 py-2.5 font-semibold">No. Transaksi</th>
-                      <th className="px-4 py-2.5 font-semibold">Tanggal</th>
-                      <th className="px-4 py-2.5 font-semibold">Metode</th>
-                      <th className="px-4 py-2.5 font-semibold">Status</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {transactions.data.items.map((s) => (
-                      <tr key={s.id} onClick={() => navigate(`/sales/${s.id}`)} className="cursor-pointer hover:bg-slate-50/60">
-                        <td className="px-4 py-2.5 font-medium text-primary-600">{s.invoice_number}</td>
-                        <td className="px-4 py-2.5 text-slate-600">{formatDateTime(s.created_at)}</td>
-                        <td className="px-4 py-2.5 text-slate-600">{paymentMethodLabel(s.payment_method)}</td>
-                        <td className="px-4 py-2.5"><StatusBadge status={s.status} /></td>
-                        <td className="px-4 py-2.5 text-right font-semibold">{formatRupiah(s.total)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="border-t border-slate-200">
-                  <Pagination
-                    page={page}
-                    totalPages={transactions.data.totalPages}
-                    total={transactions.data.total}
-                    pageSize={transactions.data.pageSize}
-                    onPageChange={setPage}
-                  />
-                </div>
-              </>
+              <DataTable
+                columns={[
+                  { key: 'invoice_number', headerLabel: 'No. Transaksi' },
+                  { key: 'created_at', headerLabel: 'Tanggal' },
+                  { key: 'payment_method', headerLabel: 'Metode', render: (row) => paymentMethodLabel(row.payment_method) },
+                  { key: 'status', headerLabel: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+                  { key: 'total', headerLabel: 'Total', align: 'right' }
+                ]}
+                data={transactions.data.items}
+                loading={transactions.loading}
+                page={page}
+                totalPages={transactions.data.totalPages}
+                total={transactions.data.total}
+                pageSize={transactions.data.pageSize}
+                onPageChange={setPage}
+                onRowClick={(sale) => navigate(`/sales/${sale.id}`)}
+                className="w-full"
+              />
             )}
           </Card>
         </>

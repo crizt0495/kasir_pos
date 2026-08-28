@@ -6,7 +6,7 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Card, Button, StatusBadge, ConfirmDialog, Skeleton, ErrorState, EmptyState, Select, Pagination } from '../components/ui/index.jsx';
+import { Card, Button, StatusBadge, ConfirmDialog, Skeleton, ErrorState, EmptyState, Select, Pagination, DataTable } from '../components/ui/index.jsx';
 import { formatRupiah, formatDate, formatQty } from '../utils/format.js';
 
 export default function PurchaseDetail() {
@@ -128,36 +128,26 @@ export default function PurchaseDetail() {
               const itemsFrom = (itemsPage - 1) * itemsPageSize;
               const pageItems = p.items.slice(itemsFrom, itemsFrom + itemsPageSize);
               return (
-                <>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
-                          <th className="px-4 py-2.5 font-semibold">Produk</th>
-                          <th className="px-4 py-2.5 font-semibold">Qty</th>
-                          <th className="px-4 py-2.5 font-semibold">Harga Beli</th>
-                          <th className="px-4 py-2.5 text-right font-semibold">Subtotal</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {pageItems.map((i) => (
-                          <tr key={i.id}>
-                            <td className="px-4 py-2.5">
-                              <p className="font-medium text-slate-800">{i.product?.name || '-'}</p>
-                              <p className="text-xs text-slate-400">{i.product?.sku}</p>
-                            </td>
-                            <td className="px-4 py-2.5">{formatQty(i.quantity)}</td>
-                            <td className="px-4 py-2.5">{formatRupiah(i.cost_price)}</td>
-                            <td className="px-4 py-2.5 text-right font-semibold">{formatRupiah(i.subtotal)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="border-t border-slate-200">
-                    <Pagination page={itemsPage} totalPages={itemsTotalPages} total={p.items.length} pageSize={itemsPageSize} onPageChange={setItemsPage} />
-                  </div>
-                </>
+                <DataTable
+                  columns={[
+                    { key: 'product.name', headerLabel: 'Produk', render: (row) => (
+                      <>
+                        <p className="font-medium text-slate-800">{row.product?.name || '-'}</p>
+                        <p className="text-xs text-slate-400">{row.product?.sku}</p>
+                      </>
+                    ) },
+                    { key: 'quantity', headerLabel: 'Qty', render: (row) => formatQty(row.quantity) },
+                    { key: 'cost_price', headerLabel: 'Harga Beli', render: (row) => formatRupiah(row.cost_price) },
+                    { key: 'subtotal', headerLabel: 'Subtotal', align: 'right', render: (row) => formatRupiah(row.subtotal) }
+                  ]}
+                  data={pageItems}
+                  page={itemsPage}
+                  totalPages={itemsTotalPages}
+                  total={p.items.length}
+                  pageSize={itemsPageSize}
+                  onPageChange={setItemsPage}
+                  className="w-full"
+                />
               );
             })()}
           </Card>
