@@ -1,19 +1,21 @@
 import { supabase } from '../config/supabase.js';
+import { getCache, setCache, delCache } from '../middleware/cache.js';
 
-let cache = null;
-let cacheAt = 0;
-const TTL = 60_000; // 1 menit
+const CACHE_KEY = 'settings:all';
+const TTL = 60 * 1000; // 1 menit
 
 export async function getSettings(force = false) {
   if (!supabase) return {};
-  if (cache && !force && Date.now() - cacheAt < TTL) return cache;
+  if (!force) {
+    const cached = getCache(CACHE_KEY);
+    if (cached) return cached;
+  }
   const { data } = await supabase.from('settings').select('key, value');
   const map = {};
   (data || []).forEach((s) => {
     map[s.key] = s.value;
   });
-  cache = map;
-  cacheAt = Date.now();
+  setCache(CACHE_KEY, map, TTL);
   return map;
 }
 
@@ -23,5 +25,5 @@ export async function getSetting(key) {
 }
 
 export function invalidateSettingsCache() {
-  cache = null;
+  delCache(CACHE_KEY);
 }

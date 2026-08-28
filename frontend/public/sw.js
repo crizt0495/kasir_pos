@@ -1,12 +1,10 @@
 /* POS Kasir — Service Worker (PWA)
    - Cache app shell untuk offline & akses cepat
    - API tidak di-cache (selalu jaringan)
-   - Push notification + click → buka aplikasi */
-const CACHE = 'pos-shell-v5';
+   - Push notification + click → buka aplikasi
+   - Versi: v6 — optimalisasi caching & error handling */
+const CACHE = 'pos-shell-v6';
 const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
-
-/** Hanya tangani request http(s) — abaikan chrome-extension://, data:, dll */
-const isSupported = (url) => url.protocol === 'http:' || url.protocol === 'https:';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -14,6 +12,7 @@ self.addEventListener('install', (event) => {
       .open(CACHE)
       .then((cache) => cache.addAll(ASSETS))
       .then(() => self.skipWaiting())
+      .catch(() => self.skipWaiting())
   );
 });
 
@@ -34,37 +33,37 @@ self.addEventListener('fetch', (event) => {
   try {
     url = new URL(req.url);
   } catch {
-    return; // URL tidak valid — biarkan browser menangani
+    return;
   }
-  // Abaikan skema non-http (chrome-extension, data, blob, dll)
-  if (!isSupported(url)) return;
+
+  // Abaikan skema non-http
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
   // API selalu lewat jaringan (jangan cache data transaksi)
-  if (url.pathname.startsWith('/api')) return;
+  if (url.pathname.startsWith('/api')) {
+    event.respondWith(
+      fetch(req).catch(() => new Response(JSON.stringify({ success: false, message: 'Network unavailable' }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      }))
+    );
+    return;
+  }
 
-  // Navigasi: network-first, fallback ke shell (SPA — semua route → index.html)
+  // Navigasi SPA: network-first, fallback ke shell
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req)
         .then((res) => {
           if (res.ok || res.type === 'opaqueredirect') return res;
-          return caches.match('/index.html').then((cached) => cached || Response.error());
+          return caches.match('/index.html').then((cached) => cached || new Response('Not found', { status: 404 }));
         })
-        .catch(() => caches.match('/index.html').then((cached) => cached || Response.error()))
+        .catch(() => caches.match('/index.html').then((cached) => cached || new Response('Offline', { status: 503 })))
     );
     return;
   }
 
-  // Aset statis: cache-first (hanya http/https — sudah difilter di atas)
-  // API & rute dinamis (mis. /expenses ketika fetch ke API backend) selalu
-  // ke network; jika gagal, kirim error response agar tidak reject promise.
-  if (url.pathname.startsWith('/expenses')) {
-    event.respondWith(
-      fetch(req).catch(() => new Response('Network unavailable', { status: 503 }))
-    );
-    return;
-  }
-
+  // Aset statis: cache-first dengan fallback ke network
   event.respondWith(
     caches.match(req).then(
       (cached) =>
@@ -72,13 +71,13 @@ self.addEventListener('fetch', (event) => {
         fetch(req).then((res) => {
           if (res.ok) {
             const copy = res.clone();
-            caches
-              .open(CACHE)
-              .then((cache) => cache.put(req, copy))
-              .catch(() => {}); // cache gagal tidak boleh mengganggu respons
+            caches.open(CACHE).then((cache) => cache.put(req, copy)).catch(() => {});
           }
           return res;
-        }).catch(() => caches.match('/index.html').then((cached) => cached || new Response('Offline', { status: 503 })))
+        }).catch(() => {
+          // Jika tidak ada cache & network gagal, fallback ke index.html
+          return caches.match('/index.html').then((cached) => cached || new Response('Offline', { status: 503 }));
+        })
     )
   );
 });
