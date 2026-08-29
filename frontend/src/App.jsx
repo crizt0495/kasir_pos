@@ -117,6 +117,14 @@ export default function App() {
   const bootstrap = useAuthStore((s) => s.bootstrap);
 
   useEffect(() => {
+    // Jangan probe /auth/me di halaman publik (login/ubah password) — jaga agar
+    // tidak ada 401 console noise saat belum login. Untuk route lain, bootstrap
+    // memulihkan sesi (cookie httpOnly terkirim otomatis ke backend).
+    const path = window.location.pathname;
+    if (path === '/login' || path === '/change-password') {
+      useAuthStore.getState().setLoading(false);
+      return;
+    }
     bootstrap();
   }, [bootstrap]);
 

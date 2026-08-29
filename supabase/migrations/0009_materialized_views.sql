@@ -20,22 +20,29 @@ DROP MATERIALIZED VIEW IF EXISTS mv_daily_sales;
 
 CREATE MATERIALIZED VIEW mv_daily_sales AS
 SELECT 
-  date_trunc('day', s.created_at)::date AS sale_date,
-  COUNT(*) AS total_transactions,
-  SUM(s.total) AS total_sales,
-  SUM(s.profit) AS total_profit,
-  COUNT(DISTINCT s.cashier_id) AS cashiers_count,
-  -- grouping by payment method untuk breakdown
+  d.sale_date,
+  SUM(d.cnt) AS total_transactions,
+  SUM(d.total_sales) AS total_sales,
+  SUM(d.total_profit) AS total_profit,
+  COUNT(DISTINCT d.cashier_id) AS cashiers_count,
+  -- breakdown per metode pembayaran (hindari aggregate bersarang)
   jsonb_object_agg(
-    s.payment_method,
-    jsonb_build_object(
-      'count', COUNT(*) FILTER (WHERE s.payment_method = s.payment_method),
-      'total', COALESCE(SUM(s.total) FILTER (WHERE s.payment_method = s.payment_method), 0)
-    )
+    d.payment_method,
+    jsonb_build_object('count', d.cnt, 'total', d.total_sales)
   ) AS payment_summary
-FROM sales s
-WHERE s.status <> 'cancelled'
-GROUP BY date_trunc('day', s.created_at)::date;
+FROM (
+  SELECT
+    date_trunc('day', s.created_at)::date AS sale_date,
+    s.payment_method,
+    s.cashier_id,
+    COUNT(*) AS cnt,
+    SUM(s.total) AS total_sales,
+    SUM(s.profit) AS total_profit
+  FROM sales s
+  WHERE s.status <> 'cancelled'
+  GROUP BY 1, 2, 3
+) d
+GROUP BY d.sale_date;
 
 CREATE UNIQUE INDEX idx_mv_daily_sales_date ON mv_daily_sales (sale_date);
 

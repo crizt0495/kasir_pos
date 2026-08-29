@@ -13,7 +13,7 @@ import { formatRupiah, formatDateTime } from '../utils/format.js';
 export default function ProfitSharing() {
   const { can } = usePermission();
   const [periods, setPeriods] = useState([]);
-  const [year, setYear] = useState('');
+  const [year, setYear] = useState(String(new Date().getFullYear()));
   const [statusFilter, setStatusFilter] = useState('');
   const [distributing, setDistributing] = useState(null); // share row yang sedang dibagikan
   const [amount, setAmount] = useState('');
