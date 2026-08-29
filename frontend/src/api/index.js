@@ -150,6 +150,28 @@ export const reportsApi = {
     a.remove();
     URL.revokeObjectURL(url);
   },
+  exportExcel: async (path, params, filename) => {
+    const res = await api.get(path, { params: { ...params, export: 'xlsx' }, responseType: 'blob' });
+    const url = URL.createObjectURL(new Blob([res.data]));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  },
+  exportPdf: async (path, params, filename) => {
+    const res = await api.get(path, { params: { ...params, export: 'pdf' }, responseType: 'blob' });
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  },
 };
 
 // ---------- BAGI HASIL 2,5% ----------

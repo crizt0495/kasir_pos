@@ -1,6 +1,7 @@
 import { supabase } from '../config/supabase.js';
 import { ok } from '../utils/response.js';
 import { toCsv, csvResponse } from '../utils/csv.js';
+import { buildExcel, excelResponse, buildPdf, pdfResponse } from '../utils/export.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 // Laporan memakai zona waktu WIB (UTC+7) untuk pembagian harian/mingguan/bulanan
@@ -178,7 +179,7 @@ export const salesReport = asyncHandler(async (req, res) => {
     paymentMethods[s.payment_method] = (paymentMethods[s.payment_method] || 0) + Number(s.total);
   });
 
-  const result = { period, from: start, to: end, buckets: Object.values(buckets), totals, payment_methods: paymentMethods };
+   const result = { period, from: start, to: end, buckets: Object.values(buckets), totals, payment_methods: paymentMethods };
 
   if (req.query.export === 'csv') {
     const csv = toCsv(Object.values(buckets), [
@@ -189,6 +190,14 @@ export const salesReport = asyncHandler(async (req, res) => {
       { key: 'net', label: 'Net' },
     ]);
     return csvResponse(res, csv, `laporan-penjualan-${start}-${end}.csv`);
+  }
+  if (req.query.export === 'xlsx') {
+    const workbook = await buildExcel('sales', result, { from: start, to: end });
+    return excelResponse(res, workbook, `laporan-penjualan-${start}-${end}.xlsx`);
+  }
+  if (req.query.export === 'pdf') {
+    const buffer = await buildPdf('sales', result, { from: start, to: end });
+    return pdfResponse(res, buffer, `laporan-penjualan-${start}-${end}.pdf`);
   }
   return ok(res, result);
 });
@@ -244,6 +253,14 @@ export const profitReport = asyncHandler(async (req, res) => {
     ]);
     return csvResponse(res, csv, `laporan-profit-${start}-${end}.csv`);
   }
+  if (req.query.export === 'xlsx') {
+    const workbook = await buildExcel('profit', result, { from: start, to: end });
+    return excelResponse(res, workbook, `laporan-profit-${start}-${end}.xlsx`);
+  }
+  if (req.query.export === 'pdf') {
+    const buffer = await buildPdf('profit', result, { from: start, to: end });
+    return pdfResponse(res, buffer, `laporan-profit-${start}-${end}.pdf`);
+  }
   return ok(res, result);
 });
 
@@ -277,6 +294,14 @@ export const productsReport = asyncHandler(async (req, res) => {
       { key: 'revenue', label: 'Pendapatan' },
     ]);
     return csvResponse(res, csv, `laporan-produk-${from}-${to}.csv`);
+  }
+  if (req.query.export === 'xlsx') {
+    const workbook = await buildExcel('products', result, { from, to });
+    return excelResponse(res, workbook, `laporan-produks-${from}-${to}.xlsx`);
+  }
+  if (req.query.export === 'pdf') {
+    const buffer = await buildPdf('products', result, { from, to });
+    return pdfResponse(res, buffer, `laporan-produks-${from}-${to}.pdf`);
   }
   return ok(res, result);
 });
@@ -317,6 +342,7 @@ export const inventoryReport = asyncHandler(async (req, res) => {
     low_stock_list: low.slice(0, 50),
     out_of_stock_list: out.slice(0, 50),
     movements: Object.values(movementSummary),
+    inventory_list: all,
   };
 
   if (req.query.export === 'csv') {
@@ -328,6 +354,14 @@ export const inventoryReport = asyncHandler(async (req, res) => {
       { key: 'status', label: 'Status' },
     ]);
     return csvResponse(res, csv, `laporan-stok-${from}-${to}.csv`);
+  }
+  if (req.query.export === 'xlsx') {
+    const workbook = await buildExcel('inventory', result, { from, to });
+    return excelResponse(res, workbook, `laporan-stok-${from}-${to}.xlsx`);
+  }
+  if (req.query.export === 'pdf') {
+    const buffer = await buildPdf('inventory', result, { from, to });
+    return pdfResponse(res, buffer, `laporan-stok-${from}-${to}.pdf`);
   }
   return ok(res, result);
 });
@@ -377,6 +411,14 @@ export const cashierReport = asyncHandler(async (req, res) => {
     ]);
     return csvResponse(res, csv, `laporan-kasir-${from}-${to}.csv`);
   }
+  if (req.query.export === 'xlsx') {
+    const workbook = await buildExcel('cashier', result, { from, to });
+    return excelResponse(res, workbook, `laporan-kasir-${from}-${to}.xlsx`);
+  }
+  if (req.query.export === 'pdf') {
+    const buffer = await buildPdf('cashier', result, { from, to });
+    return pdfResponse(res, buffer, `laporan-kasir-${from}-${to}.pdf`);
+  }
   return ok(res, result);
 });
 
@@ -413,6 +455,14 @@ export const purchasesReport = asyncHandler(async (req, res) => {
       { key: 'total', label: 'Total' },
     ]);
     return csvResponse(res, csv, `laporan-pembelian-${from}-${to}.csv`);
+  }
+  if (req.query.export === 'xlsx') {
+    const workbook = await buildExcel('purchases', result, { from, to });
+    return excelResponse(res, workbook, `laporan-pembelian-${from}-${to}.xlsx`);
+  }
+  if (req.query.export === 'pdf') {
+    const buffer = await buildPdf('purchases', result, { from, to });
+    return pdfResponse(res, buffer, `laporan-pembelian-${from}-${to}.pdf`);
   }
   return ok(res, result);
 });

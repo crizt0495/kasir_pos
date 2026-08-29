@@ -6,9 +6,11 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 const router = Router();
 router.use(requireAuth);
 
-/** Export CSV hanya untuk yang punya reports.export */
+/** Export (CSV/Excel/PDF) hanya untuk yang punya reports.export */
 const requireExport = (req, res, next) => {
-  if (req.query.export === 'csv' && !req.user.permissions.has('reports.export')) {
+  const fmt = req.query.export;
+  if (fmt && !['csv', 'xlsx', 'pdf'].includes(fmt)) return next();
+  if (fmt && !req.user.permissions.has('reports.export')) {
     return res.status(403).json({ success: false, message: 'Anda tidak memiliki akses export', code: 'FORBIDDEN' });
   }
   return next();

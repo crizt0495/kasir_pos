@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileDown, TrendingUp } from 'lucide-react';
+import { FileDown, TrendingUp, FileSpreadsheet, FileText } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts';
@@ -8,7 +8,7 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Card, Tabs, Button, Select, Field, Input, Skeleton, ErrorState, EmptyState, Badge, PageHeader } from '../components/ui/index.jsx';
+import { Card, Tabs, Button, Select, Skeleton, ErrorState, EmptyState, Badge, PageHeader, DatePicker, DateRangePicker } from '../components/ui/index.jsx';
 import { formatRupiah, formatNumber, formatDate, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 
 const PERIODS = [
@@ -42,6 +42,7 @@ export default function Reports() {
   const [period, setPeriod] = useState('daily');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [exporting, setExporting] = useState('');
 
   const params = { period: period === 'custom' ? 'custom' : period, ...(from && { from }), ...(to && { to }) };
   const deps = [tab, period, from, to];
@@ -52,14 +53,35 @@ export default function Reports() {
   );
 
   const d = data.data;
+  const hasDateRange = ['sales', 'profit'].includes(tab);
+  const showDatePicker = hasDateRange ? period === 'custom' : true;
 
-  const exportCsv = async () => {
+  const runExport = async (fmt, fn) => {
+    if (exporting) return;
+    setExporting(fmt);
     try {
-      await reportsApi.exportCsv(EXPORT_PATHS[tab], params, `laporan-${tab}-${from || 'semua'}-${to || 'semua'}.csv`);
-      toast.success('Laporan CSV diunduh');
+      await fn();
+      toast.success(`Laporan ${fmt.toUpperCase()} diunduh`);
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Gagal mengunduh CSV'));
+      toast.error(getErrorMessage(error, `Gagal mengunduh ${fmt.toUpperCase()}`));
+    } finally {
+      setExporting('');
     }
+  };
+
+  const exportCsv = () => runExport('csv', () =>
+    reportsApi.exportCsv(EXPORT_PATHS[tab], params, `laporan-${tab}-${from || 'semua'}-${to || 'semua'}.csv`)
+  );
+  const exportExcel = () => runExport('xlsx', () =>
+    reportsApi.exportExcel(EXPORT_PATHS[tab], params, `laporan-${tab}-${from || 'semua'}-${to || 'semua'}.xlsx`)
+  );
+  const exportPdf = () => runExport('pdf', () =>
+    reportsApi.exportPdf(EXPORT_PATHS[tab], params, `laporan-${tab}-${from || 'semua'}-${to || 'semua'}.pdf`)
+  );
+
+  const setPageDate = (setter) => (e) => {
+    const v = e.target.value;
+    setter(v);
   };
 
   return (
@@ -68,28 +90,34 @@ export default function Reports() {
         title="Laporan"
         description="Analisis penjualan, profit, produk, stok, kasir, dan pembelian"
         actions={can('reports.export') && (
-          <Button variant="secondary" icon={FileDown} onClick={exportCsv}>
-            Export CSV
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" icon={FileText} onClick={exportPdf} loading={exporting === 'pdf'} disabled={!!exporting}>Export PDF</Button>
+            <Button variant="secondary" icon={FileSpreadsheet} onClick={exportExcel} loading={exporting === 'xlsx'} disabled={!!exporting}>Export Excel</Button>
+            <Button variant="secondary" icon={FileDown} onClick={exportCsv} loading={exporting === 'csv'} disabled={!!exporting}>Export CSV</Button>
+          </div>
         )}
       />
 
       <div className="flex flex-wrap items-center gap-3">
         <Tabs tabs={TABS} active={tab} onChange={setTab} />
         {['sales', 'profit'].includes(tab) && (
-          <div className="flex items-center gap-2">
-            <Select value={period} onChange={(e) => setPeriod(e.target.value)} className="w-36">
-              {PERIODS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
-            </Select>
-            {period === 'custom' && (
-              <>
-                <Field className="w-36"><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></Field>
-                <Field className="w-36"><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></Field>
-              </>
-            )}
-          </div>
+          <Select value={period} onChange={(e) => setPeriod(e.target.value)} className="w-36">
+            {PERIODS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
+          </Select>
         )}
       </div>
+
+      {showDatePicker && (
+        <div className="rounded-xl border border-slate-200 bg-white p-3">
+          <DateRangePicker
+            from={from}
+            to={to}
+            onFromChange={setPageDate(setFrom)}
+            onToChange={setPageDate(setTo)}
+            hint={hasDateRange ? 'Rentang tanggal untuk Custom' : 'Filter laporan berdasarkan rentang tanggal'}
+          />
+        </div>
+      )}
 
       {data.loading ? (
         <Skeleton className="h-96 w-full" />
