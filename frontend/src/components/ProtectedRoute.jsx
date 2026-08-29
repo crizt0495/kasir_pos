@@ -28,11 +28,15 @@ export function RequireAuth({ children }) {
   return children;
 }
 
-/** Wajib punya permission tertentu; redirect ke fallback bila tidak punya. */
+/** Wajib punya permission tertentu; redirect ke fallback bila tidak punya.
+ *  - string: wajib punya permission tersebut
+ *  - array : cukup punya SALAH SATU (sesuai filter menu di Sidebar) */
 export function RequirePermission({ permission, children, fallback = '/login' }) {
   const can = useAuthStore((s) => s.can);
+  const hasAny = useAuthStore((s) => s.hasAny);
   const location = useLocation();
-  if (!can(permission)) {
+  const allowed = Array.isArray(permission) ? hasAny(permission) : can(permission);
+  if (!allowed) {
     return <Navigate to={fallback} state={{ from: location.pathname }} replace />;
   }
   return children;

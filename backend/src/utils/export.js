@@ -1,14 +1,8 @@
 import ExcelJS from 'exceljs';
-import PdfPrinter from 'pdfmake';
+import pdfmake from 'pdfmake/build/pdfmake.js';
+import pdfFonts from 'pdfmake/build/vfs_fonts.js';
 
-const fonts = {
-  Roboto: {
-    normal: 'Helvetica',
-    bold: 'Helvetica-Bold',
-    italics: 'Helvetica-Oblique',
-    bolditalics: 'Helvetica-BoldOblique',
-  },
-};
+pdfmake.vfs = pdfFonts;
 
 function formatRupiah(num) {
   if (num === null || num === undefined) return '-';
@@ -175,7 +169,6 @@ export function excelResponse(res, workbook, filename) {
 // PDF EXPORT
 // ============================================================
 export async function buildPdf(tab, data, meta = {}) {
-  const printer = new PdfPrinter(fonts);
   const cols = getColumns(tab);
 
   let bodyRows = [];
@@ -194,6 +187,7 @@ export async function buildPdf(tab, data, meta = {}) {
     pageSize: 'A4',
     pageOrientation: 'landscape',
     pageMargins: [20, 20, 20, 20],
+    defaultStyle: { font: 'Roboto', fontSize: 9, color: '#1E293B' },
     content: [
       { text: `LAPORAN ${capitalize(tab)}`, style: 'title' },
       { text: `Periode: ${meta.from || '-'} s/d ${meta.to || '-'}`, style: 'subtitle' },
@@ -202,7 +196,7 @@ export async function buildPdf(tab, data, meta = {}) {
       {
         table: {
           headerRows: 1,
-          widths: cols.map((c) => c.width * 4),
+          widths: cols.map((c) => c.width * 3),
           body: [
             cols.map((c) => ({ text: c.label, style: 'tableHeader' })),
             ...bodyRows,
@@ -226,17 +220,10 @@ export async function buildPdf(tab, data, meta = {}) {
       spacer: { fontSize: 8, margin: [0, 0, 0, 6] },
       tableHeader: { bold: true, fontSize: 9, color: '#FFFFFF', fillColor: '#4F46E5' },
     },
-    defaultStyle: { fontSize: 9, color: '#1E293B' },
   };
 
-  return new Promise((resolve, reject) => {
-    const pdfDoc = printer.createPdfKitDocument(docDefinition);
-    const chunks = [];
-    pdfDoc.on('data', (chunk) => chunks.push(chunk));
-    pdfDoc.on('end', () => resolve(Buffer.concat(chunks)));
-    pdfDoc.on('error', reject);
-    pdfDoc.end();
-  });
+  const doc = await pdfmake.createPdf(docDefinition);
+  return doc.getBuffer();
 }
 
 export function pdfResponse(res, buffer, filename) {

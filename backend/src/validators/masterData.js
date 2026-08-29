@@ -46,6 +46,7 @@ export const customerSchema = z.object({
   address: z.string().trim().max(500).nullable().optional(),
   birth_date: z.string().date('Tanggal lahir tidak valid').nullable().optional(),
   notes: z.string().trim().max(1000).nullable().optional(),
+  is_general: z.boolean().optional(),
 });
 
 export const supplierSchema = z.object({

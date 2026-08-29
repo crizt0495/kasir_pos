@@ -92,7 +92,7 @@ export default function ProfitSharing() {
         amount: amountNum,
         note: note || null,
       });
-      toast.success(`Bagi hasil ${formatRupiah(amt)} berhasil dibagikan`);
+      toast.success(`Bagi hasil ${formatRupiah(amountNum)} berhasil dibagikan`);
       setConfirmDistribute(false);
       setDistributing(null);
       setAmount('');

@@ -95,7 +95,7 @@ function AppRoutes() {
           <Route path="sales" element={<RequirePermission permission="sales.view"><Sales /></RequirePermission>} />
           <Route path="sales/:id" element={<RequirePermission permission="sales.view"><SaleDetail /></RequirePermission>} />
           <Route path="returns" element={<RequirePermission permission="returns.view"><Returns /></RequirePermission>} />
-          <Route path="cashier" element={<RequirePermission permission={['cashier.view', 'cashier.open']}><Cashier /></RequirePermission>} />
+          <Route path="cashier" element={<RequirePermission permission={['cashier.view', 'cashier.open']} fallback="/pos"><Cashier /></RequirePermission>} />
           <Route path="expenses" element={<RequirePermission permission="expenses.view"><Expenses /></RequirePermission>} />
           <Route path="reports" element={<RequirePermission permission="reports.view"><Reports /></RequirePermission>} />
           <Route path="profit-sharing" element={<RequirePermission permission="profit.view"><ProfitSharing /></RequirePermission>} />

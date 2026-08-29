@@ -146,6 +146,7 @@ export default function POS() {
         items,
         customer_id: cart.customer?.id || null,
         session_id: sessionId || null,
+        discount: Number(cart.discount) || 0,
       });
       setLastSale(res.data.sale);
       cart.clear();

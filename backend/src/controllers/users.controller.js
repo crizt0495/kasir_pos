@@ -87,12 +87,13 @@ export const createUser = asyncHandler(async (req, res) => {
     .single();
   if (error) throw error;
 
-  await supabase.from('profiles').insert({
+  const { error: profErr } = await supabase.from('profiles').insert({
     id: user.id,
     full_name: data.full_name,
     email: data.email || null,
     phone: data.phone || null,
   });
+  if (profErr) throw profErr;
 
   const roleIds = await resolveRoleIds(data.roles);
   if (roleIds.length) {
@@ -151,7 +152,8 @@ export const updateUser = asyncHandler(async (req, res) => {
   if (data.email !== undefined) profilePatch.email = data.email || null;
   if (data.phone !== undefined) profilePatch.phone = data.phone || null;
   if (Object.keys(profilePatch).length) {
-    await supabase.from('profiles').upsert({ id, ...profilePatch });
+    const { error: profErr } = await supabase.from('profiles').upsert({ id, ...profilePatch });
+    if (profErr) throw profErr;
   }
 
   // Update roles
