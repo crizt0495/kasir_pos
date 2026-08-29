@@ -52,6 +52,27 @@ export async function requireAuth(req, res, next) {
   }
 }
 
+/**
+ * Middleware: auth opsional. Mengisi req.user bila token valid, tapi TIDAK
+ * melempar 401 bila absen/kadaluarsa. Dipakai oleh /auth/me agar probe sesi
+ * di sisi client tidak menghasilkan 401 (noise console) maupun auth:expired.
+ */
+export async function optionalAuth(req, res, next) {
+  const token =
+    (req.cookies && req.cookies[TOKEN_COOKIE]) ||
+    (req.headers.authorization && req.headers.authorization.replace(/^Bearer\s+/i, ''));
+  if (token) {
+    try {
+      const payload = jwt.verify(token, env.JWT_SECRET);
+      const user = await loadUserAuth(payload.uid);
+      if (user && user.is_active && user.token_version === payload.tv) req.user = user;
+    } catch {
+      // abaikan — biarkan req.user undefined (dianggap belum login)
+    }
+  }
+  return next();
+}
+
 /** Middleware: wajib punya permission tertentu → 403 Forbidden */
 export function requirePermission(code) {
   return (req, res, next) => {

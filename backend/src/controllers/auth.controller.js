@@ -49,7 +49,7 @@ export const logout = asyncHandler(async (req, res) => {
 });
 
 export const me = asyncHandler(async (req, res) => {
-  return ok(res, serializeSession(req.user), 'Berhasil');
+  return ok(res, req.user ? serializeSession(req.user) : null, 'Berhasil');
 });
 
 export const changePassword = asyncHandler(async (req, res) => {

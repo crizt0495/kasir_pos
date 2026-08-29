@@ -51,10 +51,10 @@ describe('Authentication & RBAC', () => {
     assert.ok(res.body.data.roles.some((r) => r.code === 'owner'));
   });
 
-  it('endpoint tanpa login → 401', async () => {
+  it('endpoint tanpa login → 200 dengan data null (probe sesi, bukan 401)', async () => {
     const res = await request(server).get('/api/auth/me');
-    assert.equal(res.status, 401);
-    assert.equal(res.body.code, 'UNAUTHORIZED');
+    assert.equal(res.status, 200);
+    assert.equal(res.body.data, null);
   });
 
   it('endpoint tanpa login → 401 untuk data sensitif', async () => {
@@ -88,7 +88,8 @@ describe('Authentication & RBAC', () => {
     const res = await agent.post('/api/auth/logout');
     assert.equal(res.status, 200);
     const me = await agent.get('/api/auth/me');
-    assert.equal(me.status, 401);
+    assert.equal(me.status, 200);
+    assert.equal(me.body.data, null);
   });
 
   it('ganti password wajib valid (min 8 karakter, huruf + angka)', async () => {

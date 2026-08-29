@@ -26,6 +26,7 @@ export default function BarcodeScanner({ open, onClose, onScan }) {
   const zxingReaderRef = useRef(null);
   const zxingControlsRef = useRef(null);
   const videoRef = useRef(null);
+  const mountRef = useRef(null);
   const startedRef = useRef(false);
 
   useEffect(() => { onScanRef.current = onScan; }, [onScan]);
@@ -44,6 +45,11 @@ export default function BarcodeScanner({ open, onClose, onScan }) {
     if (videoRef.current) {
       try { videoRef.current.srcObject?.getTracks().forEach((t) => t.stop()); } catch (_) {}
       videoRef.current = null;
+    }
+    // Bersihkan sisa DOM yang di-injeksi html5-qrcode/zxing agar React tidak
+    // bentrok saat unmount (hindari error "removeChild is not a child").
+    if (mountRef.current) {
+      try { mountRef.current.innerHTML = ''; } catch (_) {}
     }
   };
 
@@ -221,10 +227,12 @@ export default function BarcodeScanner({ open, onClose, onScan }) {
           <>
             <div className="bg-slate-900 p-3">
               <div
-                id={SCANNER_ID}
                 className="relative overflow-hidden rounded-lg [&_video]:w-full [&_video]:h-auto"
                 style={{ minHeight: 200 }}
               >
+                {/* Node mount khusus html5-qrcode/zxing — TIDAK diisi child React
+                    agar tidak bentrok dengan React saat unmount. */}
+                <div id={SCANNER_ID} ref={mountRef} className="[&_video]:w-full [&_video]:h-auto" />
                 {status === 'initializing' && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-800 text-white">
                     <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent" />
