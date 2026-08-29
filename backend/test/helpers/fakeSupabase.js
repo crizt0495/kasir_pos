@@ -21,10 +21,16 @@ const permissionRows = [
   { id: 'p-reports-export', code: 'reports.export', name: 'Export Laporan', module: 'reports' },
 ];
 
+/** Kode permission per role (sumber tunggal kebenaran relasi role↔permission) */
+const rolePermissionCodes = {
+  [ownerRoleId]: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.create', 'products.delete', 'roles.view', 'reports.view', 'reports.export', 'inventory.view', 'inventory.adjust'],
+  [kasirRoleId]: ['dashboard.view', 'products.view'],
+};
+
 /** Role dengan role_permissions sudah "di-join" (bentuk yang dipakai loadUserAuth) */
 const roleRows = [
-  { id: ownerRoleId, name: 'Owner', code: 'owner', is_system: true, role_permissions: [{ permission: { code: 'dashboard.view' } }, { permission: { code: 'pos.access' } }, { permission: { code: 'sales.view' } }, { permission: { code: 'sales.create' } }, { permission: { code: 'products.view' } }, { permission: { code: 'products.create' } }, { permission: { code: 'products.delete' } }, { permission: { code: 'roles.view' } }, { permission: { code: 'reports.view' } }, { permission: { code: 'reports.export' } }, { permission: { code: 'inventory.view' } }, { permission: { code: 'inventory.adjust' } }] },
-  { id: kasirRoleId, name: 'Kasir', code: 'kasir', is_system: true, role_permissions: [{ permission: { code: 'dashboard.view' } }, { permission: { code: 'products.view' } }] },
+  { id: ownerRoleId, name: 'Owner', code: 'owner', is_system: true, role_permissions: rolePermissionCodes[ownerRoleId].map((code) => ({ permission: { code } })) },
+  { id: kasirRoleId, name: 'Kasir', code: 'kasir', is_system: true, role_permissions: rolePermissionCodes[kasirRoleId].map((code) => ({ permission: { code } })) },
 ];
 
 const userRows = [
@@ -92,7 +98,13 @@ const store = {
   profiles: userRows.map((u) => ({ id: u.id, full_name: u.profiles.full_name, email: u.profiles.email, phone: null, avatar_url: null })),
   roles: roleRows,
   permissions: permissionRows,
-  role_permissions: [],
+  role_permissions: Object.entries(rolePermissionCodes).flatMap(([roleId, codes]) =>
+    codes.map((code) => ({
+      role_id: roleId,
+      permission_id: (permissionRows.find((p) => p.code === code) || { id: 'p-' + code }).id,
+      permission: { code },
+    }))
+  ),
   user_roles: userRows.flatMap((u) => u.user_roles.map((ur) => ({ user_id: u.id, role: ur.role }))),
   v_users: vUserRows,
   products: productRows,

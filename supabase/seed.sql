@@ -79,8 +79,13 @@ insert into public.permissions (code, name, module, description) values
   ('expenses.delete',      'Hapus Pengeluaran',     'expenses',   'Menghapus pengeluaran'),
   ('returns.view',         'Lihat Retur',           'returns',    'Melihat retur'),
   ('returns.create',       'Buat Retur',            'returns',    'Membuat retur'),
+  ('returns.update',       'Ubah Retur',            'returns',    'Mengubah data retur'),
+  ('returns.delete',       'Hapus Retur',           'returns',    'Menghapus retur'),
   ('audit.view',           'Lihat Audit Log',       'audit',      'Melihat log aktivitas'),
   ('profit.view',          'Lihat Laba & Bagi Hasil', 'profit',   'Melihat laba transaksi dan hak bagi hasil pelanggan'),
+  ('profit.create',        'Buat Data Laba',        'profit',     'Membuat periode / share bagi hasil'),
+  ('profit.update',        'Ubah Data Laba',        'profit',     'Mengubah data laba & periode'),
+  ('profit.delete',        'Hapus Data Laba',       'profit',     'Menghapus data laba'),
   ('profit.distribute',    'Bagikan Bagi Hasil',    'profit',     'Membagikan bagi hasil 2,5% ke pelanggan'),
   ('notifications.view',   'Lihat Notifikasi',      'notifications', 'Melihat riwayat notifikasi penjualan')
 on conflict (code) do nothing;

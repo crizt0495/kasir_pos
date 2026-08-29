@@ -98,6 +98,7 @@ BEGIN
   REFRESH MATERIALIZED VIEW CONCURRENTLY mv_daily_sales;
   REFRESH MATERIALIZED VIEW CONCURRENTLY mv_top_products;
   REFRESH MATERIALIZED VIEW CONCURRENTLY mv_customer_monthly;
+  REFRESH MATERIALIZED VIEW CONCURRENTLY mv_profit_period_summary;
 END;
 $$;
 
@@ -130,10 +131,15 @@ SELECT
   SUM(cps.total_purchase) AS total_purchase,
   SUM(cps.total_profit) AS total_profit,
   SUM(cps.share_amount) AS total_share_amount,
-  SUM(cps.distributed) AS total_distributed,
-  SUM(cps.remaining) AS total_remaining
+  COALESCE(SUM(pd.distributed), 0) AS total_distributed,
+  SUM(cps.share_amount) - COALESCE(SUM(pd.distributed), 0) AS total_remaining
 FROM profit_periods ps
 JOIN customer_profit_shares cps ON cps.period_id = ps.id
+LEFT JOIN (
+  SELECT period_id, SUM(amount) AS distributed
+  FROM profit_distributions
+  GROUP BY period_id
+) pd ON pd.period_id = ps.id
 GROUP BY ps.id, ps.year;
 
 CREATE UNIQUE INDEX idx_mv_profit_period_summary_period_id ON mv_profit_period_summary (period_id);
