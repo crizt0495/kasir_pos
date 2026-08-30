@@ -2,8 +2,8 @@
    - Cache app shell untuk offline & akses cepat
    - API tidak di-cache (selalu jaringan)
    - Push notification + click → buka aplikasi
-   - Versi: v6 — optimalisasi caching & error handling */
-const CACHE = 'pos-shell-v6';
+   - Versi: v7 — purge otomatis chunk lama agar tidak 404 saat deploy hash baru */
+const CACHE = 'pos-shell-v7';
 const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -64,6 +64,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Aset statis: cache-first dengan fallback ke network
+  // Jika chunk lama 404 → hapus dari cache agar hash baru ter-load
   event.respondWith(
     caches.match(req).then(
       (cached) =>
@@ -75,10 +76,14 @@ self.addEventListener('fetch', (event) => {
           }
           return res;
         }).catch(() => {
-          // Jika tidak ada cache & network gagal, fallback ke index.html
           return caches.match('/index.html').then((cached) => cached || new Response('Offline', { status: 503 }));
         })
-    )
+    ).then((res) => {
+      if (res && res.status === 404 && res.headers.get('content-type')?.includes('javascript')) {
+        caches.open(CACHE).then((cache) => cache.delete(req));
+      }
+      return res;
+    })
   );
 });
 
