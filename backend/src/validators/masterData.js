@@ -44,7 +44,11 @@ export const customerSchema = z.object({
   phone: z.string().trim().max(30).nullable().optional(),
   email: z.string().trim().email('Email tidak valid').nullable().optional().or(z.literal('')),
   address: z.string().trim().max(500).nullable().optional(),
-  birth_date: z.string().date('Tanggal lahir tidak valid').nullable().optional(),
+  birth_date: z
+    .union([z.literal(''), z.string().date('Tanggal lahir tidak valid')])
+    .nullable()
+    .optional()
+    .transform((v) => v || null),
   notes: z.string().trim().max(1000).nullable().optional(),
   is_general: z.boolean().optional(),
 });
