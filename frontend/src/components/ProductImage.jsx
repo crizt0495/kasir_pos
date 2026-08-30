@@ -12,7 +12,7 @@ import { Package } from 'lucide-react';
  * - imgClassName: tambahan untuk elemen <img> (mis. efek hover zoom)
  * - rounded: boolean default true (rounded-lg)
  */
-export default function ProductImage({ src, alt = '', className = '', imgClassName = '', rounded = true }) {
+export default function ProductImage({ src, alt = '', className = '', imgClassName = '', rounded = true, fit = 'cover' }) {
   const [error, setError] = useState(false);
 
   if (!src || error) {
@@ -30,8 +30,9 @@ export default function ProductImage({ src, alt = '', className = '', imgClassNa
       src={src}
       alt={alt}
       loading="lazy"
+      decoding="async"
       onError={() => setError(true)}
-      className={`shrink-0 object-cover ${rounded ? 'rounded-lg' : ''} ${className} ${imgClassName}`}
+      className={`block shrink-0 ${fit === 'contain' ? 'object-contain' : 'object-cover'} ${rounded ? 'rounded-lg' : ''} ${className} ${imgClassName}`}
     />
   );
 }
