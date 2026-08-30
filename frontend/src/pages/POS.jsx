@@ -260,12 +260,13 @@ export default function POS() {
                 aria-disabled={disabled}
                 className={`group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-2.5 text-left transition-all duration-200 ${disabled ? 'pointer-events-none opacity-50 cursor-not-allowed' : 'hover:border-primary-300'}`}
               >
-                <div className="mb-2 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg bg-primary-50/50">
+                <div className="relative mb-2 aspect-[4/3] w-full overflow-hidden rounded-lg bg-primary-50/50">
                   <ProductImage
                     src={p.image_url}
                     alt={p.name}
                     rounded={false}
-                    className="h-full w-full transition-transform duration-300 ease-out group-hover:scale-110"
+                    className="h-full w-full object-cover"
+                    imgClassName="transition-transform duration-300 ease-out group-hover:scale-110"
                   />
                   {!outOfStock && (
                     <span className="absolute right-2 top-2 hidden h-7 w-7 items-center justify-center rounded-full bg-primary-600 text-white transition-all duration-150 group-hover:flex">
