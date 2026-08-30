@@ -48,32 +48,32 @@ export default function Login() {
   };
 
   return (
-    <div className="relative flex min-h-full items-center justify-center overflow-y-auto bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4 py-10">
+    <div className="relative flex min-h-full items-center justify-center overflow-y-auto bg-gradient-to-br from-slate-150 via-slate-50 to-slate-200 px-4 py-10">
       <div
-        className="pointer-events-none absolute inset-0 opacity-25"
+        className="pointer-events-none absolute inset-0 opacity-[0.55]"
         style={{
-          backgroundImage: 'radial-gradient(circle at 20% 20%, rgb(99 102 241 / 0.5) 0, transparent 40%), radial-gradient(circle at 80% 80%, rgb(14 165 233 / 0.4) 0, transparent 40%)',
+          backgroundImage: 'radial-gradient(circle at 18% 15%, rgb(31 111 92 / 0.16) 0, transparent 42%), radial-gradient(circle at 82% 85%, rgb(46 124 122 / 0.12) 0, transparent 42%)',
         }}
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        className="pointer-events-none absolute inset-0 opacity-[0.45]"
         style={{
-          backgroundImage: 'linear-gradient(to right, rgb(255 255 255 / 0.5) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / 0.5) 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(to right, rgb(110 109 116 / 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgb(110 109 116 / 0.06) 1px, transparent 1px)',
           backgroundSize: '32px 32px',
         }}
         aria-hidden="true"
       />
       <div className="relative w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-lg shadow-primary-600/40 ring-1 ring-white/20">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-lg shadow-primary-600/40">
             <Store className="h-7 w-7" />
           </div>
-          <h1 className="text-xl font-bold text-white">POS Kasir</h1>
-          <p className="text-sm text-slate-400">Masuk untuk mengelola toko Anda</p>
+          <h1 className="text-xl font-bold text-slate-900">POS Kasir</h1>
+          <p className="text-sm text-slate-500">Masuk untuk mengelola toko Anda</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-2xl bg-white p-6 shadow-2xl shadow-slate-950/60 ring-1 ring-white/60">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-2xl bg-white p-6 shadow-xl shadow-slate-900/5 ring-1 ring-slate-200/60">
           <Field label="Username" error={errors.username?.message}>
             <Input placeholder="Masukkan username" autoComplete="username" {...register('username')} error={errors.username} />
           </Field>

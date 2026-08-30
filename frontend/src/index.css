@@ -8,77 +8,216 @@
   src: url("@fontsource-variable/inter/files/inter-latin-wght-normal.woff2") format("woff2-variations");
 }
 
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2") format("woff2-variations");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-700-normal.woff2") format("woff2");
+}
+
 @theme {
   --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-display: "Manrope", "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-  --color-primary-50: #eef2ff;
-  --color-primary-100: #e0e7ff;
-  --color-primary-200: #c7d2fe;
-  --color-primary-300: #a5b4fc;
-  --color-primary-400: #818cf8;
-  --color-primary-500: #6366f1;
-  --color-primary-600: #4f46e5;
-  --color-primary-700: #4338ca;
-  --color-primary-800: #3730a3;
-  --color-primary-900: #312e81;
-  --color-primary-950: #1e1b4b;
+  /* ---- Accent: deep emerald-teal (dari mockup Kedai Klasika) ---- */
+  --color-primary-50: #eaf3ef;
+  --color-primary-100: #d8e9e1;
+  --color-primary-200: #b4d3c6;
+  --color-primary-300: #89b7a5;
+  --color-primary-400: #589682;
+  --color-primary-500: #2f7b66;
+  --color-primary-600: #1f6f5c;
+  --color-primary-700: #164f41;
+  --color-primary-800: #123f34;
+  --color-primary-900: #0e3229;
+  --color-primary-950: #072019;
 
-  --color-success-50: #f0fdf4;
-  --color-success-100: #dcfce7;
-  --color-success-200: #bbf7d0;
-  --color-success-300: #86efac;
-  --color-success-400: #4ade80;
-  --color-success-500: #22c55e;
-  --color-success-600: #16a34a;
-  --color-success-700: #15803d;
-  --color-success-800: #166534;
-  --color-success-900: #14532d;
+  /* ---- Success: leaf green senada dengan accent ---- */
+  --color-success-50: #ecf7f1;
+  --color-success-100: #dbf0e5;
+  --color-success-200: #b5e0cb;
+  --color-success-300: #85c9aa;
+  --color-success-400: #52ac87;
+  --color-success-500: #369469;
+  --color-success-600: #237a56;
+  --color-success-700: #1b6347;
+  --color-success-800: #174f3b;
+  --color-success-900: #10382b;
 
-  --color-warning-50: #fffbeb;
-  --color-warning-100: #fef3c7;
-  --color-warning-200: #fde68a;
-  --color-warning-300: #fcd34d;
-  --color-warning-400: #fbbf24;
-  --color-warning-500: #f59e0b;
-  --color-warning-600: #d97706;
-  --color-warning-700: #b45309;
-  --color-warning-800: #92400e;
-  --color-warning-900: #78350f;
+  /* ---- Warning: amber bronze hangat ---- */
+  --color-warning-50: #f9f3ea;
+  --color-warning-100: #f5e9dc;
+  --color-warning-200: #ebd4b8;
+  --color-warning-300: #dfbb91;
+  --color-warning-400: #cc9860;
+  --color-warning-500: #b9793a;
+  --color-warning-600: #a2622b;
+  --color-warning-700: #834d23;
+  --color-warning-800: #683d21;
+  --color-warning-900: #4d2e1d;
 
-  --color-danger-50: #fef2f2;
-  --color-danger-100: #fee2e2;
-  --color-danger-200: #fecaca;
-  --color-danger-300: #fca5a5;
-  --color-danger-400: #f87171;
-  --color-danger-500: #ef4444;
-  --color-danger-600: #dc2626;
-  --color-danger-700: #b91c1c;
-  --color-danger-800: #991b1b;
-  --color-danger-900: #7f1d1d;
+  /* ---- Danger: brick merah hangat ---- */
+  --color-danger-50: #f9edef;
+  --color-danger-100: #f7e4e5;
+  --color-danger-200: #eec8cb;
+  --color-danger-300: #e1a1a7;
+  --color-danger-400: #cb7079;
+  --color-danger-500: #b23a48;
+  --color-danger-600: #9c2f3d;
+  --color-danger-700: #7e2531;
+  --color-danger-800: #5e1f29;
+  --color-danger-900: #41141c;
 
-  --color-info-50: #f0f9ff;
-  --color-info-100: #e0f2fe;
-  --color-info-200: #bae6fd;
-  --color-info-300: #7dd3fc;
-  --color-info-400: #38bdf8;
-  --color-info-500: #0ea5e9;
-  --color-info-600: #0284c7;
-  --color-info-700: #0369a1;
-  --color-info-800: #075985;
-  --color-info-900: #0c4a6e;
+  /* ---- Info: sea teal lembut ---- */
+  --color-info-50: #edf5f4;
+  --color-info-100: #dcecea;
+  --color-info-200: #b9d8d6;
+  --color-info-300: #8fbebc;
+  --color-info-400: #579b99;
+  --color-info-500: #2e7c7a;
+  --color-info-600: #246766;
+  --color-info-700: #1f5453;
+  --color-info-800: #1a4342;
+  --color-info-900: #133435;
 
-  --color-slate-50: #f8fafc;
-  --color-slate-100: #f1f5f9;
-  --color-slate-200: #e2e8f0;
-  --color-slate-300: #cbd5e1;
-  --color-slate-400: #94a3b8;
-  --color-slate-500: #64748b;
-  --color-slate-600: #475569;
-  --color-slate-700: #334155;
-  --color-slate-800: #1e293b;
-  --color-slate-900: #0f172a;
-  --color-slate-950: #020617;
+  /* ---- Netral: warm paper/slate mengikuti mockup ---- */
+  --color-slate-50: #fbfaf8;
+  --color-slate-100: #f4f2ee;
+  --color-slate-150: #efede9;
+  --color-slate-200: #e7e4df;
+  --color-slate-300: #d9d6cf;
+  --color-slate-400: #a9a7a2;
+  --color-slate-500: #6e6d74;
+  --color-slate-600: #57565c;
+  --color-slate-700: #3e3e45;
+  --color-slate-800: #26262b;
+  --color-slate-900: #15151a;
+  --color-slate-950: #0b0b0f;
+
+  /* ---- Plum lembut (pengganti violet) ---- */
+  --color-violet-50: #f5f1f7;
+  --color-violet-100: #ebe3ee;
+  --color-violet-200: #d7c7dd;
+  --color-violet-300: #bb9fc4;
+  --color-violet-400: #9b72a6;
+  --color-violet-500: #7f5589;
+  --color-violet-600: #68436f;
+  --color-violet-700: #533458;
+  --color-violet-800: #3d2741;
+  --color-violet-900: #2b1c2d;
+
+  /* ---- Sea dalam (pengganti teal) ---- */
+  --color-teal-50: #edf7f6;
+  --color-teal-100: #dcefec;
+  --color-teal-200: #bae0da;
+  --color-teal-300: #8fc9c1;
+  --color-teal-400: #5caca2;
+  --color-teal-500: #3a8f84;
+  --color-teal-600: #2c746b;
+  --color-teal-700: #265e57;
+  --color-teal-800: #214b45;
+  --color-teal-900: #1b3a36;
+
+  /* ===== Alias warna default Tailwind -> palet custom ===== */
+  --color-red-50: #f9edef;
+  --color-red-100: #f7e4e5;
+  --color-red-200: #eec8cb;
+  --color-red-300: #e1a1a7;
+  --color-red-400: #cb7079;
+  --color-red-500: #b23a48;
+  --color-red-600: #9c2f3d;
+  --color-red-700: #7e2531;
+  --color-red-800: #5e1f29;
+  --color-red-900: #41141c;
+
+  --color-rose-50: #f9edef;
+  --color-rose-100: #f7e4e5;
+  --color-rose-200: #eec8cb;
+  --color-rose-300: #e1a1a7;
+  --color-rose-400: #cb7079;
+  --color-rose-500: #b23a48;
+  --color-rose-600: #9c2f3d;
+  --color-rose-700: #7e2531;
+  --color-rose-800: #5e1f29;
+  --color-rose-900: #41141c;
+
+  --color-amber-50: #f9f3ea;
+  --color-amber-100: #f5e9dc;
+  --color-amber-200: #ebd4b8;
+  --color-amber-300: #dfbb91;
+  --color-amber-400: #cc9860;
+  --color-amber-500: #b9793a;
+  --color-amber-600: #a2622b;
+  --color-amber-700: #834d23;
+  --color-amber-800: #683d21;
+  --color-amber-900: #4d2e1d;
+
+  --color-orange-50: #f9f3ea;
+  --color-orange-100: #f5e9dc;
+  --color-orange-200: #ebd4b8;
+  --color-orange-300: #dfbb91;
+  --color-orange-400: #cc9860;
+  --color-orange-500: #b9793a;
+  --color-orange-600: #a2622b;
+  --color-orange-700: #834d23;
+  --color-orange-800: #683d21;
+  --color-orange-900: #4d2e1d;
+
+  --color-emerald-50: #ecf7f1;
+  --color-emerald-100: #dbf0e5;
+  --color-emerald-200: #b5e0cb;
+  --color-emerald-300: #85c9aa;
+  --color-emerald-400: #52ac87;
+  --color-emerald-500: #369469;
+  --color-emerald-600: #237a56;
+  --color-emerald-700: #1b6347;
+  --color-emerald-800: #174f3b;
+  --color-emerald-900: #10382b;
+
+  --color-sky-50: #edf5f4;
+  --color-sky-100: #dcecea;
+  --color-sky-200: #b9d8d6;
+  --color-sky-300: #8fbebc;
+  --color-sky-400: #579b99;
+  --color-sky-500: #2e7c7a;
+  --color-sky-600: #246766;
+  --color-sky-700: #1f5453;
+  --color-sky-800: #1a4342;
+  --color-sky-900: #133435;
 
   --radius-xs: 2px;
   --radius-sm: 4px;
@@ -94,8 +233,8 @@
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.04);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.15);
-  --shadow-glow: 0 0 20px -5px rgb(99 102 241 / 0.25);
-  --shadow-glow-lg: 0 0 40px -10px rgb(99 102 241 / 0.3);
+  --shadow-glow: 0 0 20px -5px rgb(31 111 92 / 0.25);
+  --shadow-glow-lg: 0 0 40px -10px rgb(31 111 92 / 0.3);
 
   --transition-fast: 120ms ease;
   --transition-normal: 180ms ease;
@@ -158,6 +297,16 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -203,12 +352,12 @@ input[type="search"]::-webkit-search-cancel-button {
   -webkit-appearance: none;
   height: 14px;
   width: 14px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12'%3E%3C/path%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a9a7a2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12'%3E%3C/path%3E%3C/svg%3E");
   background-size: contain;
   cursor: pointer;
 }
 input[type="search"]::-webkit-search-cancel-button:hover {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12'%3E%3C/path%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236e6d74'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12'%3E%3C/path%3E%3C/svg%3E");
 }
 
 :focus-visible {
@@ -336,15 +485,15 @@ input[type="search"]::-webkit-search-cancel-button:hover {
   }
   .app-backdrop {
     background:
-      radial-gradient(80rem 40rem at 115% -15%, rgb(99 102 241 / 0.06), transparent 55%),
-      radial-gradient(60rem 30rem at -25% 115%, rgb(14 165 233 / 0.05), transparent 55%),
-      radial-gradient(40rem 20rem at 50% 50%, rgb(99 102 241 / 0.02), transparent 70%);
+      radial-gradient(80rem 40rem at 115% -15%, rgb(31 111 92 / 0.07), transparent 55%),
+      radial-gradient(60rem 30rem at -25% 115%, rgb(46 124 122 / 0.05), transparent 55%),
+      radial-gradient(40rem 20rem at 50% 50%, rgb(31 111 92 / 0.025), transparent 70%);
   }
 
   .surface-grid {
     background-image:
-      linear-gradient(to right, rgb(100 116 139 / 0.035) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(100 116 139 / 0.035) 1px, transparent 1px);
+      linear-gradient(to right, rgb(110 109 116 / 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(110 109 116 / 0.035) 1px, transparent 1px);
     background-size: 32px 32px;
   }
 
@@ -352,7 +501,7 @@ input[type="search"]::-webkit-search-cancel-button:hover {
   .skeleton-shimmer {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 45%, #e2e8f0 65%);
+    background: linear-gradient(90deg, #ece9e2 25%, #f6f4f0 45%, #ece9e2 65%);
     background-size: 200% 100%;
     animation: shimmer 1.4s ease-in-out infinite;
   }
@@ -402,20 +551,20 @@ input[type="search"]::-webkit-search-cancel-button:hover {
   }
   .card-hover:hover {
     transform: translateY(-3px);
-    border-color: rgb(99 102 241 / 0.4);
-    box-shadow: 0 16px 32px -8px rgb(79 70 229 / 0.2), 0 6px 12px -4px rgb(0 0 0 / 0.06);
+    border-color: rgb(31 111 92 / 0.4);
+    box-shadow: 0 16px 32px -8px rgb(31 111 92 / 0.18), 0 6px 12px -4px rgb(0 0 0 / 0.06);
   }
 
   /* Elevated card */
   .card-elevated {
     background: white;
-    border: 1px solid rgb(226 232 240 / 0.8);
+    border: 1px solid rgb(231 228 223 / 0.8);
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.04), 0 1px 2px rgb(0 0 0 / 0.02);
     transition: box-shadow var(--transition-normal) ease, border-color var(--transition-fast) ease;
   }
   .card-elevated:hover {
     box-shadow: 0 8px 24px -6px rgb(0 0 0 / 0.08), 0 4px 8px -4px rgb(0 0 0 / 0.03);
-    border-color: rgb(226 232 240);
+    border-color: rgb(231 228 223);
   }
 
   /* Pills & chips */
@@ -438,7 +587,7 @@ input[type="search"]::-webkit-search-cancel-button:hover {
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, rgb(99 102 241 / 0.3), rgb(14 165 233 / 0.2));
+    background: linear-gradient(135deg, rgb(31 111 92 / 0.28), rgb(46 124 122 / 0.18));
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;

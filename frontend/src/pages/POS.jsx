@@ -284,7 +284,7 @@ export default function POS() {
                     <p className="text-xs text-slate-400/80">{p.sku}</p>
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-1">
-                    <p className="text-sm font-bold text-primary-700">{formatRupiah(p.sale_price)}</p>
+                    <p className="text-sm font-bold text-primary-700 font-mono">{formatRupiah(p.sale_price)}</p>
                     <span
                       className={`pill ${
                         outOfStock
@@ -430,7 +430,7 @@ export default function POS() {
                           aria-label="Diskon item"
                         />
                       </div>
-                      <p className="w-24 text-right text-sm font-bold text-slate-800">{formatRupiah(lineTotal)}</p>
+                      <p className="w-24 text-right text-sm font-bold text-slate-800 font-mono">{formatRupiah(lineTotal)}</p>
                     </div>
                   </li>
                 );
@@ -469,7 +469,7 @@ export default function POS() {
 
           <div className="mb-3 flex items-center justify-between border-t border-slate-100 pt-2">
             <span className="text-sm font-medium text-slate-600">Total</span>
-            <span className="text-2xl font-bold text-slate-900">{formatRupiah(totals.total)}</span>
+            <span className="text-2xl font-bold text-slate-900 font-mono">{formatRupiah(totals.total)}</span>
           </div>
 
           <Button
@@ -608,7 +608,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
           </div>
           <div className="flex justify-between border-t border-slate-200/80 pt-2 text-base font-bold">
             <span>Grand Total</span>
-            <span className="text-gradient">{formatRupiah(totals.total)}</span>
+            <span className="text-gradient font-mono">{formatRupiah(totals.total)}</span>
           </div>
         </div>
 

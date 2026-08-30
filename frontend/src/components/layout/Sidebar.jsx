@@ -122,10 +122,10 @@ export function Sidebar({ open, onClose }) {
   return (
     <>
       {open && (
-        <div className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden" onClick={onClose} aria-hidden="true" />
+        <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden" onClick={onClose} aria-hidden="true" />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-full flex-col bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-300 transition-all duration-200 ease-out lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-full flex-col border-r border-slate-200/80 bg-white text-slate-600 transition-all duration-200 ease-out lg:relative lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         } ${sidebarWidth}`}
         aria-label="Navigasi utama"
@@ -133,22 +133,22 @@ export function Sidebar({ open, onClose }) {
         {collapsed && (
           <button
             onClick={() => setCollapsed(false)}
-            className="absolute -right-3 top-16 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-300 shadow-md transition-colors hover:bg-slate-700 hover:text-white lg:flex"
+            className="absolute -right-3 top-16 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-md transition-colors hover:bg-slate-100 hover:text-slate-800 lg:flex"
             aria-label="Perluas sidebar"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
         )}
 
-        <div className={`flex shrink-0 items-center border-b border-slate-800/80 py-4 ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
+        <div className={`flex shrink-0 items-center border-b border-slate-100 py-4 ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
           <div className={`flex min-w-0 items-center gap-3 ${collapsed ? 'justify-center' : 'flex-1'}`}>
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-600/40 ring-1 ring-primary-400/20">
               <Store className="h-5 w-5" aria-hidden="true" />
             </div>
             {showLabels && (
               <div className="overflow-hidden">
-                <p className="truncate text-sm font-bold text-white tracking-tight">POS Kasir</p>
-                <p className="truncate text-[0.65rem] text-slate-400/80">Point of Sale</p>
+                <p className="truncate text-sm font-bold text-slate-900 tracking-tight font-display">POS Kasir</p>
+                <p className="truncate text-[0.65rem] text-slate-400">Point of Sale</p>
               </div>
             )}
           </div>
@@ -156,14 +156,14 @@ export function Sidebar({ open, onClose }) {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setCollapsed(true)}
-                className="hidden rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white lg:inline-flex"
+                className="hidden rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-800 lg:inline-flex"
                 aria-label="Lipat sidebar"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
               <button
                 onClick={onClose}
-                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white lg:hidden"
+                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-800 lg:hidden"
                 aria-label="Tutup menu"
               >
                 <X className="h-5 w-5" />
@@ -180,7 +180,7 @@ export function Sidebar({ open, onClose }) {
             return (
               <div key={gi} className="mb-3">
                 {group.section && showLabels && (
-                  <p className="mb-1.5 px-3 text-[0.6rem] font-semibold uppercase tracking-widest text-slate-500/80">
+                  <p className="mb-1.5 px-3 text-[0.6rem] font-semibold uppercase tracking-widest text-slate-400">
                     {group.section}
                   </p>
                 )}
@@ -196,8 +196,8 @@ export function Sidebar({ open, onClose }) {
                             collapsed ? 'justify-center px-0' : 'px-3'
                           } ${
                             active
-                              ? 'bg-gradient-to-r from-primary-500/90 to-primary-600/90 text-white shadow-lg shadow-primary-600/35'
-                              : 'text-slate-300/90 hover:bg-slate-800/60 hover:text-white hover:shadow-sm'
+                              ? 'bg-gradient-to-r from-primary-500/90 to-primary-600/90 text-white shadow-lg shadow-primary-600/25'
+                              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
                           }`}
                           aria-current={active ? 'page' : undefined}
                           title={showLabels ? undefined : item.label}
@@ -217,12 +217,12 @@ export function Sidebar({ open, onClose }) {
           })}
         </nav>
 
-        <div className="shrink-0 border-t border-slate-800/80 p-4">
+        <div className="shrink-0 border-t border-slate-100 p-4">
           {showLabels ? (
-            <p className="text-center text-[0.65rem] text-slate-500/70">POS App v1.0</p>
+            <p className="text-center text-[0.65rem] text-slate-400">POS App v1.0</p>
           ) : (
-            <div className="mx-auto flex h-6 w-6 items-center justify-center rounded-lg bg-slate-800/80" title="POS App v1.0">
-              <Store className="h-3.5 w-3.5 text-slate-400/70" />
+            <div className="mx-auto flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100" title="POS App v1.0">
+              <Store className="h-3.5 w-3.5 text-slate-400" />
             </div>
           )}
         </div>

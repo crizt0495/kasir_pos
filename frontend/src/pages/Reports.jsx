@@ -183,20 +183,20 @@ export default function Reports() {
               {d.buckets?.length ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={d.buckets} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e4df" />
                     <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                     <YAxis tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}rb` : v)} tick={{ fontSize: 11 }} />
                     <Tooltip formatter={(v) => formatRupiah(v)} />
                     <Legend />
                     {tab === 'sales' ? (
                       <>
-                        <Bar dataKey="sales" name="Penjualan" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="refunds" name="Retur" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="sales" name="Penjualan" fill="#1f6f5c" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="refunds" name="Retur" fill="#b23a48" radius={[4, 4, 0, 0]} />
                       </>
                     ) : (
                       <>
-                        <Bar dataKey="revenue" name="Pendapatan" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="profit" name="Profit" fill="#10b981" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="revenue" name="Pendapatan" fill="#1f6f5c" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="profit" name="Profit" fill="#369469" radius={[4, 4, 0, 0]} />
                       </>
                     )}
                   </BarChart>
@@ -226,7 +226,7 @@ function SummaryCard({ label, value, highlight = false }) {
   return (
     <div className={`rounded-xl border p-4 shadow-sm ${highlight ? 'border-primary-200 bg-primary-50' : 'border-slate-200 bg-white'}`}>
       <p className="text-xs text-slate-500">{label}</p>
-      <p className={`mt-1 text-lg font-bold ${highlight ? 'text-primary-700' : 'text-slate-900'}`}>{value}</p>
+      <p className={`mt-1 text-lg font-bold font-mono ${highlight ? 'text-primary-700' : 'text-slate-900'}`}>{value}</p>
     </div>
   );
 }

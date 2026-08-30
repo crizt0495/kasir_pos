@@ -9,7 +9,7 @@ import {
 import { StatCard, Card, Skeleton, ErrorState, EmptyState, Badge } from '../components/ui/index.jsx';
 import { formatRupiah, formatNumber, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 
-const PIE_COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#0ea5e9', '#f43f5e', '#8b5cf6', '#14b8a6', '#f97316'];
+const PIE_COLORS = ['#1f6f5c', '#369469', '#b9793a', '#2e7c7a', '#b23a48', '#7f5589', '#3a8f84', '#6e6d74'];
 
 function SummarySkeleton() {
   return (
@@ -87,14 +87,14 @@ export default function Dashboard() {
                   <BarChart data={charts.data.sales_7_days} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                     <defs>
                       <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#6366f1" />
-                        <stop offset="100%" stopColor="#4f46e5" />
+                        <stop offset="0%" stopColor="#1f6f5c" />
+                        <stop offset="100%" stopColor="#164f41" />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e4df" vertical={false} />
                     <XAxis dataKey="label" tickFormatter={(v) => v.slice(5)} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                     <YAxis tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}rb` : v)} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
-                    <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgb(99 102 241 / 0.06)' }} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgb(31 111 92 / 0.06)' }} />
                     <Bar dataKey="total" name="Penjualan" fill="url(#barGrad)" radius={[6, 6, 0, 0]} maxBarSize={48} />
                   </BarChart>
                 </ResponsiveContainer>
