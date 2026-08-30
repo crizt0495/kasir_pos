@@ -246,19 +246,44 @@ export default function POS() {
               const outOfStock = Number(p.stock) <= 0;
               const inactive = p.status !== 'active';
               const disabled = inactive || outOfStock;
+              const inCart = cart.items.find((i) => i.product.id === p.id);
+              const qty = inCart?.quantity || 0;
+              const stop = (e) => e.stopPropagation();
+              const handleAdd = (e) => {
+                stop(e);
+                if (disabled) {
+                  if (outOfStock) toast.error(`${p.name} stok habis`);
+                  return;
+                }
+                const ok = cart.add(p);
+                if (!ok && outOfStock) toast.error(`${p.name} stok habis`);
+                else if (!ok) toast.error(`Stok ${p.name} tidak cukup`);
+              };
+              const handleInc = (e) => {
+                stop(e);
+                const ok = cart.increment(p.id);
+                if (!ok) toast.error(`Stok ${p.name} tidak cukup`);
+              };
+              const handleDec = (e) => {
+                stop(e);
+                cart.decrement(p.id);
+              };
               return (
-              <button
+              <div
                 key={p.id}
-                onClick={() => {
-                  if (disabled) {
-                    if (outOfStock) toast.error(`${p.name} stok habis`);
-                    return;
+                role="button"
+                tabIndex={disabled ? -1 : 0}
+                onClick={handleAdd}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleAdd(e);
                   }
-                  cart.add(p);
                 }}
-                disabled={disabled}
                 aria-disabled={disabled}
-                className={`group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-2.5 text-left transition-all duration-200 ${disabled ? 'pointer-events-none opacity-50 cursor-not-allowed' : 'hover:border-primary-300'}`}
+                className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-white p-2.5 text-left transition-all duration-200 ${
+                  qty > 0 ? 'border-primary-300 ring-1 ring-primary-200/60' : 'border-slate-200'
+                } ${disabled ? 'pointer-events-none opacity-50 cursor-not-allowed' : 'hover:border-primary-300'}`}
               >
                 <div className="relative mb-2 aspect-[4/3] w-full overflow-hidden rounded-lg bg-slate-50">
                   <div className="absolute inset-0 p-1.5">
@@ -271,9 +296,9 @@ export default function POS() {
                       imgClassName="transition-transform duration-300 ease-out group-hover:scale-105"
                     />
                   </div>
-                  {!outOfStock && (
-                    <span className="absolute right-2 top-2 hidden h-7 w-7 items-center justify-center rounded-full bg-primary-600 text-white transition-all duration-150 group-hover:flex">
-                      <Plus className="h-4 w-4" strokeWidth={2.5} />
+                  {qty > 0 && (
+                    <span className="absolute left-2 top-2 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-600 px-1.5 text-[0.7rem] font-bold text-white shadow-sm">
+                      {qty}
                     </span>
                   )}
                   {outOfStock && (
@@ -287,24 +312,52 @@ export default function POS() {
                     <p className="line-clamp-2 text-sm font-medium text-slate-800 group-hover:text-primary-700 transition-colors">{p.name}</p>
                     <p className="text-xs text-slate-400/80">{p.sku}</p>
                   </div>
-                  <div className="mt-2 flex items-center justify-between gap-1">
+                  <div className="mt-2 flex items-center justify-between gap-1.5">
                     <p className="text-sm font-bold text-primary-700 font-mono">{formatRupiah(p.sale_price)}</p>
-                    <span
-                      className={`pill ${
-                        outOfStock
-                          ? 'bg-danger-50 text-danger-600 ring-1 ring-danger-200/50'
-                          : Number(p.stock) <= Number(p.min_stock)
-                          ? 'bg-danger-50 text-danger-600 ring-1 ring-danger-200/50'
-                          : Number(p.stock) <= Number(p.min_stock) * 1.5 && Number(p.min_stock) > 0
-                          ? 'bg-warning-50 text-warning-700 ring-1 ring-warning-200/50'
-                          : 'bg-slate-100/80 text-slate-500'
-                      }`}
-                    >
-                      {formatQty(p.stock)}
-                    </span>
+                    {qty > 0 ? (
+                      <div
+                        onClick={stop}
+                        className="flex items-center gap-0.5 rounded-lg border border-primary-300 bg-primary-50 p-0.5"
+                      >
+                        <button
+                          type="button"
+                          onClick={handleDec}
+                          aria-label={`Kurangi ${p.name}`}
+                          className="flex h-7 w-7 items-center justify-center rounded-md text-primary-700 transition-colors hover:bg-white active:bg-primary-100"
+                        >
+                          <Minus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        </button>
+                        <span className="min-w-[1.5rem] text-center text-sm font-bold font-mono text-primary-700">
+                          {qty}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleInc}
+                          disabled={qty >= Number(p.stock)}
+                          aria-label={`Tambah ${p.name}`}
+                          className="flex h-7 w-7 items-center justify-center rounded-md bg-primary-600 text-white transition-colors hover:bg-primary-700 active:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span
+                        className={`pill ${
+                          outOfStock
+                            ? 'bg-danger-50 text-danger-600 ring-1 ring-danger-200/50'
+                            : Number(p.stock) <= Number(p.min_stock)
+                            ? 'bg-danger-50 text-danger-600 ring-1 ring-danger-200/50'
+                            : Number(p.stock) <= Number(p.min_stock) * 1.5 && Number(p.min_stock) > 0
+                            ? 'bg-warning-50 text-warning-700 ring-1 ring-warning-200/50'
+                            : 'bg-slate-100/80 text-slate-500'
+                        }`}
+                      >
+                        {formatQty(p.stock)}
+                      </span>
+                    )}
                   </div>
                 </div>
-              </button>
+              </div>
               );
             })
           )}
