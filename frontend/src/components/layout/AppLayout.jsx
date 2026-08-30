@@ -65,7 +65,7 @@ export default function AppLayout() {
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
-        <main id="main-content" className={`surface-grid app-backdrop flex-1 overflow-y-auto p-4 pb-20 lg:p-6 lg:pb-6 ${isPOS ? 'p-0 pb-0 lg:p-0 lg:pb-0' : ''}`}>
+        <main id="main-content" className={`bg-slate-50 flex-1 overflow-y-auto p-4 pb-20 lg:p-6 lg:pb-6 ${isPOS ? 'p-0 pb-0 lg:p-0 lg:pb-0' : ''}`}>
           <div key={location.pathname} className="page-enter">
             <Outlet />
           </div>

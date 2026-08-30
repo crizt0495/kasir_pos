@@ -60,14 +60,14 @@ export default function Dashboard() {
         <ErrorState onRetry={summary.reload} />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Total Penjualan Hari Ini" value={formatRupiah(s.today_sales)} icon={Banknote} color="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md shadow-emerald-500/25" />
-          <StatCard label="Jumlah Transaksi Hari Ini" value={formatNumber(s.today_transactions)} icon={ReceiptText} color="bg-gradient-to-br from-primary-400 to-primary-600 text-white shadow-md shadow-primary-500/25" />
-          <StatCard label="Profit Hari Ini" value={formatRupiah(s.today_profit)} icon={TrendingUp} color="bg-gradient-to-br from-sky-400 to-sky-600 text-white shadow-md shadow-sky-500/25" />
-          <StatCard label="Total Produk" value={formatNumber(s.total_products)} icon={Package} color="bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-md shadow-slate-500/25" />
-          <StatCard label="Stok Menipis" value={formatNumber(s.low_stock)} icon={AlertTriangle} color="bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md shadow-amber-500/25" />
-          <StatCard label="Total Pelanggan" value={formatNumber(s.total_customers)} icon={Users} color="bg-gradient-to-br from-violet-400 to-violet-600 text-white shadow-md shadow-violet-500/25" />
-          <StatCard label="Total Pembelian Hari Ini" value={formatRupiah(s.purchases_today)} icon={ShoppingBag} color="bg-gradient-to-br from-rose-400 to-rose-600 text-white shadow-md shadow-rose-500/25" />
-          <StatCard label="Kas Saat Ini" value={formatRupiah(s.open_cash)} icon={Wallet} color="bg-gradient-to-br from-teal-400 to-teal-600 text-white shadow-md shadow-teal-500/25" />
+          <StatCard label="Total Penjualan Hari Ini" value={formatRupiah(s.today_sales)} icon={Banknote} color="bg-emerald-500 text-white" />
+          <StatCard label="Jumlah Transaksi Hari Ini" value={formatNumber(s.today_transactions)} icon={ReceiptText} color="bg-primary-500 text-white" />
+          <StatCard label="Profit Hari Ini" value={formatRupiah(s.today_profit)} icon={TrendingUp} color="bg-sky-500 text-white" />
+          <StatCard label="Total Produk" value={formatNumber(s.total_products)} icon={Package} color="bg-slate-500 text-white" />
+          <StatCard label="Stok Menipis" value={formatNumber(s.low_stock)} icon={AlertTriangle} color="bg-amber-500 text-white" />
+          <StatCard label="Total Pelanggan" value={formatNumber(s.total_customers)} icon={Users} color="bg-violet-500 text-white" />
+          <StatCard label="Total Pembelian Hari Ini" value={formatRupiah(s.purchases_today)} icon={ShoppingBag} color="bg-rose-500 text-white" />
+          <StatCard label="Kas Saat Ini" value={formatRupiah(s.open_cash)} icon={Wallet} color="bg-teal-500 text-white" />
         </div>
       )}
 
@@ -138,11 +138,11 @@ export default function Dashboard() {
                         <span
                           className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                             i === 0
-                              ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-md shadow-amber-400/40'
+                              ? 'bg-amber-500 text-white'
                               : i === 1
-                              ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-white shadow-sm'
+                              ? 'bg-slate-400 text-white'
                               : i === 2
-                              ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-white shadow-sm'
+                              ? 'bg-orange-400 text-white'
                               : 'bg-slate-100 text-slate-500'
                           }`}
                         >

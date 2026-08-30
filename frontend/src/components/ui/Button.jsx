@@ -1,13 +1,13 @@
 import { Loader2 } from 'lucide-react';
 
 const variantStyles = {
-  primary: 'bg-gradient-to-b from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 active:from-primary-700 active:to-primary-800 focus-visible:ring-primary-500 shadow-md shadow-primary-600/25 hover:shadow-lg hover:shadow-primary-600/30',
-  success: 'bg-gradient-to-b from-success-500 to-success-600 text-white hover:from-success-600 hover:to-success-700 active:from-success-700 active:to-success-800 focus-visible:ring-success-500 shadow-md shadow-success-600/25 hover:shadow-lg hover:shadow-success-600/30',
-  danger: 'bg-gradient-to-b from-danger-500 to-danger-600 text-white hover:from-danger-600 hover:to-danger-700 active:from-danger-700 active:to-danger-800 focus-visible:ring-danger-500 shadow-md shadow-danger-600/25 hover:shadow-lg hover:shadow-danger-600/30',
-  secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100 focus-visible:ring-slate-400 shadow-sm shadow-slate-200/60',
-  outline: 'border border-primary-200 bg-primary-50/50 text-primary-700 hover:bg-primary-100 hover:border-primary-300 active:bg-primary-200 focus-visible:ring-primary-400',
+  primary: 'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 focus-visible:ring-primary-500 shadow-sm shadow-primary-600/20',
+  success: 'bg-success-500 text-white hover:bg-success-600 active:bg-success-700 focus-visible:ring-success-500 shadow-sm shadow-success-600/20',
+  danger: 'bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-700 focus-visible:ring-danger-500 shadow-sm shadow-danger-600/20',
+  secondary: 'bg-surface text-slate-700 border border-border hover:bg-slate-50 active:bg-slate-100 focus-visible:ring-slate-400 shadow-sm',
+  outline: 'border border-border bg-surface text-slate-700 hover:bg-slate-50 active:bg-slate-100 focus-visible:ring-slate-400',
   ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-800 active:bg-slate-200 focus-visible:ring-slate-400',
-  subtle: 'bg-slate-100 text-slate-700 hover:bg-slate-150 active:bg-slate-200 focus-visible:ring-slate-400',
+  subtle: 'bg-slate-50 text-slate-700 hover:bg-slate-100 active:bg-slate-150 focus-visible:ring-slate-400',
 };
 
 const sizeStyles = {

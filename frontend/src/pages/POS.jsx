@@ -212,7 +212,7 @@ export default function POS() {
           <button
             onClick={() => setCategoryId('')}
             className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 ${
-              !categoryId ? 'bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-md shadow-primary-600/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800'
+              !categoryId ? 'bg-primary-600 text-white' : 'bg-surface text-slate-600 hover:bg-slate-100 hover:text-slate-800'
             }`}
           >
             Semua
@@ -222,7 +222,7 @@ export default function POS() {
               key={c.id}
               onClick={() => setCategoryId(categoryId === c.id ? '' : c.id)}
               className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 ${
-                categoryId === c.id ? 'bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-md shadow-primary-600/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800'
+                categoryId === c.id ? 'bg-primary-600 text-white' : 'bg-surface text-slate-600 hover:bg-slate-100 hover:text-slate-800'
               }`}
             >
               {c.name}
@@ -258,9 +258,9 @@ export default function POS() {
                 }}
                 disabled={disabled}
                 aria-disabled={disabled}
-                className={`group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 p-2.5 text-left transition-all duration-200 ${disabled ? 'pointer-events-none opacity-50 cursor-not-allowed' : 'hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/12'}`}
+                className={`group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-2.5 text-left transition-all duration-200 ${disabled ? 'pointer-events-none opacity-50 cursor-not-allowed' : 'hover:border-primary-300'}`}
               >
-                <div className="mb-2 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-100/80">
+                <div className="mb-2 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg bg-primary-50/50">
                   <ProductImage
                     src={p.image_url}
                     alt={p.name}
@@ -268,13 +268,13 @@ export default function POS() {
                     className="h-full w-full transition-transform duration-300 ease-out group-hover:scale-110"
                   />
                   {!outOfStock && (
-                    <span className="absolute right-2 top-2 hidden h-7 w-7 items-center justify-center rounded-full bg-gradient-to-b from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-600/40 transition-all duration-150 group-hover:flex">
+                    <span className="absolute right-2 top-2 hidden h-7 w-7 items-center justify-center rounded-full bg-primary-600 text-white transition-all duration-150 group-hover:flex">
                       <Plus className="h-4 w-4" strokeWidth={2.5} />
                     </span>
                   )}
                   {outOfStock && (
                     <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-slate-900/40">
-                      <span className="rounded-full bg-danger-600 px-2.5 py-1 text-xs font-bold text-white shadow-lg">Stok Habis</span>
+                      <span className="rounded-full bg-danger-600 px-2.5 py-1 text-xs font-bold text-white">Stok Habis</span>
                     </span>
                   )}
                 </div>
@@ -608,7 +608,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
           </div>
           <div className="flex justify-between border-t border-slate-200/80 pt-2 text-base font-bold">
             <span>Grand Total</span>
-            <span className="text-gradient font-mono">{formatRupiah(totals.total)}</span>
+            <span className="text-primary-700 font-mono">{formatRupiah(totals.total)}</span>
           </div>
         </div>
 

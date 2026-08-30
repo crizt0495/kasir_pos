@@ -104,7 +104,7 @@ export function Topbar({ onMenuClick }) {
               aria-haspopup="true"
               aria-label="Menu pengguna"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-xs font-bold text-white ring-2 ring-primary-200/60 shadow-md shadow-primary-500/20">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-xs font-bold text-white ring-2 ring-primary-200/60">
                 {initials(displayName)}
               </div>
               <div className="hidden text-left md:block">

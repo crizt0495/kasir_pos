@@ -142,7 +142,7 @@ export function Sidebar({ open, onClose }) {
 
         <div className={`flex shrink-0 items-center border-b border-slate-100 py-4 ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
           <div className={`flex min-w-0 items-center gap-3 ${collapsed ? 'justify-center' : 'flex-1'}`}>
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-600/40 ring-1 ring-primary-400/20">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-md ring-1 ring-primary-400/20">
               <Store className="h-5 w-5" aria-hidden="true" />
             </div>
             {showLabels && (
@@ -196,7 +196,7 @@ export function Sidebar({ open, onClose }) {
                             collapsed ? 'justify-center px-0' : 'px-3'
                           } ${
                             active
-                              ? 'bg-gradient-to-r from-primary-500/90 to-primary-600/90 text-white shadow-lg shadow-primary-600/25'
+                              ? 'bg-primary-600 text-white shadow-sm'
                               : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
                           }`}
                           aria-current={active ? 'page' : undefined}

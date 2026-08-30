@@ -48,32 +48,17 @@ export default function Login() {
   };
 
   return (
-    <div className="relative flex min-h-full items-center justify-center overflow-y-auto bg-gradient-to-br from-slate-150 via-slate-50 to-slate-200 px-4 py-10">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.55]"
-        style={{
-          backgroundImage: 'radial-gradient(circle at 18% 15%, rgb(31 111 92 / 0.16) 0, transparent 42%), radial-gradient(circle at 82% 85%, rgb(46 124 122 / 0.12) 0, transparent 42%)',
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.45]"
-        style={{
-          backgroundImage: 'linear-gradient(to right, rgb(110 109 116 / 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgb(110 109 116 / 0.06) 1px, transparent 1px)',
-          backgroundSize: '32px 32px',
-        }}
-        aria-hidden="true"
-      />
+    <div className="relative flex min-h-full items-center justify-center overflow-y-auto bg-slate-100 px-4 py-10">
       <div className="relative w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-lg shadow-primary-600/40">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-600 text-white">
             <Store className="h-7 w-7" />
           </div>
           <h1 className="text-xl font-bold text-slate-900">POS Kasir</h1>
           <p className="text-sm text-slate-500">Masuk untuk mengelola toko Anda</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-2xl bg-white p-6 shadow-xl shadow-slate-900/5 ring-1 ring-slate-200/60">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <Field label="Username" error={errors.username?.message}>
             <Input placeholder="Masukkan username" autoComplete="username" {...register('username')} error={errors.username} />
           </Field>
@@ -107,7 +92,7 @@ export default function Login() {
             type="submit"
             loading={submitting}
             disabled={!isValid || submitting}
-            className="w-full shadow-lg shadow-primary-600/25"
+            className="w-full"
             size="lg"
           >
             Login

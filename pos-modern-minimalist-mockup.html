@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kedai Klasika — POS Modern Minimalist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #FAFAF8;
+    --surface: #FFFFFF;
+    --border: #E7E4DF;
+    --border-soft: #F0EEEA;
+    --text: #15151A;
+    --text-soft: #6E6D74;
+    --text-faint: #A9A7A2;
+    --accent: #1F6F5C;
+    --accent-dark: #164F41;
+    --accent-soft: #E7F0EC;
+    --amber: #B9793A;
+    --amber-soft: #F5E9DC;
+    --brick: #B23A48;
+    --brick-soft: #F7E4E5;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ height:100%; }
+  body{
+    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:#EFEDE9; font-family:'Inter', sans-serif; padding: 32px 12px;
+  }
+
+  /* ---------- PHONE FRAME ---------- */
+  .phone{
+    width: 380px; height: 794px; border-radius: 40px;
+    background: #1B1B1E; padding: 10px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.18);
+  }
+  .screen{
+    width:100%; height:100%; background: var(--bg); border-radius: 30px; overflow:hidden;
+    position:relative; display:flex; flex-direction:column;
+  }
+
+  /* ---------- STATUS BAR ---------- */
+  .statusbar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 14px 24px 4px; font-family:'IBM Plex Mono'; font-size:12px; font-weight:600; color: var(--text); flex-shrink:0;
+  }
+  .statusbar .icons{ display:flex; gap:5px; align-items:center; color: var(--text-soft); }
+
+  /* ---------- HEADER ---------- */
+  .app-header{ padding: 10px 22px 14px; flex-shrink:0; border-bottom: 1px solid var(--border-soft); }
+  .greet-row{ display:flex; align-items:center; justify-content:space-between; }
+  .greet-row .hello{ font-family:'Manrope'; font-size: 19px; font-weight:800; color: var(--text); letter-spacing:-0.3px; }
+  .greet-row .store{ font-size: 11.5px; color: var(--text-soft); margin-top:3px; font-weight:600; }
+  .bell{
+    width:38px; height:38px; border-radius:11px; border:1px solid var(--border); background: var(--surface);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; color:var(--text-soft); font-size:15px;
+  }
+  .bell::after{ content:''; position:absolute; top:8px; right:9px; width:6px; height:6px; border-radius:50%; background: var(--brick); box-shadow: 0 0 0 2px var(--surface); }
+  .page-title{ font-family:'Manrope'; font-size: 20px; font-weight:800; color: var(--text); letter-spacing:-0.3px; }
+  .page-sub{ font-size:11.5px; color: var(--text-soft); margin-top:4px; font-weight:600; }
+
+  /* ---------- SEARCH ---------- */
+  .search-pill{
+    margin: 14px 22px 10px; height:44px; border-radius: 11px; border: 1px solid var(--border); background: var(--surface);
+    display:flex; align-items:center; gap:9px; padding: 0 14px; flex-shrink:0;
+  }
+  .search-pill input{ border:none; background:transparent; outline:none; font-family:'Inter'; font-size:13.5px; color:var(--text); width:100%; font-weight:500; }
+  .search-pill input::placeholder{ color: var(--text-faint); }
+  .search-pill .ic{ color: var(--text-faint); font-size:14px; }
+
+  /* ---------- CATEGORY CHIPS ---------- */
+  .chips{ display:flex; gap:8px; padding: 2px 22px 14px; overflow-x:auto; flex-shrink:0; scrollbar-width:none; }
+  .chips::-webkit-scrollbar{ display:none; }
+  .chip{
+    padding: 8px 16px; border-radius: 8px; font-size:12px; font-weight:700; white-space:nowrap; color: var(--text-soft);
+    font-family:'Inter'; flex-shrink:0; cursor:pointer; border:1px solid var(--border); background: var(--surface);
+  }
+  .chip.active{ color:#fff; background: var(--accent); border-color: var(--accent); }
+
+  /* ---------- SCROLL AREA ---------- */
+  .scroll-area{ flex:1; overflow-y:auto; padding-bottom: 118px; scrollbar-width:none; }
+  .scroll-area::-webkit-scrollbar{ display:none; }
+
+  /* ---------- PRODUCT GRID ---------- */
+  .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; padding: 0 22px; }
+  .p-card{ border-radius: 14px; padding: 13px 12px 12px; border:1px solid var(--border); background: var(--surface); }
+  .p-thumb{
+    width:100%; height:64px; border-radius: 10px; margin-bottom:10px; background: var(--accent-soft);
+    display:flex; align-items:center; justify-content:center; font-size:24px;
+  }
+  .p-cat{ font-size:9.5px; font-weight:700; color: var(--accent); text-transform:uppercase; letter-spacing:.5px; }
+  .p-name{ font-size:13px; font-weight:700; color: var(--text); line-height:1.3; margin-top:3px; }
+  .p-stock{ font-size:10px; color: var(--text-faint); font-weight:600; margin-top:2px; }
+  .p-row{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+  .p-price{ font-family:'IBM Plex Mono'; font-size:12.5px; font-weight:600; color: var(--text); }
+  .qty-btn{
+    width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700; cursor:pointer; border:1px solid var(--border); background: var(--surface); color: var(--text); font-family:'Inter';
+  }
+  .qty-btn.fill{ background: var(--accent); border-color: var(--accent); color:#fff; }
+  .qty-wrap{ display:flex; align-items:center; gap:7px; }
+  .qty-wrap.hidden{ display:none; }
+  .qty-num{ font-family:'IBM Plex Mono'; font-weight:600; font-size:12.5px; color:var(--text); min-width:12px; text-align:center; }
+
+  /* ---------- FLOATING CART BAR ---------- */
+  .cart-bar{
+    position:absolute; left:16px; right:16px; bottom: 88px; border-radius: 14px; background: var(--surface);
+    border: 1px solid var(--border); box-shadow: 0 8px 20px rgba(20,20,20,0.08);
+    padding: 12px 12px 12px 18px; display:flex; align-items:center; justify-content:space-between;
+    z-index:5; transition: transform .25s ease, opacity .25s ease;
+  }
+  .cart-bar.hidden{ transform: translateY(24px); opacity:0; pointer-events:none; }
+  .cart-info .cart-count{ font-size:10.5px; color: var(--text-soft); font-weight:700; text-transform:uppercase; letter-spacing:.4px; }
+  .cart-info .cart-total{ font-family:'IBM Plex Mono'; font-size:16px; font-weight:700; color: var(--text); margin-top:2px; }
+  .pay-btn{
+    border:none; padding: 12px 20px; border-radius: 10px; font-family:'Manrope'; font-weight:700; font-size:13px;
+    cursor:pointer; display:flex; align-items:center; gap:6px; background: var(--accent); color:#fff;
+  }
+  .pay-btn:active{ background: var(--accent-dark); }
+
+  /* ---------- BOTTOM NAV ---------- */
+  .bottom-nav{
+    position:absolute; left:0; right:0; bottom:0; height: 82px; background: var(--surface);
+    border-top: 1px solid var(--border-soft);
+    display:flex; align-items:center; justify-content:space-around; padding-bottom: 6px; z-index:6;
+  }
+  .nav-item{ display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; width:58px; padding-top:6px; }
+  .nav-ico{ width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:16px; color: var(--text-faint); }
+  .nav-item.active .nav-ico{ color: var(--accent); }
+  .nav-label{ font-size:9.5px; font-weight:700; color: var(--text-faint); }
+  .nav-item.active .nav-label{ color: var(--accent); }
+  .nav-dot{ width:4px; height:4px; border-radius:50%; background: transparent; margin-top:-2px; }
+  .nav-item.active .nav-dot{ background: var(--accent); }
+  .nav-center-wrap{ display:flex; flex-direction:column; align-items:center; gap:5px; width:58px; }
+  .nav-center{
+    width:36px; height:36px; border-radius:10px; background: var(--accent); display:flex; align-items:center; justify-content:center;
+    font-size:18px; color:#fff; cursor:pointer;
+  }
+  .nav-center:active{ background: var(--accent-dark); }
+
+  /* ---------- SCREENS SHOW/HIDE ---------- */
+  .screen-panel{ display:none; flex-direction:column; height:100%; }
+  .screen-panel.active{ display:flex; }
+
+  /* ---------- HISTORY LIST ---------- */
+  .hist-container{ margin: 4px 22px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); overflow:hidden; }
+  .hist-row{ display:flex; align-items:center; gap:12px; padding: 14px 16px; border-bottom: 1px solid var(--border-soft); }
+  .hist-row:last-child{ border-bottom:none; }
+  .hist-ico{ width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+  .hist-mid{ flex:1; min-width:0; }
+  .hist-id{ font-family:'IBM Plex Mono'; font-size:12.5px; font-weight:600; color:var(--text); }
+  .hist-time{ font-size:10.5px; color:var(--text-faint); font-weight:500; margin-top:3px; }
+  .hist-right{ text-align:right; flex-shrink:0; }
+  .hist-total{ font-family:'IBM Plex Mono'; font-weight:700; font-size:13px; color:var(--text); }
+  .badge{ font-size:9px; font-weight:800; padding:3px 8px; border-radius:5px; margin-top:5px; display:inline-block; letter-spacing:.3px; }
+  .badge.paid{ background: var(--accent-soft); color: var(--accent); }
+  .badge.refund{ background: var(--brick-soft); color: var(--brick); }
+
+  /* ---------- PRODUK (kelola) ---------- */
+  .add-fab{
+    margin: 14px 22px 14px; height:46px; border-radius: 11px; display:flex; align-items:center; justify-content:center;
+    gap:8px; font-family:'Manrope'; font-weight:700; font-size:13px; color: var(--surface); cursor:pointer; background: var(--text);
+  }
+  .manage-container{ margin: 0 22px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); overflow:hidden; }
+  .manage-row{ display:flex; align-items:center; gap:12px; padding: 13px 16px; border-bottom: 1px solid var(--border-soft); }
+  .manage-row:last-child{ border-bottom:none; }
+  .manage-thumb{ width:40px; height:40px; border-radius:10px; background: var(--accent-soft); display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+  .manage-info{ flex:1; min-width:0; }
+  .manage-name{ font-size:12.5px; font-weight:700; color:var(--text); }
+  .manage-price{ font-family:'IBM Plex Mono'; font-size:11px; color:var(--text-soft); font-weight:500; margin-top:3px; }
+  .toggle{ width:38px; height:22px; border-radius:999px; position:relative; cursor:pointer; flex-shrink:0; border:1px solid var(--border); }
+  .toggle .dot{ position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background: var(--text-faint); transition: all .2s ease; }
+  .toggle.on{ background: var(--accent-soft); border-color: var(--accent); }
+  .toggle.on .dot{ left:18px; background: var(--accent); }
+  .toggle.off{ background: var(--bg); }
+
+  /* ---------- AKUN ---------- */
+  .profile-card{ margin: 14px 22px 20px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); padding: 18px; display:flex; align-items:center; gap:13px; }
+  .avatar{ width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-family:'Manrope'; font-weight:800; font-size:18px; color:#fff; background: var(--accent); flex-shrink:0; }
+  .profile-name{ font-family:'Manrope'; font-weight:800; font-size:14.5px; color:var(--text); }
+  .profile-role{ font-size:11px; color:var(--text-soft); font-weight:600; margin-top:3px; }
+  .menu-section-title{ font-size:10.5px; font-weight:800; color: var(--text-faint); text-transform:uppercase; letter-spacing:.7px; margin: 4px 22px 8px; }
+  .menu-container{ margin: 0 22px 18px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); overflow:hidden; }
+  .menu-row{ display:flex; align-items:center; gap:12px; padding: 13px 16px; border-bottom: 1px solid var(--border-soft); cursor:pointer; }
+  .menu-row:last-child{ border-bottom:none; }
+  .menu-ico{ width:32px; height:32px; border-radius:9px; background: var(--accent-soft); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; color:var(--accent); }
+  .menu-label{ flex:1; font-size:12.5px; font-weight:600; color:var(--text); }
+  .chev{ color:var(--text-faint); font-size:13px; }
+  .logout-btn{ margin: 4px 22px 0; height:46px; border-radius: 11px; border: 1px solid var(--brick-soft); display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Manrope'; font-weight:700; font-size:13px; color: var(--brick); cursor:pointer; background: var(--brick-soft); }
+
+  /* ---------- TOAST ---------- */
+  .toast{
+    position:absolute; top:64px; left:50%; transform: translateX(-50%) translateY(-16px); opacity:0;
+    background: var(--text); color:#fff; font-size:12px; font-weight:600; padding: 10px 18px; border-radius: 8px;
+    z-index:20; transition: all .3s ease; box-shadow: 0 10px 24px rgba(0,0,0,0.2); white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform: translateX(-50%) translateY(0); }
+
+  .caption{ text-align:center; color: #85837E; font-family:'Inter'; font-size:12px; margin-top:18px; font-weight:600; }
+</style>
+</head>
+<body>
+
+<div>
+  <div class="phone">
+    <div class="screen">
+
+      <div class="statusbar">
+        <span>09:41</span>
+        <div class="icons"><span>📶</span><span>🔋</span></div>
+      </div>
+
+      <div class="toast" id="toast">Transaksi baru dimulai</div>
+
+      <!-- ===================== SCREEN: KASIR ===================== -->
+      <div class="screen-panel active" id="panel-kasir">
+        <div class="app-header">
+          <div class="greet-row">
+            <div>
+              <div class="hello">Halo, Rani</div>
+              <div class="store">Kedai Klasika · Shift Pagi</div>
+            </div>
+            <div class="bell">🔔</div>
+          </div>
+        </div>
+
+        <div class="search-pill">
+          <span class="ic">⌕</span>
+          <input type="text" placeholder="Cari menu...">
+        </div>
+
+        <div class="chips">
+          <div class="chip active" data-cat="semua">Semua</div>
+          <div class="chip" data-cat="minuman">Minuman</div>
+          <div class="chip" data-cat="makanan">Makanan</div>
+          <div class="chip" data-cat="snack">Snack</div>
+        </div>
+
+        <div class="scroll-area">
+          <div class="grid" id="product-grid"></div>
+        </div>
+
+        <div class="cart-bar hidden" id="cart-bar">
+          <div class="cart-info">
+            <div class="cart-count" id="cart-count">0 item</div>
+            <div class="cart-total" id="cart-total">Rp 0</div>
+          </div>
+          <button class="pay-btn">Bayar →</button>
+        </div>
+      </div>
+
+      <!-- ===================== SCREEN: PRODUK ===================== -->
+      <div class="screen-panel" id="panel-produk">
+        <div class="app-header">
+          <div class="page-title">Kelola Produk</div>
+          <div class="page-sub">8 menu · 2 stok menipis</div>
+        </div>
+        <div class="scroll-area">
+          <div class="add-fab">＋ Tambah Produk Baru</div>
+          <div class="manage-container">
+            <div class="manage-row">
+              <div class="manage-thumb">☕</div>
+              <div class="manage-info">
+                <div class="manage-name">Kopi Susu Gula Aren</div>
+                <div class="manage-price">Rp 18.000 · stok 42</div>
+              </div>
+              <div class="toggle on"><div class="dot"></div></div>
+            </div>
+            <div class="manage-row">
+              <div class="manage-thumb">🥐</div>
+              <div class="manage-info">
+                <div class="manage-name">Croissant Coklat</div>
+                <div class="manage-price">Rp 22.000 · stok 6</div>
+              </div>
+              <div class="toggle on"><div class="dot"></div></div>
+            </div>
+            <div class="manage-row">
+              <div class="manage-thumb">🍵</div>
+              <div class="manage-info">
+                <div class="manage-name">Teh Manis Dingin</div>
+                <div class="manage-price">Rp 8.000 · stok 58</div>
+              </div>
+              <div class="toggle on"><div class="dot"></div></div>
+            </div>
+            <div class="manage-row">
+              <div class="manage-thumb">🍩</div>
+              <div class="manage-info">
+                <div class="manage-name">Donat Kentang</div>
+                <div class="manage-price">Rp 12.000 · stok 0</div>
+              </div>
+              <div class="toggle off"><div class="dot"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== SCREEN: RIWAYAT ===================== -->
+      <div class="screen-panel" id="panel-riwayat">
+        <div class="app-header">
+          <div class="page-title">Riwayat Transaksi</div>
+          <div class="page-sub">Hari ini · Rp 612.000 total</div>
+        </div>
+        <div class="scroll-area">
+          <div class="hist-container">
+            <div class="hist-row">
+              <div class="hist-ico" style="background:var(--accent-soft); color:var(--accent)">✓</div>
+              <div class="hist-mid">
+                <div class="hist-id">#TRX-1082</div>
+                <div class="hist-time">Hari ini, 09.24 · 3 item</div>
+              </div>
+              <div class="hist-right">
+                <div class="hist-total">Rp 46.000</div>
+                <span class="badge paid">LUNAS</span>
+              </div>
+            </div>
+            <div class="hist-row">
+              <div class="hist-ico" style="background:var(--accent-soft); color:var(--accent)">✓</div>
+              <div class="hist-mid">
+                <div class="hist-id">#TRX-1081</div>
+                <div class="hist-time">Hari ini, 09.10 · 1 item</div>
+              </div>
+              <div class="hist-right">
+                <div class="hist-total">Rp 18.000</div>
+                <span class="badge paid">LUNAS</span>
+              </div>
+            </div>
+            <div class="hist-row">
+              <div class="hist-ico" style="background:var(--brick-soft); color:var(--brick)">↺</div>
+              <div class="hist-mid">
+                <div class="hist-id">#TRX-1080</div>
+                <div class="hist-time">Hari ini, 08.52 · 2 item</div>
+              </div>
+              <div class="hist-right">
+                <div class="hist-total">Rp 34.000</div>
+                <span class="badge refund">REFUND</span>
+              </div>
+            </div>
+            <div class="hist-row">
+              <div class="hist-ico" style="background:var(--accent-soft); color:var(--accent)">✓</div>
+              <div class="hist-mid">
+                <div class="hist-id">#TRX-1079</div>
+                <div class="hist-time">Hari ini, 08.31 · 4 item</div>
+              </div>
+              <div class="hist-right">
+                <div class="hist-total">Rp 87.000</div>
+                <span class="badge paid">LUNAS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== SCREEN: AKUN ===================== -->
+      <div class="screen-panel" id="panel-akun">
+        <div class="app-header">
+          <div class="page-title">Akun Saya</div>
+        </div>
+        <div class="scroll-area">
+          <div class="profile-card">
+            <div class="avatar">R</div>
+            <div>
+              <div class="profile-name">Rani Adiningtyas</div>
+              <div class="profile-role">Kasir · Kedai Klasika</div>
+            </div>
+          </div>
+
+          <div class="menu-section-title">Toko</div>
+          <div class="menu-container">
+            <div class="menu-row"><div class="menu-ico">🏪</div><div class="menu-label">Info Toko</div><div class="chev">›</div></div>
+            <div class="menu-row"><div class="menu-ico">👥</div><div class="menu-label">Karyawan</div><div class="chev">›</div></div>
+            <div class="menu-row"><div class="menu-ico">🖨️</div><div class="menu-label">Pengaturan Struk</div><div class="chev">›</div></div>
+          </div>
+
+          <div class="menu-section-title">Lainnya</div>
+          <div class="menu-container">
+            <div class="menu-row"><div class="menu-ico">🔔</div><div class="menu-label">Notifikasi</div><div class="chev">›</div></div>
+            <div class="menu-row"><div class="menu-ico">❓</div><div class="menu-label">Bantuan</div><div class="chev">›</div></div>
+          </div>
+
+          <div class="logout-btn">⎋ Keluar Akun</div>
+        </div>
+      </div>
+
+      <!-- ===================== BOTTOM NAV ===================== -->
+      <div class="bottom-nav">
+        <div class="nav-item active" data-panel="kasir">
+          <div class="nav-ico">🧾</div>
+          <div class="nav-label">Kasir</div>
+          <div class="nav-dot"></div>
+        </div>
+        <div class="nav-item" data-panel="produk">
+          <div class="nav-ico">📦</div>
+          <div class="nav-label">Produk</div>
+          <div class="nav-dot"></div>
+        </div>
+        <div class="nav-center-wrap" id="nav-center-btn">
+          <div class="nav-center">＋</div>
+          <div class="nav-label" style="color:var(--text-faint)">Baru</div>
+        </div>
+        <div class="nav-item" data-panel="riwayat">
+          <div class="nav-ico">🕘</div>
+          <div class="nav-label">Riwayat</div>
+          <div class="nav-dot"></div>
+        </div>
+        <div class="nav-item" data-panel="akun">
+          <div class="nav-ico">👤</div>
+          <div class="nav-label">Akun</div>
+          <div class="nav-dot"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="caption">Kedai Klasika — Konsep UI POS Mobile · Modern Minimalist</div>
+</div>
+
+<script>
+  const products = [
+    { id:1, name:"Kopi Susu Gula Aren", price:18000, cat:"minuman", emoji:"☕", stock:42 },
+    { id:2, name:"Es Kopi Susu", price:16000, cat:"minuman", emoji:"🥤", stock:37 },
+    { id:3, name:"Americano Dingin", price:15000, cat:"minuman", emoji:"🧊", stock:30 },
+    { id:4, name:"Teh Manis Dingin", price:8000, cat:"minuman", emoji:"🍵", stock:58 },
+    { id:5, name:"Nasi Goreng Spesial", price:25000, cat:"makanan", emoji:"🍛", stock:14 },
+    { id:6, name:"Roti Bakar Keju", price:17000, cat:"makanan", emoji:"🍞", stock:9 },
+    { id:7, name:"Croissant Coklat", price:22000, cat:"snack", emoji:"🥐", stock:6 },
+    { id:8, name:"Donat Kentang", price:12000, cat:"snack", emoji:"🍩", stock:0 },
+  ];
+  const catLabel = { minuman:"Minuman", makanan:"Makanan", snack:"Snack" };
+
+  const cart = {};
+  const grid = document.getElementById('product-grid');
+  const cartBar = document.getElementById('cart-bar');
+  const cartCount = document.getElementById('cart-count');
+  const cartTotal = document.getElementById('cart-total');
+
+  function rupiah(n){ return "Rp " + n.toLocaleString('id-ID'); }
+
+  function renderGrid(filter){
+    grid.innerHTML = "";
+    products.filter(p => filter === 'semua' || p.cat === filter).forEach(p => {
+      const qty = cart[p.id] || 0;
+      const card = document.createElement('div');
+      card.className = 'p-card';
+      card.innerHTML = `
+        <div class="p-thumb">${p.emoji}</div>
+        <div class="p-cat">${catLabel[p.cat]}</div>
+        <div class="p-name">${p.name}</div>
+        <div class="p-stock">${p.stock === 0 ? 'Stok habis' : 'Stok ' + p.stock}</div>
+        <div class="p-row">
+          <div class="p-price">${rupiah(p.price)}</div>
+          ${p.stock === 0 ? '' : `
+            <div class="qty-wrap ${qty === 0 ? 'hidden' : ''}">
+              <button class="qty-btn" data-action="dec">–</button>
+              <span class="qty-num">${qty}</span>
+              <button class="qty-btn" data-action="inc">+</button>
+            </div>
+            <button class="qty-btn fill ${qty === 0 ? '' : 'hidden'}" data-action="inc">+</button>
+          `}
+        </div>
+      `;
+      if(p.stock > 0){
+        card.querySelectorAll('[data-action="inc"]').forEach(btn => btn.addEventListener('click', () => changeQty(p.id, 1, filter)));
+        card.querySelectorAll('[data-action="dec"]').forEach(btn => btn.addEventListener('click', () => changeQty(p.id, -1, filter)));
+      }
+      grid.appendChild(card);
+    });
+  }
+
+  function changeQty(id, delta, filter){
+    cart[id] = (cart[id] || 0) + delta;
+    if(cart[id] <= 0) delete cart[id];
+    renderGrid(filter);
+    updateCartBar();
+  }
+
+  function updateCartBar(){
+    const ids = Object.keys(cart);
+    const totalItems = ids.reduce((s,id) => s + cart[id], 0);
+    const totalPrice = ids.reduce((s,id) => s + cart[id] * products.find(p=>p.id==id).price, 0);
+    if(totalItems === 0){ cartBar.classList.add('hidden'); }
+    else {
+      cartBar.classList.remove('hidden');
+      cartCount.textContent = totalItems + " item";
+      cartTotal.textContent = rupiah(totalPrice);
+    }
+  }
+
+  let activeCat = 'semua';
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      activeCat = chip.dataset.cat;
+      renderGrid(activeCat);
+    });
+  });
+
+  renderGrid('semua');
+
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      document.querySelectorAll('.screen-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + item.dataset.panel).classList.add('active');
+    });
+  });
+
+  document.getElementById('nav-center-btn').addEventListener('click', () => {
+    Object.keys(cart).forEach(k => delete cart[k]);
+    renderGrid(activeCat);
+    updateCartBar();
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelector('[data-panel="kasir"]').classList.add('active');
+    document.querySelectorAll('.screen-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-kasir').classList.add('active');
+
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1800);
+  });
+</script>
+
+</body>
+</html>
