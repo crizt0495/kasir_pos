@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { env } from '../config/env.js';
+import { resolveProvider } from './smsProviders.js';
 
 const fmtRupiah = (n) => 'Rp' + Number(n || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
 
@@ -83,6 +84,18 @@ async function sendTelegram(message) {
   }
 }
 
+/** Kirim SMS ke HP owner via provider yang dikonfigurasi (Twilio / Fonnte) */
+export async function sendSMS(message) {
+  const provider = resolveProvider(env);
+  if (!provider) return 'SMS tidak dikonfigurasi (isi SMS_TO + salah satu provider)';
+  try {
+    await provider.send(message, env);
+    return null;
+  } catch (err) {
+    return `${provider.name}: ${err?.message || 'Gagal kirim'}`;
+  }
+}
+
 async function logNotification(entry) {
   try {
     await supabase.from('notification_logs').insert(entry);
@@ -102,6 +115,13 @@ async function logNotification(entry) {
 export async function notifyNewSale(sale) {
   try {
     const { title, body, payload } = buildSaleNotification(sale);
+
+    // Pesan singkat untuk SMS (maks ~160 karakter, single SMS)
+    const customerName = sale.customer?.name || 'Umum';
+    const dateShort = new Date(sale.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    const smsMessage =
+      `POS: ${sale.invoice_number} Rp${Number(sale.total || 0).toLocaleString('id-ID')}` +
+      ` ${sale.payment_method || '-'} ${customerName} ${dateShort}`;
 
     // Cari user yang punya permission notifications.view (Owner)
     const { data: userRows } = await supabase
@@ -147,12 +167,31 @@ export async function notifyNewSale(sale) {
       }
     }
 
-    // 2) Fallback Telegram (dikirim sekali ke chat owner)
+    // 2) SMS ke HP Owner (via Twilio / Fonnte)
+    const smsErr = await sendSMS(smsMessage);
+    if (smsErr) {
+      await logNotification({
+        type: 'SALE',
+        title: 'SMS',
+        body: smsMessage,
+        payload: { invoice_number: sale.invoice_number, sale_id: sale.id },
+        status: 'failed',
+        error: smsErr.slice(0, 500),
+      });
+    } else {
+      await logNotification({
+        type: 'SALE',
+        title: 'SMS',
+        body: smsMessage,
+        payload: { invoice_number: sale.invoice_number, sale_id: sale.id },
+        status: 'sent',
+        error: null,
+      });
+    }
+
+    // 3) Fallback Telegram (dikirim sekali ke chat owner)
     if (pushSent === 0 || env.TELEGRAM_BOT_TOKEN) {
       const tgErr = await sendTelegram(`${title}\n\n${body}`);
-      if (tgErr && pushSent === 0 && pushFailed > 0) {
-        // Semua push gagal & Telegram juga gagal → sudah tercatat di atas
-      }
       if (!tgErr) {
         await logNotification({
           type: 'SALE',

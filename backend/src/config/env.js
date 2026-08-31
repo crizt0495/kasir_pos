@@ -34,6 +34,13 @@ export const env = {
   // Fallback notifikasi Telegram — opsional
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',
   TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID || '',
+  // SMS ke HP Owner (via Twilio atau Fonnte) — opsional
+  SMS_PROVIDER: process.env.SMS_PROVIDER || '',   // 'twilio' atau 'fonnte'
+  SMS_ACCOUNT_SID: process.env.SMS_ACCOUNT_SID || '',
+  SMS_AUTH_TOKEN: process.env.SMS_AUTH_TOKEN || '',
+  SMS_FROM: process.env.SMS_FROM || '',
+  SMS_API_TOKEN: process.env.SMS_API_TOKEN || '',
+  SMS_TO: process.env.SMS_TO || '',
 };
 
 export const isProd = env.NODE_ENV === 'production';
