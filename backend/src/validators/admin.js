@@ -121,6 +121,32 @@ const settingsInvoiceValue = z
   })
   .passthrough();
 
+const settingsNotificationValue = z
+  .object({
+    enabled: z.boolean().default(false),
+    owner_phone: z
+      .string()
+      .trim()
+      .max(30, 'Nomor HP maksimal 30 karakter')
+      .nullable()
+      .optional(),
+    telegram_chat_id: z
+      .string()
+      .trim()
+      .max(50, 'Telegram Chat ID maksimal 50 karakter')
+      .nullable()
+      .optional(),
+    channels: z
+      .object({
+        web_push: z.boolean().default(true),
+        sms: z.boolean().default(false),
+        telegram: z.boolean().default(false),
+      })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
 const settingsValueSchemas = {
   store: settingsStoreValue,
   pos: settingsPosValue,
@@ -128,6 +154,7 @@ const settingsValueSchemas = {
   inventory: settingsInventoryValue,
   user_session: settingsSessionValue,
   invoice: settingsInvoiceValue,
+  notification: settingsNotificationValue,
 };
 
 export const settingsUpdateSchema = z

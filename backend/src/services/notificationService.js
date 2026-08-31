@@ -1,6 +1,28 @@
 import { supabase } from '../config/supabase.js';
 import { env } from '../config/env.js';
 import { resolveProvider } from './smsProviders.js';
+import { getSetting } from './settingsService.js';
+
+const DEFAULT_NOTIF_SETTINGS = {
+  enabled: false,
+  owner_phone: '',
+  telegram_chat_id: '',
+  channels: { web_push: true, sms: false, telegram: false },
+};
+
+/** Ambil pengaturan notifikasi (cached via settingsService 1 menit). */
+async function loadNotifSettings() {
+  try {
+    const s = await getSetting('notification');
+    return {
+      ...DEFAULT_NOTIF_SETTINGS,
+      ...s,
+      channels: { ...DEFAULT_NOTIF_SETTINGS.channels, ...(s?.channels || {}) },
+    };
+  } catch {
+    return DEFAULT_NOTIF_SETTINGS;
+  }
+}
 
 const fmtRupiah = (n) => 'Rp' + Number(n || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
 
@@ -67,15 +89,16 @@ async function sendWebPush(subscription, payload) {
   }
 }
 
-/** Kirim pesan via Telegram Bot (fallback sederhana) */
-async function sendTelegram(message) {
-  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return 'Telegram tidak dikonfigurasi';
+/** Kirim pesan via Telegram Bot; chatId boleh ditekan dari settings */
+async function sendTelegram(message, chatIdArg) {
+  const chatId = chatIdArg || env.TELEGRAM_CHAT_ID;
+  if (!env.TELEGRAM_BOT_TOKEN || !chatId) return 'Telegram tidak dikonfigurasi';
   const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`;
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: message }),
+      body: JSON.stringify({ chat_id: chatId, text: message }),
     });
     if (!res.ok) return `Telegram HTTP ${res.status}`;
     return null;
@@ -85,11 +108,12 @@ async function sendTelegram(message) {
 }
 
 /** Kirim SMS ke HP owner via provider yang dikonfigurasi (Twilio / Fonnte) */
-export async function sendSMS(message) {
-  const provider = resolveProvider(env);
+export async function sendSMS(message, { to, providerEnv } = {}) {
+  const activeEnv = { ...env, ...(providerEnv || {}), SMS_TO: to || env.SMS_TO };
+  const provider = resolveProvider(activeEnv);
   if (!provider) return 'SMS tidak dikonfigurasi (isi SMS_TO + salah satu provider)';
   try {
-    await provider.send(message, env);
+    await provider.send(message, activeEnv);
     return null;
   } catch (err) {
     return `${provider.name}: ${err?.message || 'Gagal kirim'}`;
@@ -112,11 +136,21 @@ async function logNotification(entry) {
  * notifikasi hanya dicatat di notification_logs (status failed) dan
  * TIDAK menyebabkan transaksi gagal / rollback.
  */
+/**
+ * Kirim notifikasi penjualan ke Owner via channel yang aktif:
+ * Web Push + SMS + Telegram.
+ *
+ * FIRE-AND-FORGET: fungsi ini TIDAK PERNAH melempar error. Kegagalan
+ * tidak dicatat di notification_logs dan TIDAK menyebabkan transaksi gagal.
+ */
 export async function notifyNewSale(sale) {
   try {
+    const notifSettings = await loadNotifSettings();
+    if (!notifSettings.enabled) return;
+
     const { title, body, payload } = buildSaleNotification(sale);
 
-    // Pesan singkat untuk SMS (maks ~160 karakter, single SMS)
+    // Pesan singkat untuk SMS
     const customerName = sale.customer?.name || 'Umum';
     const dateShort = new Date(sale.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     const smsMessage =
@@ -131,80 +165,61 @@ export async function notifyNewSale(sale) {
 
     const recipients = [...new Set((userRows || []).map((ur) => ur.user_id).filter(Boolean))];
 
-    // 1) Web Push ke setiap subscription milik recipient
-    let pushSent = 0;
-    let pushFailed = 0;
-    for (const userId of recipients) {
-      const { data: subs } = await supabase
-        .from('notification_subscriptions')
-        .select('*')
-        .eq('user_id', userId);
+    // 1) Web Push
+    if (notifSettings.channels.web_push) {
+      let pushSent = 0;
+      let pushFailed = 0;
+      for (const userId of recipients) {
+        const { data: subs } = await supabase
+          .from('notification_subscriptions')
+          .select('*')
+          .eq('user_id', userId);
 
-      for (const sub of subs || []) {
-        const err = await sendWebPush(sub, { title, body, ...payload });
-        if (err) {
-          pushFailed += 1;
-          await logNotification({
-            user_id: userId,
-            type: 'SALE',
-            title,
-            body,
-            payload: { ...payload, endpoint: sub.endpoint },
-            status: 'failed',
-            error: String(err).slice(0, 500),
-          });
-        } else {
-          pushSent += 1;
-          await logNotification({
-            user_id: userId,
-            type: 'SALE',
-            title,
-            body,
-            payload,
-            status: 'sent',
-          });
+        for (const sub of subs || []) {
+          const err = await sendWebPush(sub, { title, body, ...payload });
+          if (err) {
+            pushFailed += 1;
+            await logNotification({ user_id: userId, type: 'SALE', title, body, payload: { ...payload, endpoint: sub.endpoint }, status: 'failed', error: String(err).slice(0, 500) });
+          } else {
+            pushSent += 1;
+            await logNotification({ user_id: userId, type: 'SALE', title, body, payload, status: 'sent' });
+          }
         }
       }
     }
 
-    // 2) SMS ke HP Owner (via Twilio / Fonnte)
-    const smsErr = await sendSMS(smsMessage);
-    if (smsErr) {
-      await logNotification({
-        type: 'SALE',
-        title: 'SMS',
-        body: smsMessage,
-        payload: { invoice_number: sale.invoice_number, sale_id: sale.id },
-        status: 'failed',
-        error: smsErr.slice(0, 500),
-      });
-    } else {
-      await logNotification({
-        type: 'SALE',
-        title: 'SMS',
-        body: smsMessage,
-        payload: { invoice_number: sale.invoice_number, sale_id: sale.id },
-        status: 'sent',
-        error: null,
-      });
+    // 2) SMS
+    if (notifSettings.channels.sms) {
+      const ownerPhone = notifSettings.owner_phone || env.SMS_TO;
+      if (ownerPhone) {
+        const smsErr = await sendSMS(smsMessage, { to: ownerPhone });
+        await logNotification({
+          type: 'SALE_SMS',
+          title: 'SMS',
+          body: smsMessage,
+          payload: { invoice_number: sale.invoice_number, sale_id: sale.id },
+          status: smsErr ? 'failed' : 'sent',
+          error: smsErr ? smsErr.slice(0, 500) : null,
+        });
+      }
     }
 
-    // 3) Fallback Telegram (dikirim sekali ke chat owner)
-    if (pushSent === 0 || env.TELEGRAM_BOT_TOKEN) {
-      const tgErr = await sendTelegram(`${title}\n\n${body}`);
-      if (!tgErr) {
+    // 3) Telegram
+    if (notifSettings.channels.telegram) {
+      const tgChatId = notifSettings.telegram_chat_id || env.TELEGRAM_CHAT_ID;
+      if (tgChatId && env.TELEGRAM_BOT_TOKEN) {
+        const tgErr = await sendTelegram(`${title}\n\n${body}`, tgChatId);
         await logNotification({
-          type: 'SALE',
+          type: 'SALE_TG',
           title,
           body,
           payload,
-          status: 'sent',
-          error: null,
+          status: tgErr ? 'failed' : 'sent',
+          error: tgErr ? tgErr.slice(0, 500) : null,
         });
       }
     }
   } catch (err) {
-    // Jangan pernah mengganggu alur transaksi
     try {
       await logNotification({
         type: 'SALE',

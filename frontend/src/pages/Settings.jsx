@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Save, Store, Settings as SettingsIcon, Receipt, Percent, Boxes, UserCog, AlertTriangle } from 'lucide-react';
+import { Save, Store, Settings as SettingsIcon, Receipt, Percent, Boxes, UserCog, AlertTriangle, Bell } from 'lucide-react';
 import { settingsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { settingsSchema } from '../schemas/index.js';
@@ -14,6 +14,7 @@ const TABS = [
   { key: 'tax', label: 'Pajak' },
   { key: 'inventory', label: 'Inventory' },
   { key: 'session', label: 'User & Sesi' },
+  { key: 'notification', label: 'Notifikasi' },
 ];
 
 export default function Settings() {
@@ -35,6 +36,13 @@ export default function Settings() {
       inventory: { allow_negative_stock: false, low_stock_threshold: 0, ...(s.inventory || {}) },
       user_session: { session_timeout_minutes: 480, ...(s.user_session || {}) },
       invoice: { prefix: 'INV', ...(s.invoice || {}) },
+      notification: {
+        enabled: false,
+        owner_phone: '',
+        telegram_chat_id: '',
+        channels: { web_push: true, sms: false, telegram: false },
+        ...(s.notification || {}),
+      },
     });
   }
 
@@ -57,6 +65,7 @@ export default function Settings() {
         { key: 'inventory', value: form.inventory },
         { key: 'user_session', value: form.user_session },
         { key: 'invoice', value: form.invoice },
+        { key: 'notification', value: form.notification },
       ]);
       toast.success('Pengaturan berhasil disimpan');
       settings.reload();
@@ -211,6 +220,83 @@ export default function Settings() {
               error={!!errors.user_session?.session_timeout_minutes}
             />
           </Field>
+        </Card>
+      )}
+
+      {tab === 'notification' && (
+        <Card title={<span className="flex items-center gap-2"><Bell className="h-4 w-4" /> Notifikasi Penjualan</span>} bodyClassName="p-5">
+          <div className="space-y-5">
+            <Checkbox
+              label="Aktifkan notifikasi penjualan ke Owner"
+              checked={form.notification.enabled === true}
+              onChange={(e) => update('notification', { enabled: e.target.checked })}
+            />
+            <p className="text-xs text-slate-400">
+              Jika diaktifkan, Owner akan menerima pemberitahuan setiap ada transaksi penjualan baru.
+            </p>
+
+            <div className="border-t border-slate-100 pt-4">
+              <p className="mb-3 text-sm font-medium text-slate-700">Channel pengiriman</p>
+              <div className="space-y-3">
+                <Checkbox
+                  label="Web Push (browser HP owner — perlu install PWA & subscribe)"
+                  checked={form.notification.channels?.web_push === true}
+                  onChange={(e) => update('notification', { channels: { ...(form.notification.channels || {}), web_push: e.target.checked } })}
+                  disabled={!form.notification.enabled}
+                />
+                <Checkbox
+                  label="SMS (via Fonnte/Twilio)"
+                  checked={form.notification.channels?.sms === true}
+                  onChange={(e) => update('notification', { channels: { ...(form.notification.channels || {}), sms: e.target.checked } })}
+                  disabled={!form.notification.enabled}
+                />
+                <Checkbox
+                  label="Telegram Bot"
+                  checked={form.notification.channels?.telegram === true}
+                  onChange={(e) => update('notification', { channels: { ...(form.notification.channels || {}), telegram: e.target.checked } })}
+                  disabled={!form.notification.enabled}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <Field
+                label="Nomor HP Owner (SMS)"
+                hint="Contoh: 628123456789"
+                error={errors.notification?.owner_phone}
+              >
+                <Input
+                  value={form.notification.owner_phone || ''}
+                  onChange={(e) => update('notification', { owner_phone: e.target.value })}
+                  placeholder="628xxxxxxxxxx"
+                  disabled={!form.notification.enabled || form.notification.channels?.sms !== true}
+                  error={!!errors.notification?.owner_phone}
+                />
+              </Field>
+              <Field
+                label="Telegram Chat ID (Owner)"
+                hint="Angka chat id owner. Kosongkan untuk pakai TELEGRAM_CHAT_ID di .env"
+                error={errors.notification?.telegram_chat_id}
+              >
+                <Input
+                  value={form.notification.telegram_chat_id || ''}
+                  onChange={(e) => update('notification', { telegram_chat_id: e.target.value })}
+                  placeholder="123456789"
+                  disabled={!form.notification.enabled || form.notification.channels?.telegram !== true}
+                  error={!!errors.notification?.telegram_chat_id}
+                />
+              </Field>
+            </div>
+
+            <div className="rounded-xl bg-slate-50 p-4 text-xs text-slate-500">
+              <p className="font-medium text-slate-600">Catatan setup channel:</p>
+              <ul className="mt-1.5 list-disc space-y-1 pl-4">
+                <li><b>Web Push</b> — butuh VAPID keys di <code>.env</code>; Owner harus buka aplikasi di browser HP lalu mengaktifkan lonceng notifikasi, dan install aplikasinya ke layar utama.</li>
+                <li><b>SMS</b> — butuh API token provider (Fonnte/Twilio) di <code>.env</code>; nomor HP diisi di sini.</li>
+                <li><b>Telegram</b> — butuh <code>TELEGRAM_BOT_TOKEN</code> di <code>.env</code>; chat id bisa diisi di sini.</li>
+              </ul>
+            </div>
+          </div>
         </Card>
       )}
     </div>

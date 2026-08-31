@@ -184,4 +184,19 @@ export const settingsSchema = z.object({
         .regex(/^[A-Z0-9]+$/, 'Hanya huruf kapital dan angka'),
     })
     .passthrough(),
+  notification: z
+    .object({
+      enabled: z.boolean().default(false),
+      owner_phone: optionalText(30),
+      telegram_chat_id: optionalText(50),
+      channels: z
+        .object({
+          web_push: z.boolean().default(true),
+          sms: z.boolean().default(false),
+          telegram: z.boolean().default(false),
+        })
+        .passthrough()
+        .optional(),
+    })
+    .passthrough(),
 });
