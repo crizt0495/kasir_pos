@@ -59,6 +59,8 @@ export function Modal({
   showCloseButton = true,
 }) {
   const previousActiveElement = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
@@ -67,7 +69,7 @@ export function Modal({
     document.body.style.overflow = 'hidden';
 
     const handleEscape = (e) => {
-      if (e.key === 'Escape') onClose?.();
+      if (e.key === 'Escape') onCloseRef.current?.();
     };
 
     window.addEventListener('keydown', handleEscape);
@@ -76,7 +78,7 @@ export function Modal({
       document.body.style.overflow = '';
       previousActiveElement.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
@@ -135,13 +137,16 @@ export function Drawer({
   width = 'w-[420px] sm:max-w-[480px]',
   closeOnOverlayClick = true,
 }) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (!open) return;
 
     document.body.style.overflow = 'hidden';
 
     const handleEscape = (e) => {
-      if (e.key === 'Escape') onClose?.();
+      if (e.key === 'Escape') onCloseRef.current?.();
     };
 
     window.addEventListener('keydown', handleEscape);
@@ -149,7 +154,7 @@ export function Drawer({
       window.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = '';
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
