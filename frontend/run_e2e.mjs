@@ -13,7 +13,7 @@ async function postLogin() {
   try {
     const res = await fetch('http://127.0.0.1:3001/api/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'admin', password: 'Admin123!' }),
+      body: JSON.stringify({ username: 'admin', password: 'Admin2026!x' }),
     });
     return res.status;
   } catch { return 0; }

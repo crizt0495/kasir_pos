@@ -5,7 +5,7 @@
 -- periode bagi hasil tahun berjalan, settings.
 --
 -- Akun default (WAJIB segera diganti password):
---   username: admin   password: Admin123!   role: Owner
+--   username: admin   password: Admin2026!x   role: Owner
 --   username: kasir   password: Kasir123!   role: Kasir
 -- Password di-hash dengan bcrypt (pgcrypto crypt/gen_salt).
 -- ============================================================
@@ -115,7 +115,7 @@ on conflict do nothing;
 -- USERS (password di-hash bcrypt)
 -- ------------------------------------------------------------
 insert into public.users (username, password_hash, is_active, must_change_password) values
-  ('admin', crypt('Admin123!', gen_salt('bf', 10)), true, false),
+  ('admin', crypt('Admin2026!x', gen_salt('bf', 10)), true, false),
   ('kasir', crypt('Kasir123!', gen_salt('bf', 10)), true, false)
 on conflict (username) do nothing;
 

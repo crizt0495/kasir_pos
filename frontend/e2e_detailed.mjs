@@ -30,7 +30,7 @@ const uniq = 'E2E' + Date.now();
 await step('Login admin', async () => {
   await page.goto(BASE + '/login', { waitUntil: 'domcontentloaded' });
   await page.fill('input[placeholder="Masukkan username"]', 'admin');
-  await page.fill('input[placeholder="Masukkan password"]', 'Admin123!');
+  await page.fill('input[placeholder="Masukkan password"]', 'Admin2026!x');
   await page.click('button:has-text("Login")');
   await page.waitForFunction(() => !location.pathname.startsWith('/login'), null, { timeout: 15000 });
 });

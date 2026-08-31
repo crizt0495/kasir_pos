@@ -11,7 +11,7 @@ test('Alur penjualan lengkap: login → POS → checkout → transaksi sukses', 
   // ---------- Login ----------
   await page.goto('/login');
   await page.getByPlaceholder('Masukkan username').fill('admin');
-  await page.getByPlaceholder('Masukkan password').fill('Admin123!');
+  await page.getByPlaceholder('Masukkan password').fill('Admin2026!x');
   await page.getByRole('button', { name: 'Login' }).click();
   await expect(page).toHaveURL(/dashboard/);
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();

@@ -170,7 +170,7 @@ Vite mem-proxy `/api` ke backend, jadi tidak perlu mengatur CORS di development.
 
 | Username | Password | Role |
 |---|---|---|
-| `admin` | `Admin123!` | Owner |
+| `admin` | `Admin2026!x` | Owner |
 | `kasir` | `Kasir123!` | Kasir |
 
 > ⚠️ Kedua akun diberi flag **must_change_password = true** — sistem **memaksa ganti password** saat pertama login. Ganti segera! Untuk production, gunakan password acak via env/setup wizard (lihat §7).

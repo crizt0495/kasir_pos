@@ -7,7 +7,7 @@ const BACKEND_CWD = '/home/chris/Documents/Aplikasi/pos/backend';
 const BASE = 'http://127.0.0.1:5188';
 
 const backend = spawn('node', ['src/server.js'], { cwd: BACKEND_CWD, env: process.env, stdio: ['ignore','ignore','ignore'] });
-async function postLogin(){ try{ const r=await fetch('http://127.0.0.1:3001/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'admin',password:'Admin123!'})}); return r.status;}catch{return 0;} }
+async function postLogin(){ try{ const r=await fetch('http://127.0.0.1:3001/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'admin',password:'Admin2026!x'})}); return r.status;}catch{return 0;} }
 for(let i=0;i<40;i++){ const c=await postLogin(); if(c===200){ log('backend READY'); break; } await new Promise(r=>setTimeout(r,1000)); }
 
 const { chromium } = await import('playwright');
@@ -46,7 +46,7 @@ async function openCreate() {
 await step('Login admin', async()=>{
   await page.goto(BASE+'/login',{waitUntil:'domcontentloaded'});
   await page.fill('input[placeholder="Masukkan username"]','admin');
-  await page.fill('input[placeholder="Masukkan password"]','Admin123!');
+  await page.fill('input[placeholder="Masukkan password"]','Admin2026!x');
   await page.click('button:has-text("Login")');
   await page.waitForFunction(()=>!location.pathname.startsWith('/login'),null,{timeout:15000});
 });

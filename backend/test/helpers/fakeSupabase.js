@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 
-const ADMIN_PASSWORD = 'Admin123!';
+const ADMIN_PASSWORD = 'Admin2026!x';
 const LIMITED_PASSWORD = 'Limited123!';
 
 export const adminId = '11111111-1111-1111-1111-111111111111';

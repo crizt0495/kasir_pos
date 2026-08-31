@@ -3,7 +3,7 @@ import { expect } from '@playwright/test';
 export async function login(page) {
   await page.goto('/login');
   await page.getByPlaceholder('Masukkan username').fill('admin');
-  await page.getByPlaceholder('Masukkan password').fill('Admin123!');
+  await page.getByPlaceholder('Masukkan password').fill('Admin2026!x');
   await page.getByRole('button', { name: 'Login', exact: true }).click();
   await page.waitForURL(/\/dashboard/);
   await page.getByRole('heading', { name: 'Dashboard' }).waitFor({ state: 'visible' });
