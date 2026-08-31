@@ -340,19 +340,35 @@ export default function POS() {
                           <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
                         </button>
                       </div>
-                    ) : (
+                    ) : disabled ? (
                       <span
                         className={`pill ${
-                          outOfStock
+                          inactive
+                            ? 'bg-slate-100/80 text-slate-500'
+                            : outOfStock
                             ? 'bg-danger-50 text-danger-600 ring-1 ring-danger-200/50'
-                            : Number(p.stock) <= Number(p.min_stock)
-                            ? 'bg-danger-50 text-danger-600 ring-1 ring-danger-200/50'
-                            : Number(p.stock) <= Number(p.min_stock) * 1.5 && Number(p.min_stock) > 0
-                            ? 'bg-warning-50 text-warning-700 ring-1 ring-warning-200/50'
                             : 'bg-slate-100/80 text-slate-500'
                         }`}
                       >
-                        {formatQty(p.stock)}
+                        {inactive ? 'Nonaktif' : formatQty(p.stock)}
+                      </span>
+                    ) : (
+                      <span
+                        onClick={stop}
+                        className="flex items-center gap-1.5"
+                      >
+                        <span className="text-[0.7rem] font-medium text-slate-400 tabular-nums">
+                          Stok {formatQty(p.stock)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleAdd}
+                          aria-label={`Tambah ${p.name} ke keranjang`}
+                          title={`Tambah ${p.name}`}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-600 text-white shadow-sm transition-all duration-150 hover:bg-primary-700 hover:shadow active:scale-95 active:bg-primary-800"
+                        >
+                          <Plus className="h-4 w-4" strokeWidth={2.5} />
+                        </button>
                       </span>
                     )}
                   </div>
