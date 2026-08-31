@@ -9,5 +9,11 @@ export default defineConfig({
   test: {
     include: ['src/**/*.test.js'],
     exclude: ['e2e/**', 'node_modules/**'],
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: true,
+      },
+    },
   },
 });

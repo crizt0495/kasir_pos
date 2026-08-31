@@ -12,6 +12,11 @@ Aplikasi Point of Sale (POS) modern: React 18 + Vite + Tailwind CSS v4 (frontend
 - Test frontend: `npm run test -w frontend` (Vitest, 33 tests)
 - Test backend: `npm run test -w backend`
 - E2E: `npx playwright test` (dari `frontend/`) — butuh backend + Supabase live. CATATAN: `playwright.config.js` menjalankan `dev:backend` dari folder frontend sehingga gagal sendiri; jalankan `npm run dev:backend` & `npm run dev:frontend` manual dulu, lalu `npx playwright test` (config pakai `reuseExistingServer: true`).
+- CATATAN lingkungan Termux/Android (Node v26 build khusus):
+  - `node --test` multi-file rusak ("expected absolute path: --test-concurrency=0"). Backend test dipakai lewat `test/run-all.mjs` (menjalankan tiap file `.test.js` proses terpisah) → `npm run test -w backend` = 56 test.
+  - Vitest default gagal spawn worker; `frontend/vitest.config.js` memakai `pool: threads, singleThread: true` → 33 test.
+  - `process.execPath`/`process.argv[0]` mengarah ke linker Android (bukan node); runner backdoor memakai `command -v node` sebagai fallback.
+  - E2E browser (Playwright + Supabase live) TIDAK bisa dijalankan di sini: butuh kredensial Supabase (backend/.env) + browser chromium; tidak tersedia di perangkat ini.
 
 ## Bahasa & Konvensi
 - Seluruh UI berbahasa Indonesia (label, pesan error, toast, dsb.).
