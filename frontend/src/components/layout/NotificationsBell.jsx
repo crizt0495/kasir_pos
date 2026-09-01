@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Bell, BellOff, CheckCheck } from 'lucide-react';
 import { notificationsApi } from '../../api/index.js';
 import { usePermission } from '../../hooks/usePermission.js';
@@ -20,9 +20,11 @@ function urlBase64ToUint8Array(base64String) {
 async function subscribePush() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !VAPID_PUBLIC_KEY) return;
   try {
+    if (Notification.permission === 'denied') return;
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
+      if (Notification.permission === 'denied') return;
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
@@ -43,6 +45,7 @@ export function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
+  const pushSubscribedRef = useRef(false);
 
   // load dengan referensi stabil — tidak memicu useEffect berulang
   const load = useCallback(async () => {
@@ -57,7 +60,10 @@ export function NotificationsBell() {
 
   useEffect(() => {
     if (!can('notifications.view')) return undefined;
-    subscribePush();
+    if (!pushSubscribedRef.current) {
+      pushSubscribedRef.current = true;
+      subscribePush();
+    }
     load();
 
     // Polling hanya saat tab VISIBLE (hemat request, hindari rate limit)
