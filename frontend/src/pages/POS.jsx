@@ -292,14 +292,14 @@ export default function POS() {
                     }
                   }}
                   aria-disabled={disabled}
-                  className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-white text-left transition-all duration-300 ${
+                  className={`group relative flex cursor-pointer flex-col rounded-xl border bg-white text-left transition-all duration-300 ${
                     qty > 0 
                       ? 'border-primary-400 bg-primary-50/30 shadow-sm ring-1 ring-primary-200/50' 
                       : 'border-slate-200 hover:border-primary-300 hover:shadow-md'
                   } ${disabled ? 'pointer-events-none opacity-60 cursor-not-allowed' : ''}`}
                 >
                   {/* Product Image */}
-                  <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
+                  <div className="relative aspect-square w-full overflow-hidden rounded-t-xl bg-gradient-to-br from-slate-50 to-slate-100">
                     <div className="absolute inset-0 p-1.5 sm:p-2">
                       <ProductImage
                         src={p.image_url}
@@ -329,7 +329,7 @@ export default function POS() {
                   </div>
 
                   {/* Product Info */}
-                  <div className="flex flex-1 flex-col p-1.5 sm:px-3 sm:pb-3">
+                  <div className="flex flex-1 flex-col rounded-b-xl p-1.5 sm:px-3 sm:pb-3">
                     <div className="mb-1 sm:mb-2">
                       <p className="line-clamp-2 text-[11px] font-semibold text-slate-800 group-hover:text-primary-700 transition-colors sm:text-sm">
                         {p.name}
@@ -346,7 +346,7 @@ export default function POS() {
                       {qty > 0 ? (
                         <div
                           onClick={stop}
-                          className="flex shrink-0 items-center overflow-hidden rounded-lg border border-primary-300 bg-white shadow-sm"
+                          className="flex shrink-0 items-center overflow-visible rounded-lg border border-primary-300 bg-white shadow-sm"
                         >
                           <button
                             type="button"
