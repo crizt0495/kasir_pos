@@ -272,7 +272,7 @@ export default function POS() {
         </div>
 
         {/* Product Grid */}
-        <div className="grid flex-1 grid-cols-2 gap-2 overflow-y-auto pb-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid flex-1 min-h-0 grid-cols-2 content-start items-start gap-2 overflow-y-auto pb-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
           {products.loading ? (
             Array.from({ length: 10 }).map((_, i) => (
               <div
@@ -336,7 +336,7 @@ export default function POS() {
                     }
                   }}
                   aria-disabled={disabled}
-                  className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition-all duration-200 ${
+                  className={`group relative flex cursor-pointer flex-col rounded-2xl border bg-white text-left shadow-sm transition-all duration-200 ${
                     qty > 0
                       ? 'border-primary-400 ring-2 ring-primary-200/60'
                       : 'border-slate-200 hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg'
