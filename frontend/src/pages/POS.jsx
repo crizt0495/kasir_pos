@@ -854,7 +854,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
     try {
       const payload = {
         payment_method: isDebtMethod ? 'CASH' : method,
-        cash_received: isDebtMethod ? 0 : (isCash ? paidNum : null),
+        cash_received: isDebtMethod ? null : (isCash ? paidNum : null),
         notes: notes || null,
         tax: taxAmount,
         additional_cost: additionalCost || 0,

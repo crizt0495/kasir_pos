@@ -80,6 +80,7 @@ export const getSale = asyncHandler(async (req, res) => {
 
 export const createSale = asyncHandler(async (req, res) => {
   const body = req.body;
+  const hasDebt = Boolean(body.record_debt);
 
   const { data: result, error } = await supabase.rpc('fn_create_sale', {
     p_cashier_id: req.user.id,
@@ -93,6 +94,7 @@ export const createSale = asyncHandler(async (req, res) => {
     p_cash_received: body.cash_received ?? null,
     p_notes: body.notes || null,
     p_session_id: body.session_id || null,
+    p_allow_partial: hasDebt,
   });
   handleRpcError(error);
 
