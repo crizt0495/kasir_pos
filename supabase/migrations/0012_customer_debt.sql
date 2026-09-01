@@ -10,16 +10,16 @@
 -- ============================================================
 
 -- ------------------------------------------------------------
--- Tambah kolom debt di customers
+-- Tambah kolom debt di customers (idempoten)
 -- ------------------------------------------------------------
 alter table public.customers
-  add column total_debt numeric(15,2) not null default 0,
-  add column pending_debt numeric(15,2) not null default 0;
+  add column if not exists total_debt numeric(15,2) not null default 0,
+  add column if not exists pending_debt numeric(15,2) not null default 0;
 
 -- ------------------------------------------------------------
--- Buat tabel customer_debts
+-- Buat tabel customer_debts (idempoten)
 -- ------------------------------------------------------------
-create table public.customer_debts (
+create table if not exists public.customer_debts (
   id                  uuid primary key default gen_random_uuid(),
   customer_id         uuid not null references public.customers(id) on delete cascade,
   amount              numeric(15,2) not null check (amount >= 0),
@@ -37,9 +37,9 @@ create table public.customer_debts (
 -- ------------------------------------------------------------
 -- Indeks
 -- ------------------------------------------------------------
-create index idx_customer_debts_customer on public.customer_debts (customer_id);
-create index idx_customer_debts_status on public.customer_debts (status);
-create index idx_customer_debts_due_date on public.customer_debts (due_date);
+create index if not exists idx_customer_debts_customer on public.customer_debts (customer_id);
+create index if not exists idx_customer_debts_status on public.customer_debts (status);
+create index if not exists idx_customer_debts_due_date on public.customer_debts (due_date);
 
 -- ------------------------------------------------------------
 -- Fungsi transaksi untuk mencatat hutang baru
@@ -48,7 +48,7 @@ create or replace function public.fn_record_debt(
   p_customer_id    uuid,
   p_amount        numeric,
   p_due_date      date,
-  p_notes         text default null,
+  p_notes         text,
   p_created_by    uuid
 ) returns jsonb
 language plpgsql
@@ -57,8 +57,8 @@ as $$
 declare
   v_customer record;
   v_debt_id        uuid;
-  v_total_debt     numeric;
-  v_pending_debt   numeric;
+  v_total_debt     numeric := 0;
+  v_pending_debt   numeric := 0;
 begin
   -- Validasi input
   if p_amount <= 0 then
@@ -129,14 +129,13 @@ language plpgsql
 security definer
 as $$
 declare
-  v_customer record;
-  v_debt record;
+  v_customer_id uuid;
+  v_amount numeric;
+  v_paid_amount numeric;
+  v_remaining numeric;
   v_amount_to_pay numeric;
-  v_old_paid_amount numeric;
-  v_new_paid_amount numeric;
   v_old_remaining numeric;
   v_new_remaining numeric;
-  v_customer_total_debt numeric;
   v_customer_pending_debt numeric;
 begin
   -- Validasi input
@@ -144,60 +143,36 @@ begin
     raise exception 'Jumlah pembayaran harus lebih dari 0' using errcode = 'P0001';
   end if;
 
-  -- Ambil data hutang dan customer
-  select cd.*, c.total_debt, c.pending_debt
-    into v_debt, v_customer
-    from public.customer_debts cd
-    join public.customers c on c.id = cd.customer_id
-    where cd.id = p_debt_id
+  -- Ambil data hutang
+  select customer_id, amount, paid_amount, remaining_amount
+    into v_customer_id, v_amount, v_paid_amount, v_remaining
+    from public.customer_debts
+    where id = p_debt_id
     for update;
 
   if not found then
     raise exception 'Hutang tidak ditemukan' using errcode = 'P0001';
   end if;
 
-  -- Hitung jumlah yang harus dibayar
-  v_amount_to_pay := least(p_amount, v_debt.remaining_amount);
+  v_old_remaining := v_remaining;
+  v_amount_to_pay := least(p_amount, v_remaining);
+  v_new_remaining := v_remaining - v_amount_to_pay;
 
-  -- Update hutang
-  v_old_paid_amount := v_debt.paid_amount;
-  v_new_paid_amount := v_debt.paid_amount + v_amount_to_pay;
-  v_old_remaining := v_debt.remaining_amount;
-  v_new_remaining := v_debt.remaining_amount - v_amount_to_pay;
+  update public.customer_debts
+    set paid_amount = paid_amount + v_amount_to_pay,
+        remaining_amount = v_new_remaining,
+        status = case when v_new_remaining <= 0 then 'paid' else 'partial' end,
+        updated_at = now(),
+        updated_by = p_created_by
+    where id = p_debt_id;
 
-  if v_new_paid_amount >= v_debt.amount then
-    -- Lunasi hutang
-    update public.customer_debts
-      set paid_amount = v_new_paid_amount,
-          remaining_amount = 0,
-          status = case when v_new_remaining <= 0 then 'paid' else 'partial' end,
-          updated_at = now(),
-          updated_by = p_created_by
-      where id = p_debt_id
-      returning remaining_amount into v_new_remaining;
-  else
-    -- Bayar sebagian
-    update public.customer_debts
-      set paid_amount = v_new_paid_amount,
-          remaining_amount = v_new_remaining,
-          status = case when v_new_remaining <= 0 then 'paid' else 'partial' end,
-          updated_at = now(),
-          updated_by = p_created_by
-      where id = p_debt_id;
-  end if;
-
-  -- Update customer debt totals
-  v_customer_total_debt := v_customer.total_debt;
-  v_customer_pending_debt := v_customer.pending_debt;
-
+  -- Kurangi pending_debt customer ketika lunas
   if v_old_remaining > 0 and v_new_remaining = 0 then
-    -- Kurangi hutang yang tertunda
-    v_customer_pending_debt := v_customer.pending_debt - v_amount_to_pay;
     update public.customers
-      set pending_debt = v_customer_pending_debt,
+      set pending_debt = greatest(pending_debt - v_amount_to_pay, 0),
           updated_at = now(),
           updated_by = p_created_by
-      where id = v_debt.customer_id;
+      where id = v_customer_id;
   end if;
 
   -- Catat audit
@@ -211,24 +186,17 @@ begin
     jsonb_build_object(
       'debt_id', p_debt_id,
       'amount_paid', v_amount_to_pay,
-      'old_paid_amount', v_old_paid_amount,
-      'new_paid_amount', v_new_paid_amount,
-      'old_remaining', v_old_remaining,
       'new_remaining', v_new_remaining,
-      'new_status', status
+      'new_status', case when v_new_remaining <= 0 then 'paid' else 'partial' end
     )
   );
 
-  -- Return data terbaru
-  -- Return data terbaru
   return jsonb_build_object(
     'debt_id', p_debt_id,
     'amount_paid', v_amount_to_pay,
-    'paid_amount', v_new_paid_amount,
+    'paid_amount', v_paid_amount + v_amount_to_pay,
     'remaining_amount', v_new_remaining,
-    'status', (select status from public.customer_debts where id = p_debt_id),
-    'customer_total_debt', v_customer_total_debt,
-    'customer_pending_debt', v_customer_pending_debt
+    'status', case when v_new_remaining <= 0 then 'paid' else 'partial' end
   );
 end;
 $$;
@@ -303,6 +271,7 @@ begin
 end;
 $$ language plpgsql;
 
+drop trigger if exists trg_update_customer_debt_totals on public.customer_debts;
 create trigger trg_update_customer_debt_totals
   after update on public.customer_debts
   for each row
@@ -310,17 +279,23 @@ create trigger trg_update_customer_debt_totals
 
 -- ------------------------------------------------------------
 -- Trigger function: auto-mark overdue debts
+-- Dipicu saat insert & update untuk menandai lewat jatuh tempo.
 -- ------------------------------------------------------------
 create or replace function public.update_debt_overdue_status()
 returns trigger as $$
 begin
-  update public.customer_debts
-    set status = 'overdue', updated_at = now()
-    where status in ('pending', 'partial')
-      and due_date < current_date;
-  return null;
+  if NEW.status in ('pending', 'partial') and NEW.due_date < current_date then
+    NEW.status := 'overdue';
+  end if;
+  return NEW;
 end;
 $$ language plpgsql;
+
+drop trigger if exists trg_debt_overdue_before on public.customer_debts;
+create trigger trg_debt_overdue_before
+  before insert or update on public.customer_debts
+  for each row
+  execute function public.update_debt_overdue_status();
 
 -- ------------------------------------------------------------
 -- Extra indexes
@@ -334,15 +309,19 @@ create index if not exists idx_customer_debts_created_at on public.customer_debt
 -- ------------------------------------------------------------
 
 -- Hanya service_role (backend) yang bisa mengakses tabel ini
+drop policy if exists customer_debts_select on public.customer_debts;
 create policy customer_debts_select on public.customer_debts
   for select using (public.has_permission('customers.view'));
 
+drop policy if exists customer_debts_insert on public.customer_debts;
 create policy customer_debts_insert on public.customer_debts
   for insert with check (public.has_permission('customers.create'));
 
+drop policy if exists customer_debts_update on public.customer_debts;
 create policy customer_debts_update on public.customer_debts
   for update using (public.has_permission('customers.update'));
 
+drop policy if exists customer_debts_delete on public.customer_debts;
 create policy customer_debts_delete on public.customer_debts
   for delete using (public.has_permission('customers.delete'));
 
