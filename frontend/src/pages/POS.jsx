@@ -782,25 +782,25 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
   const [debtDueDate, setDebtDueDate] = useState(new Date().toISOString().split('T')[0]);
   const [debtNotes, setDebtNotes] = useState('');
 
+  const paidNum = Number(paid) || 0;
+  const change = computeChange(paidNum, totals.total);
+  const isCash = method === 'CASH';
+
+  // Hitung hutang yang perlu dibuat jika bayar kurang
+  const debtAmount = isCash ? Math.max(0, totals.total - paidNum) : 0;
+  const canRecordDebt = debtAmount > 0 && customer?.id && !customer?.is_general;
+
   useEffect(() => {
     if (open) {
       setMethod('CASH');
       setPaid('');
       setNotes('');
       setError(null);
-      setRecordDebt(canRecordDebt); // Auto-check jika ada hutang
+      setRecordDebt(canRecordDebt);
       setDebtDueDate(new Date().toISOString().split('T')[0]);
       setDebtNotes('');
     }
   }, [open, customer?.id, canRecordDebt]);
-
-  const paidNum = Number(paid) || 0;
-  const change = computeChange(paidNum, totals.total);
-  const isCash = method === 'CASH';
-  
-  // Hitung hutang yang perlu dibuat jika bayar kurang
-  const debtAmount = isCash ? Math.max(0, totals.total - paidNum) : 0;
-  const canRecordDebt = debtAmount > 0 && customer?.id && !customer?.is_general;
   
   // Tombol bisa diklik jika: bayar cukup, atau bisa catat hutang (dan sudah ceklist)
   const canSubmit = paidNum >= totals.total || (canRecordDebt && recordDebt && debtDueDate);
