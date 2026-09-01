@@ -272,7 +272,7 @@ export default function POS() {
         </div>
 
         {/* Product Grid */}
-        <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-2 overflow-y-auto pb-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid flex-1 grid-cols-2 gap-2 overflow-y-auto pb-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
           {products.loading ? (
             Array.from({ length: 10 }).map((_, i) => (
               <div
@@ -367,7 +367,7 @@ export default function POS() {
                   </div>
 
                   {/* Product Info */}
-                  <div className="flex flex-1 flex-col gap-1 px-2 py-2">
+                  <div className="flex flex-col gap-1 px-2 py-2">
                     <p className="line-clamp-2 min-h-[2rem] text-[11px] font-semibold leading-tight text-slate-800 transition-colors group-hover:text-primary-700 sm:text-xs">
                       {p.name}
                     </p>
@@ -385,7 +385,7 @@ export default function POS() {
                       }`} />
                       {inactive ? 'Nonaktif' : outOfStock ? 'Habis' : formatQty(p.stock)}
                     </span>
-                    <div className="mt-auto pt-1.5">
+                    <div className="pt-1.5">
                       {qty > 0 ? (
                         <div onClick={stop} className="grid h-8 grid-cols-[2rem_1fr_2rem] items-stretch overflow-hidden rounded-lg border border-primary-300 bg-white shadow-sm">
                           <button type="button" onClick={handleDec} className="flex items-center justify-center bg-white text-primary-700 transition-colors hover:bg-primary-50 active:bg-primary-100" aria-label={`Kurangi ${p.name}`}>
