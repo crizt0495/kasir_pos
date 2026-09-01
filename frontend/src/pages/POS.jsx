@@ -272,7 +272,7 @@ export default function POS() {
         </div>
 
         {/* Product Grid */}
-        <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
           {products.loading ? (
             Array.from({ length: 10 }).map((_, i) => (
               <div
@@ -343,7 +343,7 @@ export default function POS() {
                   } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
                 >
                   {/* Product Image */}
-                  <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-t-2xl bg-gradient-to-br from-slate-50 to-slate-100">
+                  <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-t-2xl bg-gradient-to-br from-slate-50 to-slate-100">
                     <div className="absolute inset-0 p-2 sm:p-3">
                       <ProductImage
                         src={p.image_url}
@@ -357,7 +357,7 @@ export default function POS() {
 
                     {/* Quantity Badge */}
                     {qty > 0 && (
-                      <span className="absolute right-1.5 top-1.5 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-600 px-2 text-xs font-bold text-white shadow-md sm:right-2 sm:top-2 sm:h-7 sm:min-w-[1.75rem]">
+                      <span className="absolute right-2 top-2 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-600 px-2 text-xs font-bold text-white shadow-md sm:h-7 sm:min-w-[1.75rem]">
                         {qty}
                       </span>
                     )}
