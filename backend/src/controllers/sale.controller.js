@@ -82,7 +82,7 @@ export const createSale = asyncHandler(async (req, res) => {
   const body = req.body;
   const hasDebt = Boolean(body.record_debt);
 
-  const { data: result, error } = await supabase.rpc('fn_create_sale', {
+  let { data: result, error } = await supabase.rpc('fn_create_sale', {
     p_cashier_id: req.user.id,
     p_created_by: req.user.id,
     p_items: body.items,
@@ -96,6 +96,26 @@ export const createSale = asyncHandler(async (req, res) => {
     p_session_id: body.session_id || null,
     p_allow_partial: hasDebt,
   });
+
+  // Fallback: jika migration 0013 belum di-apply, tanpa p_allow_partial
+  if (error && String(error.message || '').includes('Could not find')) {
+    const retry = await supabase.rpc('fn_create_sale', {
+      p_cashier_id: req.user.id,
+      p_created_by: req.user.id,
+      p_items: body.items,
+      p_customer_id: body.customer_id || null,
+      p_discount: body.discount || 0,
+      p_tax: body.tax || 0,
+      p_additional_cost: body.additional_cost || 0,
+      p_payment_method: body.payment_method || 'CASH',
+      p_cash_received: body.cash_received ?? null,
+      p_notes: body.notes || null,
+      p_session_id: body.session_id || null,
+    });
+    result = retry.data;
+    error = retry.error;
+  }
+
   handleRpcError(error);
 
   const sale = await fetchSaleDetail(result.sale_id);
