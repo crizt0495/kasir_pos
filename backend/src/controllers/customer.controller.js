@@ -13,7 +13,7 @@ import { safeSearch } from '../utils/sanitize.js';
 const CUSTOMER_SELECT = '*, sales: sales(status, total)';
 // Daftar: kolom minimal — agregat transaksi dihitung via fn_customers_stats
 // (jangan embed seluruh riwayat sales per pelanggan di daftar)
-const CUSTOMER_LIST_SELECT = 'id, name, phone, email, is_general, created_at, total_debt, pending_debt';
+const CUSTOMER_LIST_SELECT = 'id, name, phone, email, is_general, created_at';
 
 export const listCustomers = asyncHandler(async (req, res) => {
   const { page, pageSize } = getPagination(req.query);
@@ -37,9 +37,13 @@ export const listCustomers = asyncHandler(async (req, res) => {
   const ids = result.items.map((c) => c.id);
   let statsMap = {};
   if (ids.length) {
-    const { data: stats } = await supabase.rpc('fn_customers_stats', { p_ids: ids });
-    for (const row of Array.isArray(stats) ? stats : []) {
-      statsMap[row.customer_id] = { total_transactions: Number(row.total_transactions || 0), total_spend: Number(row.total_spend || 0) };
+    try {
+      const { data: stats } = await supabase.rpc('fn_customers_stats', { p_ids: ids });
+      for (const row of Array.isArray(stats) ? stats : []) {
+        statsMap[row.customer_id] = { total_transactions: Number(row.total_transactions || 0), total_spend: Number(row.total_spend || 0) };
+      }
+    } catch (err) {
+      // ignore jika RPC belum ada (migration belum di-apply)
     }
   }
 
@@ -64,7 +68,7 @@ export const getCustomer = asyncHandler(async (req, res) => {
     const { data: stats } = await supabase.rpc('fn_get_customer_debt_stats', { p_customer_id: req.params.id });
     debtStats = stats;
   } catch (err) {
-    // ignore kalau kolom/RPC belum ada di DB
+    // ignore kalau kolom/RPC belum ada di DB (misal migration belum di-apply)
   }
 
   return ok(res, {
