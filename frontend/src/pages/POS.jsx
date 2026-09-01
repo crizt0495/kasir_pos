@@ -779,16 +779,28 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [recordDebt, setRecordDebt] = useState(false);
-  const [debtDueDate, setDebtDueDate] = useState(new Date().toISOString().split('T')[0]);
+  const [debtDueDate, setDebtDueDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().split('T')[0];
+  });
   const [debtNotes, setDebtNotes] = useState('');
 
   const paidNum = Number(paid) || 0;
   const change = computeChange(paidNum, totals.total);
   const isCash = method === 'CASH';
+  const isDebtMethod = method === 'DEBT';
 
-  // Hitung hutang yang perlu dibuat jika bayar kurang
-  const debtAmount = isCash ? Math.max(0, totals.total - paidNum) : 0;
-  const canRecordDebt = debtAmount > 0 && customer?.id && !customer?.is_general;
+  // Pelanggan yang valid untuk hutang (terdaftar & bukan Umum)
+  const validDebtCustomer = customer?.id && !customer?.is_general;
+
+  // Hitung hutang: cash kurang atau metode DEBT (tidak bayar sama sekali)
+  const debtAmount = (isCash && paidNum < totals.total)
+    ? Math.max(0, totals.total - paidNum)
+    : isDebtMethod
+      ? totals.total
+      : 0;
+  const canRecordDebt = debtAmount > 0 && validDebtCustomer;
 
   useEffect(() => {
     if (open) {
@@ -796,21 +808,33 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
       setPaid('');
       setNotes('');
       setError(null);
-      setRecordDebt(canRecordDebt);
-      setDebtDueDate(new Date().toISOString().split('T')[0]);
+      setRecordDebt(false);
+      const d = new Date();
+      d.setDate(d.getDate() + 30);
+      setDebtDueDate(d.toISOString().split('T')[0]);
       setDebtNotes('');
     }
-  }, [open, customer?.id, canRecordDebt]);
-  
-  // Tombol bisa diklik jika: bayar cukup, atau bisa catat hutang (dan sudah ceklist)
-  const canSubmit = paidNum >= totals.total || (canRecordDebt && recordDebt && debtDueDate);
+  }, [open, customer?.id]);
+
+  // Tombol bisa diklik jika: bayar cukup, atau bisa catat hutang (dan sudah ceklist + tanggal)
+  const canSubmit = isDebtMethod
+    ? validDebtCustomer && Boolean(debtDueDate)
+    : paidNum >= totals.total || (canRecordDebt && recordDebt && debtDueDate);
 
   const submit = async () => {
-    // Jika bayar kurang tapi belum centang hutang → tampilkan info
-    if (isCash) {
+    if (isDebtMethod) {
+      if (!validDebtCustomer) {
+        setError('Hutang hanya untuk pelanggan terdaftar. Pilih pelanggan terlebih dahulu.');
+        return;
+      }
+      if (!debtDueDate) {
+        setError('Tanggal jatuh tempo hutang wajib diisi');
+        return;
+      }
+    } else if (isCash) {
       const isShort = paidNum < totals.total;
       if (isShort) {
-        if (!customer?.id || customer?.is_general) {
+        if (!validDebtCustomer) {
           setError('Jumlah bayar kurang dari total. Silakan pilih pelanggan terdaftar untuk mencatat hutang, atau lengkapi pembayaran.');
           return;
         }
@@ -827,19 +851,21 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
     setSubmitting(true);
     setError(null);
     try {
-      await onConfirm({
-        payment_method: method,
-        cash_received: isCash ? paidNum : null,
+      const payload = {
+        payment_method: isDebtMethod ? 'CASH' : method,
+        cash_received: isDebtMethod ? 0 : (isCash ? paidNum : null),
         notes: notes || null,
         tax: taxAmount,
         additional_cost: additionalCost || 0,
-        // Data hutang jika bayar kurang
-        record_debt: recordDebt ? {
+      };
+      if (canRecordDebt && (isDebtMethod || recordDebt)) {
+        payload.record_debt = {
           amount: debtAmount,
           due_date: debtDueDate,
           notes: debtNotes || null,
-        } : null,
-      });
+        };
+      }
+      await onConfirm(payload);
     } catch (e) {
       setError(getErrorMessage(e, 'Transaksi gagal'));
     } finally {
@@ -939,6 +965,23 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                 <span>{paymentMethodLabel(m)}</span>
               </button>
             ))}
+            {validDebtCustomer && (
+              <button
+                onClick={() => setMethod('DEBT')}
+                className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border px-3 py-3 text-sm font-medium transition-all duration-200 ${
+                  isDebtMethod
+                    ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-sm ring-1 ring-amber-200'
+                    : 'border-slate-200 text-slate-700 hover:border-amber-300 hover:bg-amber-50/50 hover:text-amber-600'
+                }`}
+              >
+                <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                  isDebtMethod ? 'bg-amber-100' : 'bg-slate-100'
+                }`}>
+                  <AlertTriangle className={`h-5 w-5 ${isDebtMethod ? 'text-amber-600' : 'text-slate-400'}`} />
+                </div>
+                <span>Hutang</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -1019,7 +1062,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
         )}
 
         {/* Non-Cash Payment Message */}
-        {!isCash && (
+        {!isCash && !isDebtMethod && (
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
             <div className="flex items-start gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
@@ -1038,8 +1081,48 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
           </div>
         )}
 
-        {/* Catat Hutang Baru — muncul jika bayar kurang + pelanggan terdaftar */}
-        {isCash && customer?.id && !customer?.is_general && debtAmount > 0 && (
+        {/* Hutang method (tidak bayar sama sekali) */}
+        {isDebtMethod && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50/50 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <h5 className="text-sm font-semibold text-amber-800">Transaksi Hutang (Tidak Bayar)</h5>
+                <p className="mt-0.5 text-xs text-amber-700">
+                  Seluruh total <b>{formatRupiah(totals.total)}</b> akan dicatat sebagai hutang atas nama <b>{customer?.name}</b>.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 ml-[52px] space-y-2">
+              <div>
+                <label className="text-xs font-medium text-amber-800">Tanggal Jatuh Tempo *</label>
+                <input
+                  type="date"
+                  value={debtDueDate}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setDebtDueDate(e.target.value)}
+                  className="mt-0.5 w-full rounded-lg border border-amber-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-amber-800">Catatan hutang (opsional)</label>
+                <input
+                  type="text"
+                  value={debtNotes}
+                  onChange={(e) => setDebtNotes(e.target.value)}
+                  placeholder="cth: bon sementara, hutang gaji, dll"
+                  className="mt-0.5 w-full rounded-lg border border-amber-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  maxLength={500}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Catat Hutang (bayar kurang) — hanya muncul di metode cash */}
+        {!isDebtMethod && isCash && customer?.id && !customer?.is_general && debtAmount > 0 && (
           <div className="rounded-xl border border-amber-300 bg-amber-50/50 p-4">
             <label className="flex cursor-pointer items-start gap-3">
               <input
@@ -1081,6 +1164,23 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Warning kalau cash kurang tapi tidak bisa hutang */}
+        {isCash && debtAmount > 0 && !validDebtCustomer && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+              </div>
+              <div>
+                <h5 className="text-sm font-semibold text-red-800">Tidak bisa catat hutang</h5>
+                <p className="mt-0.5 text-xs text-red-700">
+                  Pembayaran kurang <b>{formatRupiah(debtAmount)}</b>. Hutang hanya dapat dicatat untuk pelanggan terdaftar (bukan "Pelanggan Umum"). Pilih pelanggan terlebih dahulu atau lengkapi pembayaran.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
