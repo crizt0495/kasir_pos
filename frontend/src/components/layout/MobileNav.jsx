@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, ReceiptText, Settings as SettingsIcon,
   MoreHorizontal, X, Tags, Users, Truck, Boxes, ArrowLeftRight, ClipboardList,
   ShoppingBag, Wallet, PiggyBank, BarChart3, ShieldCheck, UserCog, KeyRound,
-  ScrollText, HandCoins,
+  ScrollText, HandCoins, BookUser,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore.js';
 
@@ -17,6 +17,7 @@ const MAIN_ITEMS = [
 
 const MORE_ITEMS = [
   { section: 'Transaksi', items: [
+    { label: 'Hutang', to: '/debts', icon: BookUser, perm: 'customers.view' },
     { label: 'Retur', to: '/returns', icon: ArrowLeftRight, perm: 'returns.view' },
     { label: 'Pembelian', to: '/purchases', icon: ShoppingBag, perm: 'purchases.view' },
   ]},
