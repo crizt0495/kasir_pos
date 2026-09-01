@@ -346,17 +346,17 @@ export default function POS() {
                       {qty > 0 ? (
                         <div
                           onClick={stop}
-                          className="flex items-center gap-0.5 rounded-lg border border-primary-300 bg-white p-0.5 shadow-sm"
+                          className="flex shrink-0 items-center overflow-hidden rounded-lg border border-primary-300 bg-primary-50/50 shadow-sm"
                         >
                           <button
                             type="button"
                             onClick={handleDec}
                             aria-label={`Kurangi ${p.name}`}
-                            className="flex h-6 w-6 items-center justify-center rounded-md text-primary-700 transition-colors hover:bg-primary-50 active:bg-primary-100 sm:h-7 sm:w-7"
+                            className="flex h-6 w-6 items-center justify-center text-primary-700 transition-colors hover:bg-primary-100 active:bg-primary-200 sm:h-7 sm:w-7"
                           >
                             <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={2.5} />
                           </button>
-                          <span className="min-w-[1.5rem] text-center text-xs font-bold font-mono text-primary-700 sm:min-w-[2rem] sm:text-sm">
+                          <span className="min-w-[1.25rem] text-center text-xs font-bold font-mono text-primary-700 sm:min-w-[1.75rem] sm:text-sm">
                             {qty}
                           </span>
                           <button
@@ -364,7 +364,7 @@ export default function POS() {
                             onClick={handleInc}
                             disabled={qty >= Number(p.stock)}
                             aria-label={`Tambah ${p.name}`}
-                            className="flex h-6 w-6 items-center justify-center rounded-md bg-primary-600 text-white transition-colors hover:bg-primary-700 active:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-40 sm:h-7 sm:w-7"
+                            className="flex h-6 w-6 items-center justify-center bg-primary-600 text-white transition-colors hover:bg-primary-700 active:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-40 disabled:bg-primary-300 sm:h-7 sm:w-7"
                           >
                             <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={2.5} />
                           </button>
