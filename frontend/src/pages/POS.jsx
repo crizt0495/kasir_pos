@@ -268,10 +268,10 @@ export default function POS() {
         </div>
 
         {/* Product Grid */}
-        <div className="grid flex-1 auto-rows-fr grid-cols-3 gap-2 overflow-y-auto pb-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+        <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-2.5 overflow-y-auto pb-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {products.loading ? (
-            Array.from({ length: 15 }).map((_, i) => (
-              <Skeleton key={i} className="h-44 rounded-xl" />
+            Array.from({ length: 12 }).map((_, i) => (
+              <Skeleton key={i} className="h-52 rounded-2xl lg:h-60" />
             ))
           ) : products.error ? (
             <div className="col-span-full">
@@ -321,36 +321,36 @@ export default function POS() {
                     }
                   }}
                   aria-disabled={disabled}
-                  className={`group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all duration-200 ${
-                    qty > 0 
-                      ? 'border-primary-400 ring-1 ring-primary-200/50' 
-                      : 'border-slate-200 hover:border-primary-300 hover:shadow-md'
-                  } ${disabled ? 'opacity-60' : ''}`}
+                  className={`group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition-all duration-200 ${
+                    qty > 0
+                      ? 'border-primary-400 ring-2 ring-primary-200/50'
+                      : 'border-slate-200 hover:-translate-y-1 hover:border-primary-300 hover:shadow-lg'
+                  } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
                 >
                   {/* Product Image */}
-                  <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-t-xl bg-slate-50">
-                    <div className="absolute inset-0 p-1.5 sm:p-2">
+                  <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-t-2xl bg-gradient-to-br from-slate-50 to-slate-100">
+                    <div className="absolute inset-0 p-2 sm:p-3">
                       <ProductImage
                         src={p.image_url}
                         alt={p.name}
                         rounded={false}
                         fit="contain"
                         className="h-full w-full"
-                        imgClassName="transition-transform duration-500 ease-out group-hover:scale-105"
+                        imgClassName="transition-transform duration-500 ease-out group-hover:scale-110"
                       />
                     </div>
-                    
+
                     {/* Quantity Badge */}
                     {qty > 0 && (
-                      <span className="absolute left-1.5 top-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary-600 px-1.5 text-[10px] font-bold text-white shadow sm:left-2 sm:top-2 sm:h-6 sm:min-w-[1.5rem] sm:text-xs">
+                      <span className="absolute right-1.5 top-1.5 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-600 px-2 text-xs font-bold text-white shadow-md sm:right-2 sm:top-2 sm:h-7 sm:min-w-[1.75rem]">
                         {qty}
                       </span>
                     )}
-                    
+
                     {/* Stock status overlay */}
                     {outOfStock && (
                       <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60">
-                        <span className="rounded-full bg-danger-600 px-2 py-0.5 text-[10px] font-bold text-white sm:px-3 sm:py-1 sm:text-xs">
+                        <span className="rounded-full bg-danger-600 px-3 py-1 text-xs font-bold text-white">
                           Stok Habis
                         </span>
                       </div>
@@ -358,18 +358,18 @@ export default function POS() {
                   </div>
 
                   {/* Product Info */}
-                  <div className="flex flex-1 flex-col gap-1 px-1.5 py-1.5 sm:gap-1.5 sm:px-2.5 sm:py-2.5">
-                    {/* Name - fixed 2 baris */}
-                    <p className="line-clamp-2 h-7 text-[11px] font-semibold leading-tight text-slate-800 group-hover:text-primary-700 transition-colors sm:h-9 sm:text-xs">
+                  <div className="flex flex-1 flex-col gap-1.5 px-2.5 py-2.5 sm:gap-2 sm:px-3 sm:py-3">
+                    {/* Name - 2 baris */}
+                    <p className="line-clamp-2 min-h-[2.25rem] text-xs font-semibold leading-tight text-slate-800 transition-colors group-hover:text-primary-700 sm:min-h-[2.5rem] sm:text-sm">
                       {p.name}
                     </p>
 
                     {/* Price + stock */}
-                    <div className="flex flex-col gap-0.5">
-                      <p className="truncate text-[12px] font-bold leading-none text-primary-700 font-mono sm:text-sm">
+                    <div className="flex flex-col gap-1">
+                      <p className="truncate text-sm font-bold text-primary-700 font-mono sm:text-base">
                         {formatRupiah(p.sale_price)}
                       </p>
-                      <p className={`flex items-center gap-1 truncate text-[10px] sm:text-[11px] ${
+                      <p className={`flex items-center gap-1.5 truncate text-[11px] sm:text-xs ${
                         inactive ? 'text-slate-400' : outOfStock ? 'font-medium text-danger-600' : 'text-slate-500'
                       }`}>
                         <span className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full sm:h-2 sm:w-2 ${
@@ -381,12 +381,12 @@ export default function POS() {
                       </p>
                     </div>
 
-                    {/* Action Controls - tetap di bawah */}
+                    {/* Action Controls */}
                     <div className="mt-auto pt-1">
                       {qty > 0 ? (
                         <div
                           onClick={stop}
-                          className="grid h-7 grid-cols-[2rem_1fr_2rem] items-stretch overflow-hidden rounded-md border border-primary-300 bg-white shadow-sm sm:h-8 sm:grid-cols-[2.5rem_1fr_2.5rem]"
+                          className="grid h-9 grid-cols-[2.5rem_1fr_2.5rem] items-stretch overflow-hidden rounded-xl border border-primary-300 bg-white shadow-sm"
                         >
                           <button
                             type="button"
@@ -394,9 +394,9 @@ export default function POS() {
                             aria-label={`Kurangi ${p.name}`}
                             className="flex items-center justify-center bg-white text-primary-700 transition-colors hover:bg-primary-50 active:bg-primary-100"
                           >
-                            <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.5} />
+                            <Minus className="h-4 w-4" strokeWidth={2.5} />
                           </button>
-                          <span className="flex items-center justify-center border-x border-primary-200 bg-primary-50/60 text-center text-xs font-bold font-mono text-primary-700 sm:text-sm">
+                          <span className="flex items-center justify-center border-x border-primary-200 bg-primary-50 text-center text-sm font-bold font-mono text-primary-700">
                             {qty}
                           </span>
                           <button
@@ -406,11 +406,11 @@ export default function POS() {
                             aria-label={`Tambah ${p.name}`}
                             className="flex items-center justify-center bg-primary-600 text-white transition-colors hover:bg-primary-700 active:bg-primary-800 disabled:cursor-not-allowed disabled:bg-slate-300"
                           >
-                            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.5} />
+                            <Plus className="h-4 w-4" strokeWidth={2.5} />
                           </button>
                         </div>
                       ) : disabled ? (
-                        <div className="flex h-7 w-full items-center justify-center rounded-md bg-slate-100 text-[10px] font-medium text-slate-400 sm:h-8 sm:text-xs">
+                        <div className="flex h-9 w-full items-center justify-center rounded-xl bg-slate-100 text-xs font-medium text-slate-400">
                           {inactive ? 'Nonaktif' : 'Habis'}
                         </div>
                       ) : (
@@ -419,10 +419,10 @@ export default function POS() {
                           onClick={handleAdd}
                           aria-label={`Tambah ${p.name} ke keranjang`}
                           title={`Tambah ${p.name}`}
-                          className="flex h-7 w-full items-center justify-center gap-1 rounded-md bg-primary-600 text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow active:scale-[0.98] active:bg-primary-800 sm:h-8"
+                          className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-b from-primary-500 to-primary-600 text-white text-sm font-semibold shadow-sm shadow-primary-600/20 transition-all duration-200 hover:from-primary-600 hover:to-primary-700 hover:shadow-md active:scale-[0.98]"
                         >
-                          <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.5} />
-                          <span className="text-[10px] font-semibold sm:text-xs">Tambah</span>
+                          <Plus className="h-4 w-4" strokeWidth={2.5} />
+                          <span>Tambah</span>
                         </button>
                       )}
                     </div>
