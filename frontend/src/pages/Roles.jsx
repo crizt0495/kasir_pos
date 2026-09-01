@@ -9,7 +9,7 @@ import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { Button } from '../components/ui/Button.jsx';
-import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
+import { DataTable, SearchInput, Card } from '../components/ui/DataTable.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Field, Input, Textarea } from '../components/ui/Form.jsx';
 import { Badge, Skeleton, ErrorState } from '../components/ui/Feedback.jsx';

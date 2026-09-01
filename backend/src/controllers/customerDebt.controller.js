@@ -31,6 +31,26 @@ export const listDebts = asyncHandler(async (req, res) => {
   return ok(res, result);
 });
 
+export const listDebtsByCustomer = asyncHandler(async (req, res) => {
+  const { page, pageSize } = getPagination(req.query, 20);
+  const customerId = req.params.customer_id;
+
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      return supabase.from('customer_debts').select(select, opts).eq('customer_id', customerId);
+    },
+    select:
+      'id, amount, paid_amount, remaining_amount, due_date, status, notes, created_at, customer:customers(id, name, phone), created_by_user:users(id, username, profiles(full_name))',
+    signature: countSignature('customer_debts', [customerId]),
+    page,
+    pageSize,
+    orderBy: 'created_at',
+    ascending: false,
+  });
+
+  return ok(res, result);
+});
+
 export const getDebt = asyncHandler(async (req, res) => {
   const { data, error } = await supabase
     .from('customer_debts')

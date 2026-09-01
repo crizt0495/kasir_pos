@@ -10,7 +10,7 @@ import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { formatDate } from '../utils/format.js';
 import { Button } from '../components/ui/Button.jsx';
-import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
+import { DataTable, SearchInput, Card } from '../components/ui/DataTable.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Field, Input, Textarea, Select } from '../components/ui/Form.jsx';
 import { StatusBadge, EmptyState, Skeleton, ErrorState } from '../components/ui/Feedback.jsx';
