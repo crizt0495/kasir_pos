@@ -14,6 +14,7 @@ import { formatRupiah, formatNumber, formatQty, formatDateTime, paymentMethodLab
 import { Button } from '../components/ui/Button.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Input, Select, Field, Textarea } from '../components/ui/Form.jsx';
+import CurrencyInput from '../components/ui/CurrencyInput.jsx';
 import { Skeleton, EmptyState, ErrorState, Badge } from '../components/ui/Feedback.jsx';
 import BarcodeScanner from '../components/ui/BarcodeScanner.jsx';
 import ReceiptModal from '../components/pos/ReceiptModal.jsx';
@@ -999,19 +1000,17 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                     </span>
                   )}
                 </label>
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-slate-500">Rp</div>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={paid}
-                    onChange={(e) => setPaid(e.target.value)}
-                    placeholder="0"
-                    className="pl-10 text-lg"
-                    error={paidNum < totals.total && !canRecordDebt}
-                    autoFocus
-                  />
-                </div>
+                 <div className="relative">
+                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-slate-500">Rp</div>
+                   <CurrencyInput
+                     value={paidNum}
+                     onChange={(value) => setPaid(String(value))}
+                     placeholder="0"
+                     className="pl-10 text-lg"
+                     error={paidNum < totals.total && !canRecordDebt}
+                     autoFocus
+                   />
+                 </div>
                 <div className="flex gap-2 mt-2">
                   {[50000, 100000, totals.total].map((amount) => (
                     <button
@@ -1033,7 +1032,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                     : 'border-red-300 bg-red-50 text-red-700'
                 }`}>
                   <div className="text-2xl font-bold font-mono">
-                    {formatRupiah(Math.max(change, 0))}
+                    {change >= 0 ? formatRupiah(change) : formatRupiah(Math.abs(change))}
                   </div>
                   <div className="text-xs text-slate-500 mt-1">
                     {change >= 0 ? 'Kembalian kepada pelanggan' : 'Kurang bayar'}
