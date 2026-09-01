@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, ReceiptText, Package, Tags, Users, Truck, Boxes,
   ArrowLeftRight, ClipboardList, ShoppingBag, Wallet, PiggyBank, BarChart3, ShieldCheck,
-  UserCog, KeyRound, ScrollText, Settings as SettingsIcon, X, Store, HandCoins,
+  UserCog, KeyRound, ScrollText, Settings as SettingsIcon, X, Store, HandCoins, BookUser,
   ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore.js';
@@ -15,6 +15,7 @@ const MENU = [
     items: [
       { label: 'POS / Kasir', to: '/pos', icon: ShoppingCart, perm: 'pos.access' },
       { label: 'Penjualan', to: '/sales', icon: ReceiptText, perm: 'sales.view' },
+      { label: 'Hutang', to: '/debts', icon: BookUser, perm: 'customers.view' },
       { label: 'Retur', to: '/returns', icon: ArrowLeftRight, perm: 'returns.view' },
     ],
   },

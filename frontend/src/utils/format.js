@@ -97,3 +97,26 @@ export function initials(name = '') {
     .map((w) => w[0].toUpperCase())
     .join('') || '?';
 }
+
+const DEBT_STATUS_LABELS = {
+  pending: 'Belum Bayar',
+  paid: 'Lunas',
+  partial: 'Sebagian',
+  overdue: 'Jatuh Tempo',
+  cancelled: 'Dibatalkan',
+};
+
+export function debtStatusLabel(status) {
+  return DEBT_STATUS_LABELS[status] || status;
+}
+
+export function debtStatusColor(status) {
+  const colors = {
+    pending: 'bg-danger-50 text-danger-700',
+    paid: 'bg-success-50 text-success-700',
+    partial: 'bg-warning-50 text-warning-700',
+    overdue: 'bg-danger-100 text-danger-700',
+    cancelled: 'bg-slate-100 text-slate-500',
+  };
+  return colors[status] || 'bg-slate-100 text-slate-700';
+}
