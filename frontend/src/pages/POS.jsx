@@ -239,10 +239,10 @@ export default function POS() {
         </div>
 
         {/* Product Grid */}
-        <div className="grid flex-1 auto-rows-max grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
+        <div className="grid flex-1 auto-rows-max grid-cols-3 gap-2 overflow-y-auto pb-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
           {products.loading ? (
-            Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className="h-40 rounded-xl" />
+            Array.from({ length: 15 }).map((_, i) => (
+              <Skeleton key={i} className="h-32 rounded-lg" />
             ))
           ) : products.error ? (
             <div className="col-span-full">
@@ -299,8 +299,8 @@ export default function POS() {
                   } ${disabled ? 'pointer-events-none opacity-60 cursor-not-allowed' : ''}`}
                 >
                   {/* Product Image */}
-                  <div className="relative mb-3 aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
-                    <div className="absolute inset-0 p-2">
+                  <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
+                    <div className="absolute inset-0 p-1.5 sm:p-2">
                       <ProductImage
                         src={p.image_url}
                         alt={p.name}
@@ -313,7 +313,7 @@ export default function POS() {
                     
                     {/* Quantity Badge */}
                     {qty > 0 && (
-                      <span className="absolute left-2 top-2 flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-primary-600 px-2 text-xs font-bold text-white shadow-lg">
+                      <span className="absolute left-1.5 top-1.5 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-600 px-1.5 text-xs font-bold text-white shadow-lg sm:left-2 sm:top-2">
                         {qty}
                       </span>
                     )}
@@ -321,7 +321,7 @@ export default function POS() {
                     {/* Stock Status Overlay */}
                     {outOfStock && (
                       <div className="absolute inset-0 flex items-center justify-center bg-slate-900/70">
-                        <span className="rounded-lg bg-danger-600 px-3 py-1.5 text-xs font-bold text-white">
+                        <span className="rounded-lg bg-danger-600 px-2 py-1 text-[10px] font-bold text-white sm:px-3 sm:py-1.5 sm:text-xs">
                           Stok Habis
                         </span>
                       </div>
@@ -329,17 +329,16 @@ export default function POS() {
                   </div>
 
                   {/* Product Info */}
-                  <div className="flex flex-1 flex-col px-3 pb-3">
-                    <div className="mb-3">
-                      <p className="line-clamp-2 text-sm font-semibold text-slate-800 group-hover:text-primary-700 transition-colors">
+                  <div className="flex flex-1 flex-col p-1.5 sm:px-3 sm:pb-3">
+                    <div className="mb-1 sm:mb-2">
+                      <p className="line-clamp-2 text-[11px] font-semibold text-slate-800 group-hover:text-primary-700 transition-colors sm:text-sm">
                         {p.name}
                       </p>
-                      <p className="mt-1 text-xs text-slate-500">{p.sku}</p>
                     </div>
 
-                    <div className="mt-auto flex items-center justify-between">
+                    <div className="mt-auto flex items-center justify-between gap-1">
                       {/* Price */}
-                      <p className="text-sm font-bold text-primary-700 font-mono">
+                      <p className="text-[11px] font-bold text-primary-700 font-mono sm:text-sm">
                         {formatRupiah(p.sale_price)}
                       </p>
 
@@ -347,17 +346,17 @@ export default function POS() {
                       {qty > 0 ? (
                         <div
                           onClick={stop}
-                          className="flex items-center gap-1 rounded-lg border border-primary-300 bg-white p-1 shadow-sm"
+                          className="flex items-center gap-0.5 rounded-lg border border-primary-300 bg-white p-0.5 shadow-sm"
                         >
                           <button
                             type="button"
                             onClick={handleDec}
                             aria-label={`Kurangi ${p.name}`}
-                            className="flex h-7 w-7 items-center justify-center rounded-md text-primary-700 transition-colors hover:bg-primary-50 active:bg-primary-100"
+                            className="flex h-6 w-6 items-center justify-center rounded-md text-primary-700 transition-colors hover:bg-primary-50 active:bg-primary-100 sm:h-7 sm:w-7"
                           >
-                            <Minus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                            <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={2.5} />
                           </button>
-                          <span className="min-w-[2rem] text-center text-sm font-bold font-mono text-primary-700">
+                          <span className="min-w-[1.5rem] text-center text-xs font-bold font-mono text-primary-700 sm:min-w-[2rem] sm:text-sm">
                             {qty}
                           </span>
                           <button
@@ -365,14 +364,14 @@ export default function POS() {
                             onClick={handleInc}
                             disabled={qty >= Number(p.stock)}
                             aria-label={`Tambah ${p.name}`}
-                            className="flex h-7 w-7 items-center justify-center rounded-md bg-primary-600 text-white transition-colors hover:bg-primary-700 active:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="flex h-6 w-6 items-center justify-center rounded-md bg-primary-600 text-white transition-colors hover:bg-primary-700 active:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-40 sm:h-7 sm:w-7"
                           >
-                            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                            <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={2.5} />
                           </button>
                         </div>
                       ) : disabled ? (
                         <span
-                          className={`rounded-lg px-2.5 py-1.5 text-xs font-medium ${
+                          className={`rounded-lg px-1.5 py-1 text-[10px] font-medium sm:px-2.5 sm:py-1.5 sm:text-xs ${
                             inactive
                               ? 'bg-slate-200 text-slate-500'
                               : outOfStock
@@ -383,18 +382,18 @@ export default function POS() {
                           {inactive ? 'Nonaktif' : formatQty(p.stock)}
                         </span>
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-slate-500 tabular-nums">
-                            Stok {formatQty(p.stock)}
+                        <div className="flex items-center gap-1">
+                          <span className="hidden text-[10px] font-medium text-slate-500 tabular-nums sm:block">
+                            {formatQty(p.stock)}
                           </span>
                           <button
                             type="button"
                             onClick={handleAdd}
                             aria-label={`Tambah ${p.name} ke keranjang`}
                             title={`Tambah ${p.name}`}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white shadow-md transition-all duration-200 hover:bg-primary-700 hover:shadow-lg active:scale-95 active:bg-primary-800"
+                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-600 text-white shadow-md transition-all duration-200 hover:bg-primary-700 hover:shadow-lg active:scale-95 active:bg-primary-800 sm:h-8 sm:w-8"
                           >
-                            <Plus className="h-4 w-4" strokeWidth={2.5} />
+                            <Plus className="h-3.5 w-3.5 strokeWidth={2.5} sm:h-4 sm:w-4" strokeWidth={2.5} />
                           </button>
                         </div>
                       )}
