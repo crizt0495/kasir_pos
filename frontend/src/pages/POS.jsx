@@ -268,10 +268,10 @@ export default function POS() {
         </div>
 
         {/* Product Grid */}
-        <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-2.5 overflow-y-auto pb-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+        <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-2.5 overflow-y-auto pb-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {products.loading ? (
-            Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className="h-52 rounded-2xl lg:h-60" />
+            Array.from({ length: 10 }).map((_, i) => (
+              <Skeleton key={i} className="h-60 rounded-2xl" />
             ))
           ) : products.error ? (
             <div className="col-span-full">
@@ -286,6 +286,7 @@ export default function POS() {
               const outOfStock = Number(p.stock) <= 0;
               const inactive = p.status !== 'active';
               const disabled = inactive || outOfStock;
+              const lowStock = !outOfStock && Number(p.stock) <= Number(p.min_stock || 0);
               const inCart = cart.items.find((i) => i.product.id === p.id);
               const qty = inCart?.quantity || 0;
               const stop = (e) => e.stopPropagation();
@@ -323,7 +324,7 @@ export default function POS() {
                   aria-disabled={disabled}
                   className={`group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition-all duration-200 ${
                     qty > 0
-                      ? 'border-primary-400 ring-2 ring-primary-200/50'
+                      ? 'border-primary-400 ring-2 ring-primary-200/60'
                       : 'border-slate-200 hover:-translate-y-1 hover:border-primary-300 hover:shadow-lg'
                   } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
                 >
@@ -370,10 +371,10 @@ export default function POS() {
                         {formatRupiah(p.sale_price)}
                       </p>
                       <p className={`flex items-center gap-1.5 truncate text-[11px] sm:text-xs ${
-                        inactive ? 'text-slate-400' : outOfStock ? 'font-medium text-danger-600' : 'text-slate-500'
+                        inactive ? 'text-slate-400' : outOfStock ? 'font-medium text-danger-600' : lowStock ? 'font-medium text-warning-600' : 'text-slate-500'
                       }`}>
                         <span className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full sm:h-2 sm:w-2 ${
-                          inactive ? 'bg-slate-300' : outOfStock ? 'bg-danger-500' : Number(p.stock) <= Number(p.min_stock || 0) ? 'bg-warning-500' : 'bg-success-500'
+                          inactive ? 'bg-slate-300' : outOfStock ? 'bg-danger-500' : lowStock ? 'bg-warning-500' : 'bg-success-500'
                         }`} />
                         <span className="truncate">
                           {inactive ? 'Nonaktif' : outOfStock ? 'Habis' : `Stok ${formatQty(p.stock)}`}
