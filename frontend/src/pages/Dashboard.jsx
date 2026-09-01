@@ -6,7 +6,8 @@ import {
 import {
   Banknote, ReceiptText, Package, AlertTriangle, Users, ShoppingBag, TrendingUp, Wallet,
 } from 'lucide-react';
-import { StatCard, Card, Skeleton, ErrorState, EmptyState, Badge } from '../components/ui/index.jsx';
+import { Card } from '../components/ui/DataTable.jsx';
+import { StatCard, Skeleton, ErrorState, EmptyState, Badge } from '../components/ui/Feedback.jsx';
 import { formatRupiah, formatNumber, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 
 const PIE_COLORS = ['#1f6f5c', '#369469', '#b9793a', '#2e7c7a', '#b23a48', '#7f5589', '#3a8f84', '#6e6d74'];

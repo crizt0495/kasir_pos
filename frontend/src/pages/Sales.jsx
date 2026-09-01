@@ -6,7 +6,10 @@ import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
-import { DataTable, SearchInput, Select, Field, Input, StatusBadge, PageHeader } from '../components/ui/index.jsx';
+import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
+import { Field, Input, Select } from '../components/ui/Form.jsx';
+import { StatusBadge } from '../components/ui/Feedback.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatRupiah, formatDateTime, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 import ReceiptModal from '../components/pos/ReceiptModal.jsx';
 

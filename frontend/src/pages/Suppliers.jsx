@@ -8,7 +8,12 @@ import { supplierSchema } from '../schemas/index.js';
 import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, SearchInput, Button, Modal, Field, Input, Textarea, Select, StatusBadge, ConfirmDialog, PageHeader } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
+import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
+import { Field, Input, Textarea, Select } from '../components/ui/Form.jsx';
+import { StatusBadge } from '../components/ui/Feedback.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 
 const emptyForm = { name: '', contact_person: '', phone: '', email: '', address: '', notes: '', status: 'active' };
 

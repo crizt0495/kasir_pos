@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Compass } from 'lucide-react';
-import { Button } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
 
 export default function NotFound() {
   return (

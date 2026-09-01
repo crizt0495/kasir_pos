@@ -6,7 +6,11 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Card, Button, StatusBadge, ConfirmDialog, Skeleton, ErrorState, EmptyState, Select, Pagination, DataTable } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { DataTable, Pagination } from '../components/ui/DataTable.jsx';
+import { ConfirmDialog } from '../components/ui/Modal.jsx';
+import { Select } from '../components/ui/Form.jsx';
+import { StatusBadge, Skeleton, ErrorState, EmptyState } from '../components/ui/Feedback.jsx';
 import { formatRupiah, formatDate, formatQty } from '../utils/format.js';
 
 export default function PurchaseDetail() {

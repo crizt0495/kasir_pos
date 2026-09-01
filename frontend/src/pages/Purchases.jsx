@@ -7,7 +7,12 @@ import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, SearchInput, Select, Button, StatusBadge, ConfirmDialog, PageHeader } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
+import { Select } from '../components/ui/Form.jsx';
+import { ConfirmDialog } from '../components/ui/Modal.jsx';
+import { StatusBadge } from '../components/ui/Feedback.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatRupiah, formatDate } from '../utils/format.js';
 
 export default function Purchases() {

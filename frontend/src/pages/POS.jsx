@@ -11,9 +11,11 @@ import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { computeTotals, computeTax, computeChange } from '../utils/cart.js';
 import { formatRupiah, formatNumber, formatQty, formatDateTime, paymentMethodLabel } from '../utils/format.js';
-import {
-  Button, Modal, ConfirmDialog, Input, Select, Field, Textarea, Skeleton, EmptyState, ErrorState, Badge, BarcodeScanner,
-} from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
+import { Input, Select, Field, Textarea } from '../components/ui/Form.jsx';
+import { Skeleton, EmptyState, ErrorState, Badge } from '../components/ui/Feedback.jsx';
+import BarcodeScanner from '../components/ui/BarcodeScanner.jsx';
 import ReceiptModal from '../components/pos/ReceiptModal.jsx';
 import ProductImage from '../components/ProductImage.jsx';
 

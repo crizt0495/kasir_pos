@@ -8,9 +8,13 @@ import { expenseSchema } from '../schemas/index.js';
 import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import {
-  DataTable, SearchInput, Button, Modal, Field, Input, Textarea, Select, ConfirmDialog, Badge, PageHeader, CurrencyInput,
-} from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
+import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
+import { Field, Input, Textarea, Select } from '../components/ui/Form.jsx';
+import { Badge } from '../components/ui/Feedback.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
+import CurrencyInput from '../components/ui/CurrencyInput.jsx';
 import { formatRupiah, formatDate, paymentMethodLabel, paymentMethodColor, todayInput } from '../utils/format.js';
 
 const CATEGORIES = ['Operasional', 'Listrik & Air', 'Gaji', 'Transportasi', 'Pajak', 'Perbaikan', 'Lainnya'];

@@ -3,7 +3,11 @@ import { ScrollText, ChevronDown } from 'lucide-react';
 import { auditApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
-import { DataTable, SearchInput, Select, Badge, Field, Input, Modal, PageHeader } from '../components/ui/index.jsx';
+import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
+import { Field, Input, Select } from '../components/ui/Form.jsx';
+import { Modal } from '../components/ui/Modal.jsx';
+import { Badge } from '../components/ui/Feedback.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatDateTime } from '../utils/format.js';
 
 const MODULES = ['auth', 'users', 'roles', 'products', 'categories', 'customers', 'suppliers', 'inventory', 'stock_opname', 'sales', 'purchases', 'returns', 'cashier', 'expenses', 'reports', 'settings', 'audit'];

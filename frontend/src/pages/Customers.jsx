@@ -9,7 +9,11 @@ import { customerSchema } from '../schemas/index.js';
 import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, SearchInput, Button, Modal, Field, Input, Textarea, ConfirmDialog, PageHeader } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
+import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
+import { Field, Input, Textarea } from '../components/ui/Form.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatRupiah, formatNumber } from '../utils/format.js';
 
 const emptyForm = { name: '', phone: '', email: '', address: '', birth_date: '', notes: '' };

@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { inventoryApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
-import { DataTable, SearchInput, Select, Badge, Field, Input, PageHeader } from '../components/ui/index.jsx';
+import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
+import { Field, Input, Select } from '../components/ui/Form.jsx';
+import { Badge } from '../components/ui/Feedback.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatQty, formatDateTime, formatNumber } from '../utils/format.js';
 
 const TYPE_BADGES = {

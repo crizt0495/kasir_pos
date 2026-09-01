@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, ReceiptText, Banknote } from 'lucide-react';
 import { customersApi, salesApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
-import { Card, StatCard, Skeleton, ErrorState, EmptyState, StatusBadge, Pagination, DataTable } from '../components/ui/index.jsx';
+import { DataTable, Pagination, Card } from '../components/ui/DataTable.jsx';
+import { StatCard, StatusBadge, Skeleton, ErrorState, EmptyState } from '../components/ui/Feedback.jsx';
 import { formatRupiah, formatDateTime, paymentMethodLabel } from '../utils/format.js';
 
 export default function CustomerDetail() {

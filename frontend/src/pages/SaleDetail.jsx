@@ -6,9 +6,11 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import {
-  Card, Button, StatusBadge, Skeleton, ErrorState, EmptyState, Modal, Field, Textarea, Input, ConfirmDialog, Pagination, DataTable,
-} from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { DataTable, Pagination } from '../components/ui/DataTable.jsx';
+import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
+import { Field, Input, Textarea } from '../components/ui/Form.jsx';
+import { StatusBadge, Skeleton, ErrorState, EmptyState } from '../components/ui/Feedback.jsx';
 import { formatRupiah, formatDateTime, formatQty, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 import ReceiptModal from '../components/pos/ReceiptModal.jsx';
 

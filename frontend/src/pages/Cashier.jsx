@@ -5,7 +5,12 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Card, Button, Field, Input, Modal, ConfirmDialog, StatusBadge, Skeleton, EmptyState, Badge, PageHeader, Pagination } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { Field, Input } from '../components/ui/Form.jsx';
+import { DataTable, SearchInput, Pagination } from '../components/ui/DataTable.jsx';
+import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
+import { StatusBadge, Skeleton, EmptyState, Badge } from '../components/ui/Feedback.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatRupiah, formatDateTime, formatNumber } from '../utils/format.js';
 
 const parseAmount = (v) => {

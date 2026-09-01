@@ -10,7 +10,13 @@ import { productSchema, categorySchema, unitSchema } from '../schemas/index.js';
 import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Button, Field, Input, Select, Textarea, CurrencyInput, Card, Modal, Skeleton, ErrorState, BarcodeScanner } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { Field, Input, Select, Textarea } from '../components/ui/Form.jsx';
+import { Modal } from '../components/ui/Modal.jsx';
+import { Card } from '../components/ui/DataTable.jsx';
+import { Skeleton, ErrorState } from '../components/ui/Feedback.jsx';
+import CurrencyInput from '../components/ui/CurrencyInput.jsx';
+import BarcodeScanner from '../components/ui/BarcodeScanner.jsx';
 import ProductImage from '../components/ProductImage.jsx';
 
 export default function ProductForm() {

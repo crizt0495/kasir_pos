@@ -8,7 +8,10 @@ import { useApi } from '../hooks/useApi.js';
 import { userSchema } from '../schemas/index.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Button, Field, Input, Card, Skeleton, Checkbox } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { Field, Input, Checkbox } from '../components/ui/Form.jsx';
+import { Card } from '../components/ui/DataTable.jsx';
+import { Skeleton } from '../components/ui/Feedback.jsx';
 
 export default function UserForm() {
   const { id } = useParams();

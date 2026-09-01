@@ -4,10 +4,12 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import {
-  Card, Button, StatCard, Select, Input, Field, Textarea, Modal, ConfirmDialog,
-  SkeletonRows, EmptyState, ErrorState, Badge, Spinner, PageHeader, Pagination, DataTable,
-} from '../components/ui/index.jsx';
+import { Card, Pagination, DataTable } from '../components/ui/DataTable.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
+import { Field, Input, Textarea, Select } from '../components/ui/Form.jsx';
+import { StatCard, SkeletonRows, EmptyState, ErrorState, Badge, Spinner } from '../components/ui/Feedback.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatRupiah, formatDateTime } from '../utils/format.js';
 
 export default function ProfitSharing() {

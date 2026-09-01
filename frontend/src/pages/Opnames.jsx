@@ -6,7 +6,11 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, Button, StatusBadge, ConfirmDialog, PageHeader } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { DataTable } from '../components/ui/DataTable.jsx';
+import { ConfirmDialog } from '../components/ui/Modal.jsx';
+import { StatusBadge } from '../components/ui/Feedback.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatDateTime, formatQty } from '../utils/format.js';
 
 export default function Opnames() {

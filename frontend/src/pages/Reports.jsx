@@ -8,7 +8,13 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Card, Tabs, Button, Select, Skeleton, ErrorState, EmptyState, Badge, PageHeader, DatePicker, DateRangePicker } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { Tabs } from '../components/ui/DataTable.jsx';
+import { Select } from '../components/ui/Form.jsx';
+import { Card } from '../components/ui/DataTable.jsx';
+import { Skeleton, ErrorState, EmptyState, Badge } from '../components/ui/Feedback.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
+import { DatePicker, DateRangePicker } from '../components/ui/DatePicker.jsx';
 import { formatRupiah, formatNumber, formatDate, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 
 const PERIODS = [

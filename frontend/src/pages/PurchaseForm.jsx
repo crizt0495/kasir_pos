@@ -6,7 +6,11 @@ import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Button, Card, Field, Input, Select, Skeleton, SearchInput } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { Field, Input, Select } from '../components/ui/Form.jsx';
+import { SearchInput } from '../components/ui/DataTable.jsx';
+import { Card } from '../components/ui/DataTable.jsx';
+import { Skeleton } from '../components/ui/Feedback.jsx';
 import { formatRupiah } from '../utils/format.js';
 
 const parseNum = (v) => {

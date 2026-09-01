@@ -8,7 +8,12 @@ import { adjustStockSchema } from '../schemas/index.js';
 import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { DataTable, SearchInput, Select, Button, Modal, Field, Input, Textarea, Badge, ConfirmDialog, PageHeader } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
+import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
+import { Field, Input, Textarea, Select } from '../components/ui/Form.jsx';
+import { Badge } from '../components/ui/Feedback.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatQty, formatRupiah } from '../utils/format.js';
 
 export default function Inventory() {

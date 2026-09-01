@@ -7,7 +7,12 @@ import { useDebounce } from '../hooks/useDebounce.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Button, Input, SearchInput, ConfirmDialog, Badge, Skeleton, BarcodeScanner } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { Input } from '../components/ui/Form.jsx';
+import { SearchInput } from '../components/ui/DataTable.jsx';
+import { ConfirmDialog } from '../components/ui/Modal.jsx';
+import { Badge, Skeleton } from '../components/ui/Feedback.jsx';
+import BarcodeScanner from '../components/ui/BarcodeScanner.jsx';
 import { formatDateTime, formatQty } from '../utils/format.js';
 
 export default function OpnameForm() {

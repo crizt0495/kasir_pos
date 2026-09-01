@@ -4,7 +4,9 @@ import { Eye, RotateCcw } from 'lucide-react';
 import { returnsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
-import { DataTable, SearchInput, StatusBadge, PageHeader } from '../components/ui/index.jsx';
+import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
+import { StatusBadge } from '../components/ui/Feedback.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatRupiah, formatDateTime, paymentMethodLabel } from '../utils/format.js';
 
 export default function Returns() {

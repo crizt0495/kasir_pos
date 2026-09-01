@@ -8,7 +8,9 @@ import { authApi } from '../api/index.js';
 import { useAuthStore } from '../stores/authStore.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Button, Field, Input, Card } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { Field, Input } from '../components/ui/Form.jsx';
+import { Card } from '../components/ui/DataTable.jsx';
 
 export default function ChangePassword() {
   const navigate = useNavigate();

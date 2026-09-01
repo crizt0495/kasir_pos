@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore.js';
 import { RequireAuth, RequirePermission } from './components/ProtectedRoute.jsx';
 import AppLayout from './components/layout/AppLayout.jsx';
-import { Toaster, Skeleton } from './components/ui/index.jsx';
+import { Toaster, Skeleton } from './components/ui/Feedback.jsx';
 
 // Lazy loading + code splitting
 const Login = lazy(() => import('./pages/Login.jsx'));

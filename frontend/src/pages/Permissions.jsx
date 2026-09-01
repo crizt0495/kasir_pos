@@ -1,6 +1,8 @@
 import { useApi } from '../hooks/useApi.js';
 import { permissionsApi } from '../api/index.js';
-import { Card, Skeleton, ErrorState, Badge, PageHeader } from '../components/ui/index.jsx';
+import { Card } from '../components/ui/DataTable.jsx';
+import { Skeleton, ErrorState, Badge } from '../components/ui/Feedback.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 
 export default function Permissions() {
   const permissions = useApi(() => permissionsApi.list().then((r) => r.data), []);

@@ -6,7 +6,11 @@ import { settingsSchema } from '../schemas/index.js';
 import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Card, Tabs, Button, Field, Input, Select, Checkbox, PageHeader } from '../components/ui/index.jsx';
+import { Button } from '../components/ui/Button.jsx';
+import { Tabs } from '../components/ui/DataTable.jsx';
+import { Field, Input, Select, Checkbox } from '../components/ui/Form.jsx';
+import { Card } from '../components/ui/DataTable.jsx';
+import { PageHeader } from '../components/ui/PageHeader.jsx';
 
 const TABS = [
   { key: 'store', label: 'Toko' },
