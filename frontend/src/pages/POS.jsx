@@ -272,7 +272,7 @@ export default function POS() {
         </div>
 
         {/* Product Grid */}
-        <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
+        <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-3 overflow-y-auto pb-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
           {products.loading ? (
             Array.from({ length: 10 }).map((_, i) => (
               <div
@@ -336,15 +336,15 @@ export default function POS() {
                     }
                   }}
                   aria-disabled={disabled}
-                  className={`group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition-all duration-200 ${
+                  className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition-all duration-200 ${
                     qty > 0
                       ? 'border-primary-400 ring-2 ring-primary-200/60'
-                      : 'border-slate-200 hover:-translate-y-1 hover:border-primary-300 hover:shadow-lg'
+                      : 'border-slate-200 hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg'
                   } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
                 >
-                  {/* Product Image */}
+                  {/* Product Image - fixed ratio agar card tidak meluap */}
                   <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-t-2xl bg-gradient-to-br from-slate-50 to-slate-100">
-                    <div className="absolute inset-0 p-2 sm:p-3">
+                    <div className="absolute inset-0 p-2">
                       <ProductImage
                         src={p.image_url}
                         alt={p.name}
@@ -357,7 +357,7 @@ export default function POS() {
 
                     {/* Quantity Badge */}
                     {qty > 0 && (
-                      <span className="absolute right-2 top-2 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-600 px-2 text-xs font-bold text-white shadow-md sm:h-7 sm:min-w-[1.75rem]">
+                      <span className="absolute right-2 top-2 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-600 px-2 text-xs font-bold text-white shadow-md">
                         {qty}
                       </span>
                     )}
@@ -372,50 +372,45 @@ export default function POS() {
                     )}
                   </div>
 
-                  {/* Product Info */}
-                  <div className="flex flex-1 flex-col gap-1.5 px-2.5 py-2.5 sm:gap-2 sm:px-3 sm:py-3">
-                    {/* Name - 2 baris */}
-                    <p className="line-clamp-2 min-h-[2.25rem] text-xs font-semibold leading-tight text-slate-800 transition-colors group-hover:text-primary-700 sm:min-h-[2.5rem] sm:text-sm">
+                  {/* Product Info - compact, tombol selalu di bawah */}
+                  <div className="flex flex-1 flex-col px-2.5 py-2 sm:px-3 sm:py-2.5">
+                    {/* Name - 1-2 baris */}
+                    <p className="line-clamp-2 min-h-[2rem] text-xs font-semibold leading-tight text-slate-800 transition-colors group-hover:text-primary-700 sm:text-[13px]">
                       {p.name}
                     </p>
 
-                    {/* Price + stock */}
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center justify-between gap-1">
-                        <p className="truncate text-sm font-bold text-primary-700 font-mono sm:text-base">
-                          {formatRupiah(p.sale_price)}
-                        </p>
-                        {p.sku && (
-                          <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium text-slate-400 bg-slate-100">
-                            {p.sku}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between gap-1.5">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold sm:text-[11px] ${
-                          inactive
-                            ? 'bg-slate-100 text-slate-500'
-                            : outOfStock
-                              ? 'bg-danger-50 text-danger-600'
-                              : lowStock
-                                ? 'bg-warning-50 text-warning-700'
-                                : 'bg-success-50 text-success-700'
-                        }`}>
-                          <span className={`inline-block h-1.5 w-1.5 rounded-full ${
-                            inactive ? 'bg-slate-400' : outOfStock ? 'bg-danger-500' : lowStock ? 'bg-warning-500' : 'bg-success-500'
-                          }`} />
-                          {inactive ? 'Nonaktif' : outOfStock ? 'Habis' : `Stok ${formatQty(p.stock)} ${p.unit ? p.unit.short_name : 'pcs'}`}
+                    {/* Price */}
+                    <div className="mt-1.5 flex items-center justify-between gap-1">
+                      <p className="truncate text-sm font-bold text-primary-700 font-mono sm:text-[15px]">
+                        {formatRupiah(p.sale_price)}
+                      </p>
+                      {p.sku && (
+                        <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium text-slate-400 bg-slate-100">
+                          {p.sku}
                         </span>
-                        {disabled && (
-                          <span className="truncate text-[10px] text-slate-400">
-                            {formatQty(p.stock)} {p.unit ? p.unit.short_name : 'pcs'}
-                          </span>
-                        )}
-                      </div>
+                      )}
                     </div>
 
-                    {/* Action Controls */}
-                    <div className="mt-auto pt-1.5">
+                    {/* Stock */}
+                    <div className="mt-1.5">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        inactive
+                          ? 'bg-slate-100 text-slate-500'
+                          : outOfStock
+                            ? 'bg-danger-50 text-danger-600'
+                            : lowStock
+                              ? 'bg-warning-50 text-warning-700'
+                              : 'bg-success-50 text-success-700'
+                      }`}>
+                        <span className={`inline-block h-1.5 w-1.5 rounded-full ${
+                          inactive ? 'bg-slate-400' : outOfStock ? 'bg-danger-500' : lowStock ? 'bg-warning-500' : 'bg-success-500'
+                        }`} />
+                        {inactive ? 'Nonaktif' : outOfStock ? 'Habis' : `Stok ${formatQty(p.stock)} ${p.unit ? p.unit.short_name : 'pcs'}`}
+                      </span>
+                    </div>
+
+                    {/* Action Controls - jarak penuh, tidak overlap */}
+                    <div className="mt-2.5">
                       {qty > 0 ? (
                         <div
                           onClick={stop}
