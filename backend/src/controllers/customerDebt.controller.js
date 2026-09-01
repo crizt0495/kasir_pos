@@ -20,7 +20,7 @@ export const listDebts = asyncHandler(async (req, res) => {
       return query;
     },
     select:
-      'id, amount, paid_amount, remaining_amount, due_date, status, notes, created_at, customer:customers(id, name, phone), created_by_user:users(id, username, profiles(full_name))',
+      'id, amount, paid_amount, remaining_amount, due_date, status, notes, created_at, customer:customers(id, name, phone), created_by_user:users!customer_debts_created_by_fkey(id, username, profiles(full_name))',
     signature: countSignature('customer_debts', [status, customer_id, q]),
     page,
     pageSize,
@@ -40,7 +40,7 @@ export const listDebtsByCustomer = asyncHandler(async (req, res) => {
       return supabase.from('customer_debts').select(select, opts).eq('customer_id', customerId);
     },
     select:
-      'id, amount, paid_amount, remaining_amount, due_date, status, notes, created_at, customer:customers(id, name, phone), created_by_user:users(id, username, profiles(full_name))',
+      'id, amount, paid_amount, remaining_amount, due_date, status, notes, created_at, customer:customers(id, name, phone), created_by_user:users!customer_debts_created_by_fkey(id, username, profiles(full_name))',
     signature: countSignature('customer_debts', [customerId]),
     page,
     pageSize,
@@ -54,7 +54,7 @@ export const listDebtsByCustomer = asyncHandler(async (req, res) => {
 export const getDebt = asyncHandler(async (req, res) => {
   const { data, error } = await supabase
     .from('customer_debts')
-    .select('*, customer:customers(*), created_by_user:users(id, username, profiles(full_name)), updated_by_user:users(id, username, profiles(full_name))')
+    .select('*, customer:customers(*), created_by_user:users!customer_debts_created_by_fkey(id, username, profiles(full_name)), updated_by_user:users!customer_debts_updated_by_fkey(id, username, profiles(full_name))')
     .eq('id', req.params.id)
     .maybeSingle();
   if (error) throw error;
@@ -124,7 +124,7 @@ export const getDebtStats = asyncHandler(async (req, res) => {
 async function getDebtFromId(id) {
   const { data, error } = await supabase
     .from('customer_debts')
-    .select('*, customer:customers(*), created_by_user:users(id, username, profiles(full_name)), updated_by_user:users(id, username, profiles(full_name))')
+    .select('*, customer:customers(*), created_by_user:users!customer_debts_created_by_fkey(id, username, profiles(full_name)), updated_by_user:users!customer_debts_updated_by_fkey(id, username, profiles(full_name))')
     .eq('id', id)
     .maybeSingle();
   if (error) throw error;
