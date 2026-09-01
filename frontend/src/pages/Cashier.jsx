@@ -7,7 +7,7 @@ import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { Button } from '../components/ui/Button.jsx';
 import { Field, Input } from '../components/ui/Form.jsx';
-import { DataTable, SearchInput, Pagination } from '../components/ui/DataTable.jsx';
+import { DataTable, SearchInput, Pagination, Card } from '../components/ui/DataTable.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { StatusBadge, Skeleton, EmptyState, Badge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
