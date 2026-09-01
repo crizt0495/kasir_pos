@@ -292,14 +292,14 @@ export default function POS() {
                     }
                   }}
                   aria-disabled={disabled}
-                  className={`group relative flex cursor-pointer flex-col rounded-xl border bg-white text-left transition-all duration-300 ${
+                  className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all duration-300 ${
                     qty > 0 
-                      ? 'border-primary-400 bg-primary-50/30 shadow-sm ring-1 ring-primary-200/50' 
+                      ? 'border-primary-400 ring-1 ring-primary-200/50' 
                       : 'border-slate-200 hover:border-primary-300 hover:shadow-md'
-                  } ${disabled ? 'pointer-events-none opacity-60 cursor-not-allowed' : ''}`}
+                  } ${disabled ? 'opacity-60' : ''}`}
                 >
                   {/* Product Image */}
-                  <div className="relative aspect-square w-full overflow-hidden rounded-t-xl bg-gradient-to-br from-slate-50 to-slate-100">
+                  <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-t-xl bg-slate-50">
                     <div className="absolute inset-0 p-1.5 sm:p-2">
                       <ProductImage
                         src={p.image_url}
@@ -307,21 +307,21 @@ export default function POS() {
                         rounded={false}
                         fit="contain"
                         className="h-full w-full"
-                        imgClassName="transition-transform duration-500 ease-out group-hover:scale-110"
+                        imgClassName="transition-transform duration-500 ease-out group-hover:scale-105"
                       />
                     </div>
                     
                     {/* Quantity Badge */}
                     {qty > 0 && (
-                      <span className="absolute left-1.5 top-1.5 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-primary-600 px-1.5 text-xs font-bold text-white shadow-lg sm:left-2 sm:top-2">
+                      <span className="absolute left-1.5 top-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary-600 px-1.5 text-[11px] font-bold text-white shadow sm:h-6 sm:min-w-[1.5rem] sm:text-xs">
                         {qty}
                       </span>
                     )}
                     
-                    {/* Stock Status Overlay */}
+                    {/* Stock status overlay */}
                     {outOfStock && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-slate-900/70">
-                        <span className="rounded-lg bg-danger-600 px-2 py-1 text-[10px] font-bold text-white sm:px-3 sm:py-1.5 sm:text-xs">
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60">
+                        <span className="rounded-full bg-danger-600 px-2 py-0.5 text-[10px] font-bold text-white sm:px-3 sm:py-1 sm:text-xs">
                           Stok Habis
                         </span>
                       </div>
@@ -329,34 +329,48 @@ export default function POS() {
                   </div>
 
                   {/* Product Info */}
-                  <div className="flex flex-1 flex-col rounded-b-xl p-1.5 sm:px-3 sm:pb-3">
-                    <div className="mb-1 sm:mb-2">
-                      <p className="line-clamp-2 text-[11px] font-semibold text-slate-800 group-hover:text-primary-700 transition-colors sm:text-sm">
+                  <div className="flex flex-1 flex-col p-1.5 sm:p-2.5">
+                    {/* Name */}
+                    <div className="mb-1.5 sm:mb-2">
+                      <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-slate-800 group-hover:text-primary-700 transition-colors sm:text-sm">
                         {p.name}
                       </p>
                     </div>
 
-                    <div className="mt-auto flex items-center justify-between gap-1">
+                    {/* Price + stock */}
+                    <div className="mt-auto">
                       {/* Price */}
-                      <p className="text-[11px] font-bold text-primary-700 font-mono sm:text-sm">
+                      <p className="text-[12px] font-bold text-primary-700 font-mono sm:text-base">
                         {formatRupiah(p.sale_price)}
                       </p>
 
-                      {/* Action Controls */}
+                      {/* Stock info */}
+                      <p className={`mt-0.5 flex items-center gap-1 text-[10px] sm:mt-1 sm:text-xs ${
+                        inactive ? 'text-slate-400' : outOfStock ? 'text-danger-600' : 'text-slate-500'
+                      }`}>
+                        <span className="inline-block h-1.5 w-1.5 rounded-full sm:h-2 sm:w-2 ${
+                          inactive ? 'bg-slate-300' : outOfStock ? 'bg-danger-500' : Number(p.stock) <= Number(p.min_stock || 0) ? 'bg-warning-500' : 'bg-success-500'
+                        }" />
+                        {inactive ? 'Nonaktif' : outOfStock ? 'Habis' : `Stok ${formatQty(p.stock)}`}
+                      </p>
+                    </div>
+
+                    {/* Action Controls */}
+                    <div className="mt-1.5 sm:mt-2.5">
                       {qty > 0 ? (
                         <div
                           onClick={stop}
-                          className="flex shrink-0 items-center overflow-visible rounded-lg border border-primary-300 bg-white shadow-sm"
+                          className="flex w-full items-stretch overflow-hidden rounded-lg border border-primary-300 bg-white"
                         >
                           <button
                             type="button"
                             onClick={handleDec}
                             aria-label={`Kurangi ${p.name}`}
-                            className="flex h-7 w-7 items-center justify-center bg-white text-primary-700 transition-colors hover:bg-primary-50 active:bg-primary-100 sm:h-8 sm:w-8"
+                            className="flex flex-1 h-8 items-center justify-center bg-white text-primary-700 transition-colors hover:bg-primary-50 active:bg-primary-100"
                           >
-                            <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.5} />
+                            <Minus className="h-4 w-4 sm:h-4.5 sm:w-4.5" strokeWidth={2.5} />
                           </button>
-                          <span className="flex h-7 min-w-[1.75rem] items-center justify-center border-x border-primary-200 bg-primary-50/50 text-center text-xs font-bold font-mono text-primary-700 sm:h-8 sm:min-w-[2rem] sm:text-sm">
+                          <span className="flex flex-1 h-8 min-w-[2rem] items-center justify-center border-x border-primary-200 bg-primary-50/60 text-sm font-bold font-mono text-primary-700 sm:text-base">
                             {qty}
                           </span>
                           <button
@@ -364,38 +378,26 @@ export default function POS() {
                             onClick={handleInc}
                             disabled={qty >= Number(p.stock)}
                             aria-label={`Tambah ${p.name}`}
-                            className="flex h-7 w-7 items-center justify-center bg-primary-600 text-white transition-colors hover:bg-primary-700 active:bg-primary-800 disabled:cursor-not-allowed disabled:bg-slate-300 sm:h-8 sm:w-8"
+                            className="flex flex-1 h-8 items-center justify-center bg-primary-600 text-white transition-colors hover:bg-primary-700 active:bg-primary-800 disabled:bg-slate-300 disabled:cursor-not-allowed"
                           >
-                            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.5} />
+                            <Plus className="h-4 w-4 sm:h-4.5 sm:w-4.5" strokeWidth={2.5} />
                           </button>
                         </div>
                       ) : disabled ? (
-                        <span
-                          className={`rounded-lg px-1.5 py-1 text-[10px] font-medium sm:px-2.5 sm:py-1.5 sm:text-xs ${
-                            inactive
-                              ? 'bg-slate-200 text-slate-500'
-                              : outOfStock
-                              ? 'bg-danger-100 text-danger-700 border border-danger-200'
-                              : 'bg-slate-200 text-slate-500'
-                          }`}
-                        >
-                          {inactive ? 'Nonaktif' : formatQty(p.stock)}
-                        </span>
-                      ) : (
-                        <div className="flex items-center gap-1">
-                          <span className="hidden text-[10px] font-medium text-slate-500 tabular-nums sm:block">
-                            {formatQty(p.stock)}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={handleAdd}
-                            aria-label={`Tambah ${p.name} ke keranjang`}
-                            title={`Tambah ${p.name}`}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-600 text-white shadow-md transition-all duration-200 hover:bg-primary-700 hover:shadow-lg active:scale-95 active:bg-primary-800 sm:h-8 sm:w-8"
-                          >
-                            <Plus className="h-3.5 w-3.5 strokeWidth={2.5} sm:h-4 sm:w-4" strokeWidth={2.5} />
-                          </button>
+                        <div className="flex h-8 w-full items-center justify-center rounded-lg bg-slate-100 text-xs font-medium text-slate-400 sm:text-sm">
+                          {inactive ? 'Tidak tersedia' : 'Habis'}
                         </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleAdd}
+                          aria-label={`Tambah ${p.name} ke keranjang`}
+                          title={`Tambah ${p.name}`}
+                          className="flex h-8 w-full items-center justify-center gap-1.5 rounded-lg bg-primary-600 text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow active:scale-[0.98] active:bg-primary-800 sm:h-9"
+                        >
+                          <Plus className="h-4 w-4" strokeWidth={2.5} />
+                          <span className="text-xs font-semibold sm:text-sm">Tambah</span>
+                        </button>
                       )}
                     </div>
                   </div>
