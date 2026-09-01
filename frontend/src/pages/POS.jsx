@@ -195,7 +195,7 @@ export default function POS() {
   return (
     <div className="flex h-full flex-col gap-4 xl:h-[calc(100vh-6.5rem)] xl:flex-row">
       {/* ================= PRODUCTS SECTION ================= */}
-      <div className="flex min-w-0 flex-1 flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex min-w-0 flex-1 flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:p-5">
         <div className="space-y-3">
           {/* Search and Barcode Section */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
@@ -240,12 +240,16 @@ export default function POS() {
           </div>
 
           {/* Category Filters */}
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <span className="hidden shrink-0 text-xs font-medium text-slate-500 sm:inline">
+              {products.data?.items?.length || 0} produk
+            </span>
+            <div className="h-4 w-px shrink-0 bg-slate-200 sm:block" />
             <button
               onClick={() => setCategoryId('')}
               className={`shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium transition-all duration-200 ${
-                !categoryId 
-                  ? 'bg-primary-600 text-white shadow-sm' 
+                !categoryId
+                  ? 'bg-primary-600 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800'
               }`}
             >
@@ -256,8 +260,8 @@ export default function POS() {
                 key={c.id}
                 onClick={() => setCategoryId(categoryId === c.id ? '' : c.id)}
                 className={`shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium transition-all duration-200 ${
-                  categoryId === c.id 
-                    ? 'bg-primary-600 text-white shadow-sm' 
+                  categoryId === c.id
+                    ? 'bg-primary-600 text-white shadow-sm'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800'
                 }`}
               >
@@ -268,7 +272,7 @@ export default function POS() {
         </div>
 
         {/* Product Grid */}
-        <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-2.5 overflow-y-auto pb-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {products.loading ? (
             Array.from({ length: 10 }).map((_, i) => (
               <div
@@ -376,24 +380,42 @@ export default function POS() {
                     </p>
 
                     {/* Price + stock */}
-                    <div className="flex flex-col gap-1">
-                      <p className="truncate text-sm font-bold text-primary-700 font-mono sm:text-base">
-                        {formatRupiah(p.sale_price)}
-                      </p>
-                      <p className={`flex items-center gap-1.5 truncate text-[11px] sm:text-xs ${
-                        inactive ? 'text-slate-400' : outOfStock ? 'font-medium text-danger-600' : lowStock ? 'font-medium text-warning-600' : 'text-slate-500'
-                      }`}>
-                        <span className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full sm:h-2 sm:w-2 ${
-                          inactive ? 'bg-slate-300' : outOfStock ? 'bg-danger-500' : lowStock ? 'bg-warning-500' : 'bg-success-500'
-                        }`} />
-                        <span className="truncate">
-                          {inactive ? 'Nonaktif' : outOfStock ? 'Habis' : `Stok ${formatQty(p.stock)}`}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="truncate text-sm font-bold text-primary-700 font-mono sm:text-base">
+                          {formatRupiah(p.sale_price)}
+                        </p>
+                        {p.sku && (
+                          <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium text-slate-400 bg-slate-100">
+                            {p.sku}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between gap-1.5">
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold sm:text-[11px] ${
+                          inactive
+                            ? 'bg-slate-100 text-slate-500'
+                            : outOfStock
+                              ? 'bg-danger-50 text-danger-600'
+                              : lowStock
+                                ? 'bg-warning-50 text-warning-700'
+                                : 'bg-success-50 text-success-700'
+                        }`}>
+                          <span className={`inline-block h-1.5 w-1.5 rounded-full ${
+                            inactive ? 'bg-slate-400' : outOfStock ? 'bg-danger-500' : lowStock ? 'bg-warning-500' : 'bg-success-500'
+                          }`} />
+                          {inactive ? 'Nonaktif' : outOfStock ? 'Habis' : `Stok ${formatQty(p.stock)} ${p.unit ? p.unit.short_name : 'pcs'}`}
                         </span>
-                      </p>
+                        {disabled && (
+                          <span className="truncate text-[10px] text-slate-400">
+                            {formatQty(p.stock)} {p.unit ? p.unit.short_name : 'pcs'}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Action Controls */}
-                    <div className="mt-auto pt-1">
+                    <div className="mt-auto pt-1.5">
                       {qty > 0 ? (
                         <div
                           onClick={stop}
