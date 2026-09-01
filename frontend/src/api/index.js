@@ -43,6 +43,10 @@ export const customersApi = {
   create: (payload) => api.post('/customers', payload).then((r) => r.data),
   update: (id, payload) => api.put(`/customers/${id}`, payload).then((r) => r.data),
   remove: (id) => api.delete(`/customers/${id}`).then((r) => r.data),
+  debtStats: (id) => api.get(`/customer-debts/stats/${id}`).then((r) => r.data),
+  listDebts: (params) => api.get('/customer-debts', { params }).then((r) => r.data),
+  createDebt: (payload) => api.post('/customer-debts', payload).then((r) => r.data),
+  payDebt: (id, payload) => api.post(`/customer-debts/${id}/pay`, payload).then((r) => r.data),
 };
 
 export const suppliersApi = {

@@ -9,6 +9,7 @@ import cashierRoutes from './cashier.routes.js';
 import reportRoutes from './report.routes.js';
 import adminRoutes from './admin.routes.js';
 import profitRoutes from './profit.routes.js';
+import customerDebtRoutes from './customerDebt.routes.js';
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use('/', cashierRoutes);
 router.use('/', reportRoutes);
 router.use('/', adminRoutes);
 router.use('/', profitRoutes);
+router.use('/', customerDebtRoutes);
 
 export default router;

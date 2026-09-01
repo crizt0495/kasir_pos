@@ -13,7 +13,7 @@ import { safeSearch } from '../utils/sanitize.js';
 const CUSTOMER_SELECT = '*, sales: sales(status, total)';
 // Daftar: kolom minimal — agregat transaksi dihitung via fn_customers_stats
 // (jangan embed seluruh riwayat sales per pelanggan di daftar)
-const CUSTOMER_LIST_SELECT = 'id, name, phone, email, is_general, created_at';
+const CUSTOMER_LIST_SELECT = 'id, name, phone, email, is_general, created_at, total_debt, pending_debt';
 
 export const listCustomers = asyncHandler(async (req, res) => {
   const { page, pageSize } = getPagination(req.query);
@@ -58,11 +58,21 @@ export const getCustomer = asyncHandler(async (req, res) => {
   if (!data) throw notFound('Pelanggan tidak ditemukan');
 
   const validSales = (data.sales || []).filter((s) => s.status !== 'cancelled');
+
+  let debtStats = null;
+  try {
+    const { data: stats } = await supabase.rpc('fn_get_customer_debt_stats', { p_customer_id: req.params.id });
+    debtStats = stats;
+  } catch (err) {
+    // ignore kalau kolom/RPC belum ada di DB
+  }
+
   return ok(res, {
     ...data,
     sales: undefined,
     total_transactions: validSales.length,
     total_spend: validSales.reduce((sum, s) => sum + Number(s.total || 0), 0),
+    debt_stats: debtStats,
   });
 });
 
