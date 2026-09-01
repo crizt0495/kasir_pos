@@ -786,11 +786,11 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
       setPaid('');
       setNotes('');
       setError(null);
-      setRecordDebt(false);
+      setRecordDebt(canRecordDebt); // Auto-check jika ada hutang
       setDebtDueDate(new Date().toISOString().split('T')[0]);
       setDebtNotes('');
     }
-  }, [open, customer?.id]);
+  }, [open, customer?.id, canRecordDebt]);
 
   const paidNum = Number(paid) || 0;
   const change = computeChange(paidNum, totals.total);
@@ -798,15 +798,20 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
   
   // Hitung hutang yang perlu dibuat jika bayar kurang
   const debtAmount = isCash ? Math.max(0, totals.total - paidNum) : 0;
-  const canRecordDebt = debtAmount > 0 && customer?.id;
+  const canRecordDebt = debtAmount > 0 && customer?.id && !customer?.is_general;
   
-  // Validasi: bayar lunas atau punya hutang
-  const paidValid = isCash ? paidNum >= totals.total : true;
+  // Tombol bisa diklik jika: bayar cukup, atau bisa catat hutang (dan sudah ceklist)
+  const canSubmit = paidNum >= totals.total || (canRecordDebt && recordDebt && debtDueDate);
 
   const submit = async () => {
+    // Jika bayar kurang tapi belum centang hutang → tampilkan info
     if (isCash) {
-      if (canRecordDebt) {
-        // Bayar kurang → wajib pilih catat hutang
+      const isShort = paidNum < totals.total;
+      if (isShort) {
+        if (!customer?.id || customer?.is_general) {
+          setError('Jumlah bayar kurang dari total. Silakan pilih pelanggan terdaftar untuk mencatat hutang, atau lengkapi pembayaran.');
+          return;
+        }
         if (!recordDebt) {
           setError('Jumlah bayar kurang dari total. Centang "Catat sebagai hutang" untuk melanjutkan.');
           return;
@@ -815,9 +820,6 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
           setError('Tanggal jatuh tempo hutang wajib diisi');
           return;
         }
-      } else if (paidNum < totals.total) {
-        setError('Jumlah bayar kurang dari total transaksi');
-        return;
       }
     }
     setSubmitting(true);
@@ -861,7 +863,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
             <Button
               onClick={submit}
               loading={submitting}
-              disabled={isCash && !paidValid && !canRecordDebt}
+              disabled={!canSubmit}
               className="px-6"
             >
               <Banknote className="h-5 w-5" />
@@ -946,9 +948,9 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-slate-700">
                   Jumlah Bayar
-                  {!paidValid && (
-                    <span className="ml-1 text-xs font-normal text-danger-600">
-                      (kurang {formatRupiah(totals.total - paidNum)})
+                  {paidNum < totals.total && (
+                    <span className={`ml-1 text-xs font-normal ${canRecordDebt ? 'text-amber-600' : 'text-danger-600'}`}>
+                      {canRecordDebt ? `(sisa ${formatRupiah(totals.total - paidNum)} → hutang)` : `(kurang ${formatRupiah(totals.total - paidNum)})`}
                     </span>
                   )}
                 </label>
@@ -961,7 +963,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                     onChange={(e) => setPaid(e.target.value)}
                     placeholder="0"
                     className="pl-10 text-lg"
-                    error={!paidValid}
+                    error={paidNum < totals.total && !canRecordDebt}
                     autoFocus
                   />
                 </div>
