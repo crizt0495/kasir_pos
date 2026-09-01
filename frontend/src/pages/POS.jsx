@@ -271,7 +271,17 @@ export default function POS() {
         <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-2.5 overflow-y-auto pb-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {products.loading ? (
             Array.from({ length: 10 }).map((_, i) => (
-              <Skeleton key={i} className="h-60 rounded-2xl" />
+              <div
+                key={i}
+                className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+              >
+                <Skeleton className="aspect-square w-full rounded-t-2xl" />
+                <div className="flex flex-1 flex-col gap-2 p-3">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-6 w-1/2" />
+                  <Skeleton className="mt-auto h-9 w-full rounded-xl" />
+                </div>
+              </div>
             ))
           ) : products.error ? (
             <div className="col-span-full">
@@ -436,13 +446,13 @@ export default function POS() {
       </div>
 
       {/* ================= CART SECTION ================= */}
-      <div className="flex w-full flex-col rounded-2xl border border-slate-200 bg-white shadow-sm xl:w-[420px]">
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4">
-          <h3 className="flex items-center gap-2 text-base font-semibold text-slate-900">
-            <ShoppingCart className="h-5 w-5 text-primary-600" />
+      <div className="flex w-full flex-col rounded-2xl border border-slate-200 bg-white shadow-sm xl:w-[480px] 2xl:w-[520px]">
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
+            <ShoppingCart className="h-6 w-6 text-primary-600" />
             Keranjang
             {itemCount > 0 && (
-              <Badge color="bg-primary-100 text-primary-700 px-2.5 py-0.5 text-xs">
+              <Badge color="bg-primary-600 text-white px-3 py-0.5 text-sm">
                 {formatNumber(itemCount)}
               </Badge>
             )}
@@ -451,11 +461,11 @@ export default function POS() {
             <button
               onClick={() => setShowHeld(true)}
               title="Transaksi ditahan"
-              className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100 transition-colors"
+              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-primary-600 transition-colors"
             >
               <PauseCircle className="h-5 w-5" />
               {cart.heldCarts.length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary-600 text-[10px] font-bold text-white">
+                <span className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary-600 text-[10px] font-bold text-white">
                   {cart.heldCarts.length}
                 </span>
               )}
@@ -464,7 +474,7 @@ export default function POS() {
               onClick={() => cart.hold()}
               disabled={!cart.items.length}
               title="Hold transaksi"
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-40 transition-colors"
+              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <PlayCircle className="h-5 w-5" />
             </button>
@@ -472,7 +482,7 @@ export default function POS() {
               onClick={() => setConfirmClear(true)}
               disabled={!cart.items.length}
               title="Kosongkan keranjang"
-              className="rounded-lg p-2 text-red-500 hover:bg-red-50 disabled:opacity-40 transition-colors"
+              className="rounded-lg p-2 text-slate-500 hover:bg-danger-50 hover:text-danger-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <Trash2 className="h-5 w-5" />
             </button>
@@ -480,16 +490,16 @@ export default function POS() {
         </div>
 
         {/* Customer Section */}
-        <div className="mx-4 mt-3">
+        <div className="px-5 py-3.5">
           <button
             onClick={() => setShowCustomer(true)}
-            className="w-full flex items-center justify-between rounded-lg border-2 border-dashed border-slate-300 px-4 py-3 text-sm text-slate-500 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50/50 transition-all duration-200"
+            className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition-all duration-200 hover:border-primary-400 hover:bg-primary-50/30"
           >
             <span className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
-                <Users className="h-4 w-4 text-slate-500" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white shadow-sm">
+                <Users className="h-5 w-5 text-slate-500" />
               </div>
-              <span className="font-medium text-slate-700">
+              <span className="font-semibold text-slate-800">
                 {cart.customer ? cart.customer.name : 'Pelanggan umum'}
               </span>
             </span>
@@ -499,22 +509,26 @@ export default function POS() {
                   e.stopPropagation();
                   cart.setCustomer(null);
                 }}
-                className="rounded-md px-2 py-1 text-xs text-slate-400 hover:text-danger-600 hover:bg-danger-50 transition-colors"
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-danger-600 hover:bg-danger-50 hover:text-danger-700 transition-colors"
               >
-                Hapus
+                Ganti
               </button>
             )}
           </button>
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="flex-1 overflow-y-auto px-5 py-4">
           {cart.items.length === 0 ? (
-            <EmptyState
-              title="Keranjang kosong"
-              description="Klik produk atau scan barcode untuk menambahkan item"
-              action={<Package className="h-12 w-12 text-slate-300" />}
-            />
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-300">
+                <Package className="h-8 w-8" />
+              </div>
+              <h4 className="text-sm font-semibold text-slate-700">Keranjang kosong</h4>
+              <p className="mt-1 text-xs text-slate-500 text-center max-w-[200px]">
+                Klik produk atau scan barcode untuk menambahkan item
+              </p>
+            </div>
           ) : (
             <ul className="space-y-3">
               {cart.items.map((item) => {
@@ -522,7 +536,7 @@ export default function POS() {
                 return (
                   <li
                     key={item.product.id}
-                    className="rounded-xl border border-slate-200 bg-white p-3 transition-all duration-200 hover:border-slate-300 hover:shadow-sm"
+                    className="group rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition-all duration-200 hover:border-primary-300 hover:shadow-md"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-3">
@@ -530,12 +544,12 @@ export default function POS() {
                           <ProductImage
                             src={item.product.image_url}
                             alt={item.product.name}
-                            className="h-10 w-10 rounded-lg"
+                            className="h-12 w-12 rounded-lg"
                             fit="cover"
                           />
                         </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-slate-800">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-slate-800 group-hover:text-primary-700">
                             {item.product.name}
                           </p>
                           <p className="mt-0.5 text-xs text-slate-500">
@@ -546,19 +560,19 @@ export default function POS() {
                       </div>
                       <button
                         onClick={() => cart.remove(item.product.id)}
-                        className="flex-shrink-0 rounded-lg p-1.5 text-slate-300 hover:bg-danger-50 hover:text-danger-500 transition-colors"
+                        className="flex-shrink-0 rounded-lg p-1.5 text-slate-300 hover:bg-danger-50 hover:text-danger-600 transition-colors"
                         aria-label="Hapus item"
                       >
                         <X className="h-4 w-4" />
                       </button>
                     </div>
 
-                    <div className="mt-3 flex items-center justify-between gap-3">
+                    <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => cart.decrement(item.product.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 transition-colors hover:bg-slate-50 active:bg-slate-100"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 transition-colors hover:bg-slate-50 hover:text-primary-600 active:bg-slate-100"
                           aria-label="Kurangi jumlah"
                         >
                           <Minus className="h-4 w-4 text-slate-600" />
@@ -569,13 +583,13 @@ export default function POS() {
                           onChange={(e) => cart.setQuantity(item.product.id, e.target.value)}
                           min="1"
                           max={Number(item.product.stock)}
-                          className="w-14 rounded-lg border border-slate-200 py-1.5 text-center text-sm font-medium focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
+                          className="w-16 rounded-lg border border-slate-200 bg-white py-1.5 text-center text-sm font-semibold focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
                           aria-label="Jumlah"
                         />
                         <button
                           onClick={() => cart.increment(item.product.id)}
                           disabled={item.quantity >= Number(item.product.stock)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 transition-colors hover:bg-slate-50 active:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 transition-colors hover:bg-slate-50 hover:text-primary-600 active:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
                           aria-label="Tambah jumlah"
                         >
                           <Plus className="h-4 w-4 text-slate-600" />
@@ -597,7 +611,7 @@ export default function POS() {
                       </div>
 
                       {/* Line Total */}
-                      <div className="flex-shrink-0 w-28 text-right">
+                      <div className="flex-shrink-0 w-32 text-right">
                         <p className="text-sm font-bold text-slate-900 font-mono">
                           {formatRupiah(lineTotal)}
                         </p>
@@ -611,28 +625,26 @@ export default function POS() {
         </div>
 
         {/* Cart Footer - Summary & Checkout */}
-        <div className="border-t border-slate-200 px-4 py-4 space-y-4">
+        <div className="border-t border-slate-200 px-5 py-5 space-y-3.5 bg-slate-50/50">
           {/* Transaction Discount */}
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-600">Diskon transaksi</span>
-            <div className="flex items-center gap-1.5">
-              <div className="relative">
-                <Percent className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="number"
-                  value={cart.discount || ''}
-                  placeholder="0"
-                  onChange={(e) => cart.setDiscount(e.target.value)}
-                  className="w-28 rounded-lg border border-slate-200 pl-8 pr-3 py-2 text-right text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
-                />
-              </div>
+            <span className="text-slate-600 font-medium">Diskon transaksi</span>
+            <div className="relative">
+              <Percent className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="number"
+                value={cart.discount || ''}
+                placeholder="0"
+                onChange={(e) => cart.setDiscount(e.target.value)}
+                className="w-32 rounded-lg border border-slate-300 bg-white pl-8 pr-3 py-2 text-right text-sm font-semibold focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
+              />
             </div>
           </div>
 
           {/* Tax Toggle */}
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
-              <span className="text-slate-600">Pajak</span>
+              <span className="text-slate-600 font-medium">Pajak</span>
               <button
                 onClick={() => setTaxEnabled((v) => !v)}
                 className={`relative h-6 w-11 rounded-full transition-colors ${
@@ -647,23 +659,23 @@ export default function POS() {
                 />
               </button>
             </div>
-            <span className="font-medium text-slate-700">
+            <span className="font-semibold text-slate-700">
               {taxEnabled ? `${taxRate}%` : 'Nonaktif'}
             </span>
           </div>
 
           {/* Subtotal/Total Breakdown */}
-          <div className="space-y-2 border-t border-slate-100 pt-3">
+          <div className="space-y-2 border-t border-slate-200 pt-3">
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Subtotal</span>
-              <span className="font-medium text-slate-800 font-mono">
+              <span className="font-semibold text-slate-800 font-mono">
                 {formatRupiah(totals.subtotal)}
               </span>
             </div>
             {totals.discount > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Diskon</span>
-                <span className="font-medium text-danger-600 font-mono">
+                <span className="font-semibold text-danger-600 font-mono">
                   -{formatRupiah(totals.discount)}
                 </span>
               </div>
@@ -671,7 +683,7 @@ export default function POS() {
             {taxEnabled && taxAmount > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Pajak ({taxRate}%)</span>
-                <span className="font-medium text-slate-800 font-mono">
+                <span className="font-semibold text-slate-800 font-mono">
                   {formatRupiah(taxAmount)}
                 </span>
               </div>
@@ -679,35 +691,35 @@ export default function POS() {
             {additionalCost > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Biaya tambahan</span>
-                <span className="font-medium text-slate-800 font-mono">
+                <span className="font-semibold text-slate-800 font-mono">
                   {formatRupiah(additionalCost)}
                 </span>
               </div>
             )}
-            <div className="flex justify-between border-t border-slate-100 pt-2 text-base font-bold">
+            <div className="flex justify-between border-t border-slate-300 pt-3 text-lg font-bold">
               <span className="text-slate-900">Grand Total</span>
-              <span className="text-primary-700 font-mono text-xl">
+              <span className="text-primary-700 font-mono text-2xl">
                 {formatRupiah(totals.total)}
               </span>
             </div>
           </div>
 
           {/* Additional Cost Input */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-600">Biaya tambahan</span>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-slate-600 font-medium">Biaya tambahan</span>
             <input
               type="number"
               min="0"
               value={additionalCost || ''}
               onChange={(e) => setAdditionalCost(Math.max(Number(e.target.value) || 0, 0))}
-              className="w-32 rounded-lg border border-slate-200 py-1.5 px-3 text-right text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
+              className="w-36 rounded-lg border border-slate-300 bg-white py-2 px-3 text-right text-sm font-semibold focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
             />
           </div>
 
           {/* Checkout Button */}
           <Button
             size="lg"
-            className="w-full"
+            className="w-full bg-gradient-to-b from-primary-500 to-primary-600 shadow-md shadow-primary-600/25 hover:shadow-lg hover:shadow-primary-600/30 active:scale-[0.98]"
             disabled={!cart.items.length}
             onClick={() => setShowCheckout(true)}
           >
