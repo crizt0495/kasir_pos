@@ -2,8 +2,8 @@
    - Cache app shell untuk offline & akses cepat
    - API tidak di-cache (selalu jaringan)
    - Push notification + click → buka aplikasi
-   - Versi: v7 — purge otomatis chunk lama agar tidak 404 saat deploy hash baru */
-const CACHE = 'pos-shell-v7';
+   - Versi: v8 — bump untuk paksa invalidate cache chunk lama */
+const CACHE = 'pos-shell-v8';
 const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
