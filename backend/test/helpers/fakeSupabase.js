@@ -19,12 +19,16 @@ const permissionRows = [
   { id: 'p-roles-view', code: 'roles.view', name: 'Lihat Role', module: 'roles' },
   { id: 'p-reports-view', code: 'reports.view', name: 'Lihat Laporan', module: 'reports' },
   { id: 'p-reports-export', code: 'reports.export', name: 'Export Laporan', module: 'reports' },
+  { id: 'p-customers-view', code: 'customers.view', name: 'Lihat Pelanggan', module: 'customers' },
+  { id: 'p-customers-create', code: 'customers.create', name: 'Tambah Pelanggan', module: 'customers' },
+  { id: 'p-customers-update', code: 'customers.update', name: 'Ubah Pelanggan', module: 'customers' },
+  { id: 'p-customers-delete', code: 'customers.delete', name: 'Hapus Pelanggan', module: 'customers' },
 ];
 
 /** Kode permission per role (sumber tunggal kebenaran relasi role↔permission) */
 const rolePermissionCodes = {
-  [ownerRoleId]: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.create', 'products.delete', 'roles.view', 'reports.view', 'reports.export', 'inventory.view', 'inventory.adjust'],
-  [kasirRoleId]: ['dashboard.view', 'products.view'],
+  [ownerRoleId]: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.create', 'products.delete', 'roles.view', 'reports.view', 'reports.export', 'inventory.view', 'inventory.adjust', 'customers.view', 'customers.create', 'customers.update', 'customers.delete'],
+  [kasirRoleId]: ['dashboard.view', 'products.view', 'customers.view', 'customers.create', 'customers.update'],
 };
 
 /** Role dengan role_permissions sudah "di-join" (bentuk yang dipakai loadUserAuth) */
@@ -93,6 +97,38 @@ const productRows = [
   },
 ];
 
+const customerRows = [
+  { id: 'cccc0000-0000-0000-0000-000000000001', name: 'Budi Santoso', phone: '081234567890', email: 'budi@example.com', address: 'Jl. Merdeka No.1', total_debt: 0, pending_debt: 0 },
+  { id: 'cccc0000-0000-0000-0000-000000000002', name: 'Siti Aminah', phone: '089876543210', email: 'siti@example.com', address: 'Jl. Sudirman No.5', total_debt: 0, pending_debt: 0 },
+];
+
+const customerDebtRows = [
+  {
+    id: 'dddd0000-0000-0000-0000-000000000001',
+    customer_id: 'cccc0000-0000-0000-0000-000000000001',
+    amount: 50000,
+    paid_amount: 0,
+    remaining_amount: 50000,
+    due_date: '2026-09-15',
+    status: 'pending',
+    notes: 'Hutang pertama',
+    created_at: '2026-08-28T10:00:00Z',
+    created_by: adminId,
+  },
+  {
+    id: 'dddd0000-0000-0000-0000-000000000002',
+    customer_id: 'cccc0000-0000-0000-0000-000000000001',
+    amount: 100000,
+    paid_amount: 40000,
+    remaining_amount: 60000,
+    due_date: '2026-09-10',
+    status: 'partial',
+    notes: 'Sisa cicilan',
+    created_at: '2026-08-20T14:30:00Z',
+    created_by: adminId,
+  },
+];
+
 const store = {
   users: userRows,
   profiles: userRows.map((u) => ({ id: u.id, full_name: u.profiles.full_name, email: u.profiles.email, phone: null, avatar_url: null })),
@@ -108,6 +144,9 @@ const store = {
   user_roles: userRows.flatMap((u) => u.user_roles.map((ur) => ({ user_id: u.id, role: ur.role }))),
   v_users: vUserRows,
   products: productRows,
+  customers: customerRows,
+  customer_debts: customerDebtRows,
+  debt_payments: [],
   audit_logs: [],
   settings: [{ key: 'inventory', value: { allow_negative_stock: false } }, { key: 'invoice', value: { prefix: 'INV' } }],
 };
@@ -205,6 +244,34 @@ export function createFakeSupabase() {
       }
       if (fn === 'fn_adjust_stock') {
         return Promise.resolve({ data: { product_id: args.p_product_id, stock: 55, delta: 5 }, error: null });
+      }
+      if (fn === 'fn_record_debt') {
+        const debtId = 'dddd0000-0000-0000-0000-000000000099';
+        const debt = { id: debtId, customer_id: args.p_customer_id, amount: args.p_amount, paid_amount: 0, remaining_amount: args.p_amount, due_date: args.p_due_date, status: 'pending', notes: args.p_notes, created_by: args.p_created_by, created_at: new Date().toISOString() };
+        if (!store.customer_debts) store.customer_debts = [];
+        store.customer_debts.push(debt);
+        const cust = store.customers.find((c) => c.id === args.p_customer_id);
+        if (cust) { cust.total_debt = (cust.total_debt || 0) + args.p_amount; cust.pending_debt = (cust.pending_debt || 0) + args.p_amount; }
+        return Promise.resolve({ data: { debt_id: debtId, amount: args.p_amount, status: 'pending' }, error: null });
+      }
+      if (fn === 'fn_pay_debt') {
+        const debt = (store.customer_debts || []).find((d) => d.id === args.p_debt_id);
+        if (!debt) return Promise.resolve({ data: null, error: { message: 'Debt not found' } });
+        const newPaid = (debt.paid_amount || 0) + args.p_amount;
+        const remaining = (debt.amount || 0) - newPaid;
+        debt.paid_amount = newPaid;
+        debt.remaining_amount = Math.max(0, remaining);
+        debt.status = remaining <= 0 ? 'paid' : 'partial';
+        const cust = store.customers.find((c) => c.id === debt.customer_id);
+        if (cust) cust.pending_debt = Math.max(0, (cust.pending_debt || 0) - args.p_amount);
+        return Promise.resolve({ data: { debt_id: args.p_debt_id, amount_paid: newPaid, remaining_amount: debt.remaining_amount, status: debt.status }, error: null });
+      }
+      if (fn === 'fn_get_customer_debt_stats') {
+        const debts = (store.customer_debts || []).filter((d) => d.customer_id === args.p_customer_id);
+        const totalDebt = debts.reduce((s, d) => s + (d.amount || 0), 0);
+        const totalPaid = debts.reduce((s, d) => s + (d.paid_amount || 0), 0);
+        const pendingDebt = debts.reduce((s, d) => s + Math.max(0, (d.amount || 0) - (d.paid_amount || 0)), 0);
+        return Promise.resolve({ data: { total_debt: totalDebt, total_paid: totalPaid, pending_debt: pendingDebt, debt_count: debts.length }, error: null });
       }
       return Promise.resolve({ data: {}, error: null });
     },

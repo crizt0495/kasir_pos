@@ -12,7 +12,7 @@ export const createDebtSchema = z.object({
 });
 
 export const payDebtSchema = z.object({
-  debt_id: uuid,
+  debt_id: uuid.optional(),
   amount: money,
 });
 
