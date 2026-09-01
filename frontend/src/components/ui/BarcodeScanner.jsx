@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { Camera, X as XIcon, AlertCircle, Keyboard, RefreshCw } from 'lucide-react';
-import { Button, Input } from './index.jsx';
+import { Button } from './Button.jsx';
+import { Input } from './Form.jsx';
 
 const SCANNER_ID = 'barcode-scanner-container';
 const LAST_RESULT_DEBOUNCE_MS = 1200;
