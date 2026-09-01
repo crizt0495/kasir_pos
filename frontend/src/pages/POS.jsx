@@ -239,10 +239,10 @@ export default function POS() {
         </div>
 
         {/* Product Grid */}
-        <div className="grid flex-1 auto-rows-max grid-cols-3 gap-2 overflow-y-auto pb-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+        <div className="grid flex-1 auto-rows-fr grid-cols-3 gap-2 overflow-y-auto pb-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
           {products.loading ? (
             Array.from({ length: 15 }).map((_, i) => (
-              <Skeleton key={i} className="h-32 rounded-lg" />
+              <Skeleton key={i} className="h-44 rounded-xl" />
             ))
           ) : products.error ? (
             <div className="col-span-full">
@@ -292,7 +292,7 @@ export default function POS() {
                     }
                   }}
                   aria-disabled={disabled}
-                  className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all duration-300 ${
+                  className={`group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all duration-200 ${
                     qty > 0 
                       ? 'border-primary-400 ring-1 ring-primary-200/50' 
                       : 'border-slate-200 hover:border-primary-300 hover:shadow-md'
@@ -313,7 +313,7 @@ export default function POS() {
                     
                     {/* Quantity Badge */}
                     {qty > 0 && (
-                      <span className="absolute left-1.5 top-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary-600 px-1.5 text-[11px] font-bold text-white shadow sm:h-6 sm:min-w-[1.5rem] sm:text-xs">
+                      <span className="absolute left-1.5 top-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary-600 px-1.5 text-[10px] font-bold text-white shadow sm:left-2 sm:top-2 sm:h-6 sm:min-w-[1.5rem] sm:text-xs">
                         {qty}
                       </span>
                     )}
@@ -329,48 +329,45 @@ export default function POS() {
                   </div>
 
                   {/* Product Info */}
-                  <div className="flex flex-1 flex-col p-1.5 sm:p-2.5">
-                    {/* Name */}
-                    <div className="mb-1.5 sm:mb-2">
-                      <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-slate-800 group-hover:text-primary-700 transition-colors sm:text-sm">
-                        {p.name}
-                      </p>
-                    </div>
+                  <div className="flex flex-1 flex-col gap-1 px-1.5 py-1.5 sm:gap-1.5 sm:px-2.5 sm:py-2.5">
+                    {/* Name - fixed 2 baris */}
+                    <p className="line-clamp-2 h-7 text-[11px] font-semibold leading-tight text-slate-800 group-hover:text-primary-700 transition-colors sm:h-9 sm:text-xs">
+                      {p.name}
+                    </p>
 
                     {/* Price + stock */}
-                    <div className="mt-auto">
-                      {/* Price */}
-                      <p className="text-[12px] font-bold text-primary-700 font-mono sm:text-base">
+                    <div className="flex flex-col gap-0.5">
+                      <p className="truncate text-[12px] font-bold leading-none text-primary-700 font-mono sm:text-sm">
                         {formatRupiah(p.sale_price)}
                       </p>
-
-                      {/* Stock info */}
-                      <p className={`mt-0.5 flex items-center gap-1 text-[10px] sm:mt-1 sm:text-xs ${
-                        inactive ? 'text-slate-400' : outOfStock ? 'text-danger-600' : 'text-slate-500'
+                      <p className={`flex items-center gap-1 truncate text-[10px] sm:text-[11px] ${
+                        inactive ? 'text-slate-400' : outOfStock ? 'font-medium text-danger-600' : 'text-slate-500'
                       }`}>
-                        <span className="inline-block h-1.5 w-1.5 rounded-full sm:h-2 sm:w-2 ${
+                        <span className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full sm:h-2 sm:w-2 ${
                           inactive ? 'bg-slate-300' : outOfStock ? 'bg-danger-500' : Number(p.stock) <= Number(p.min_stock || 0) ? 'bg-warning-500' : 'bg-success-500'
-                        }" />
-                        {inactive ? 'Nonaktif' : outOfStock ? 'Habis' : `Stok ${formatQty(p.stock)}`}
+                        }`} />
+                        <span className="truncate">
+                          {inactive ? 'Nonaktif' : outOfStock ? 'Habis' : `Stok ${formatQty(p.stock)}`}
+                        </span>
                       </p>
                     </div>
 
-                    {/* Action Controls */}
-                    <div className="mt-1.5 sm:mt-2.5">
+                    {/* Action Controls - tetap di bawah */}
+                    <div className="mt-auto pt-1">
                       {qty > 0 ? (
                         <div
                           onClick={stop}
-                          className="flex w-full items-stretch overflow-hidden rounded-lg border border-primary-300 bg-white"
+                          className="grid h-7 grid-cols-[2rem_1fr_2rem] items-stretch overflow-hidden rounded-md border border-primary-300 bg-white shadow-sm sm:h-8 sm:grid-cols-[2.5rem_1fr_2.5rem]"
                         >
                           <button
                             type="button"
                             onClick={handleDec}
                             aria-label={`Kurangi ${p.name}`}
-                            className="flex flex-1 h-8 items-center justify-center bg-white text-primary-700 transition-colors hover:bg-primary-50 active:bg-primary-100"
+                            className="flex items-center justify-center bg-white text-primary-700 transition-colors hover:bg-primary-50 active:bg-primary-100"
                           >
-                            <Minus className="h-4 w-4 sm:h-4.5 sm:w-4.5" strokeWidth={2.5} />
+                            <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.5} />
                           </button>
-                          <span className="flex flex-1 h-8 min-w-[2rem] items-center justify-center border-x border-primary-200 bg-primary-50/60 text-sm font-bold font-mono text-primary-700 sm:text-base">
+                          <span className="flex items-center justify-center border-x border-primary-200 bg-primary-50/60 text-center text-xs font-bold font-mono text-primary-700 sm:text-sm">
                             {qty}
                           </span>
                           <button
@@ -378,14 +375,14 @@ export default function POS() {
                             onClick={handleInc}
                             disabled={qty >= Number(p.stock)}
                             aria-label={`Tambah ${p.name}`}
-                            className="flex flex-1 h-8 items-center justify-center bg-primary-600 text-white transition-colors hover:bg-primary-700 active:bg-primary-800 disabled:bg-slate-300 disabled:cursor-not-allowed"
+                            className="flex items-center justify-center bg-primary-600 text-white transition-colors hover:bg-primary-700 active:bg-primary-800 disabled:cursor-not-allowed disabled:bg-slate-300"
                           >
-                            <Plus className="h-4 w-4 sm:h-4.5 sm:w-4.5" strokeWidth={2.5} />
+                            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.5} />
                           </button>
                         </div>
                       ) : disabled ? (
-                        <div className="flex h-8 w-full items-center justify-center rounded-lg bg-slate-100 text-xs font-medium text-slate-400 sm:text-sm">
-                          {inactive ? 'Tidak tersedia' : 'Habis'}
+                        <div className="flex h-7 w-full items-center justify-center rounded-md bg-slate-100 text-[10px] font-medium text-slate-400 sm:h-8 sm:text-xs">
+                          {inactive ? 'Nonaktif' : 'Habis'}
                         </div>
                       ) : (
                         <button
@@ -393,10 +390,10 @@ export default function POS() {
                           onClick={handleAdd}
                           aria-label={`Tambah ${p.name} ke keranjang`}
                           title={`Tambah ${p.name}`}
-                          className="flex h-8 w-full items-center justify-center gap-1.5 rounded-lg bg-primary-600 text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow active:scale-[0.98] active:bg-primary-800 sm:h-9"
+                          className="flex h-7 w-full items-center justify-center gap-1 rounded-md bg-primary-600 text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow active:scale-[0.98] active:bg-primary-800 sm:h-8"
                         >
-                          <Plus className="h-4 w-4" strokeWidth={2.5} />
-                          <span className="text-xs font-semibold sm:text-sm">Tambah</span>
+                          <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.5} />
+                          <span className="text-[10px] font-semibold sm:text-xs">Tambah</span>
                         </button>
                       )}
                     </div>
