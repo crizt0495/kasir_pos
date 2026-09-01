@@ -98,7 +98,14 @@ export const createSale = asyncHandler(async (req, res) => {
   });
 
   // Fallback: jika migration 0013 belum di-apply, tanpa p_allow_partial
-  if (error && String(error.message || '').includes('Could not find')) {
+  const isFunctionNotFound = (e) =>
+    e &&
+    (String(e.code || '') === 'PGRST202' ||
+      String(e.message || '').includes('Could not find') ||
+      String(e.details || '').includes('schema cache') ||
+      String(e.message || '').includes('schema cache'));
+
+  if (isFunctionNotFound(error)) {
     const retry = await supabase.rpc('fn_create_sale', {
       p_cashier_id: req.user.id,
       p_created_by: req.user.id,
