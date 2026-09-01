@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, User, Users, PauseCircle, PlayCircle,
-  Package, ScanLine, Banknote, X, Percent, Camera,
+  Package, ScanLine, Banknote, X, Percent, Camera, AlertTriangle,
 } from 'lucide-react';
 import { productsApi, categoriesApi, customersApi, salesApi, settingsApi, cashierApi } from '../api/index.js';
 import { useCartStore } from '../stores/cartStore.js';
@@ -39,6 +39,7 @@ export default function POS() {
   const [additionalCost, setAdditionalCost] = useState(0);
   const [sessionId, setSessionId] = useState(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [debtStats, setDebtStats] = useState(null);
   const searchRef = useRef(null);
   const barcodeRef = useRef(null);
 
@@ -73,6 +74,17 @@ export default function POS() {
       cart.setCustomer(generalCustomer.data);
     }
   }, [generalCustomer.data, cart.customer, cart.setCustomer]);
+
+  // Muat statistik hutang pelanggan terdaftar (bukan Umum)
+  useEffect(() => {
+    if (cart.customer?.id && !cart.customer?.is_general) {
+      customersApi.debtStats(cart.customer.id)
+        .then((r) => setDebtStats(r.data))
+        .catch(() => setDebtStats(null));
+    } else {
+      setDebtStats(null);
+    }
+  }, [cart.customer?.id, cart.customer?.is_general]);
 
   const taxAmount = useMemo(() => {
     if (!taxEnabled) return 0;
@@ -148,6 +160,20 @@ export default function POS() {
         session_id: sessionId || null,
         discount: Number(cart.discount) || 0,
       });
+      // Catat hutang baru jika bayar kurang
+      if (payload.record_debt && cart.customer?.id) {
+        try {
+          await customersApi.createDebt({
+            customer_id: cart.customer.id,
+            amount: payload.record_debt.amount,
+            due_date: payload.record_debt.due_date,
+            notes: payload.record_debt.notes || `Hutang dari transaksi ${res.data?.sale?.invoice_number || ''}`,
+          });
+          toast.success(`Hutang ${formatRupiah(payload.record_debt.amount)} berhasil dicatat`);
+        } catch (err) {
+          toast.error(getErrorMessage(err, 'Gagal mencatat hutang'));
+        }
+      }
       setLastSale(res.data.sale);
       cart.clear();
       setShowCheckout(false);
@@ -699,6 +725,8 @@ export default function POS() {
         setAdditionalCost={setAdditionalCost}
         paymentMethods={settings?.payment_methods || PAYMENT_METHODS}
         onConfirm={handleCheckout}
+        customer={cart.customer}
+        debtStats={debtStats}
       />
 
       <CustomerModal
@@ -742,12 +770,15 @@ export default function POS() {
 /* ============================================================
    CHECKOUT MODAL - Enhanced Payment Processing
 ============================================================ */
-function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, additionalCost, setAdditionalCost, paymentMethods, onConfirm }) {
+function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, additionalCost, setAdditionalCost, paymentMethods, onConfirm, customer, debtStats }) {
   const [method, setMethod] = useState('CASH');
   const [paid, setPaid] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [recordDebt, setRecordDebt] = useState(false);
+  const [debtDueDate, setDebtDueDate] = useState(new Date().toISOString().split('T')[0]);
+  const [debtNotes, setDebtNotes] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -755,18 +786,39 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
       setPaid('');
       setNotes('');
       setError(null);
+      setRecordDebt(false);
+      setDebtDueDate(new Date().toISOString().split('T')[0]);
+      setDebtNotes('');
     }
-  }, [open]);
+  }, [open, customer?.id]);
 
   const paidNum = Number(paid) || 0;
   const change = computeChange(paidNum, totals.total);
-  const paidValid = method === 'CASH' ? paidNum >= totals.total : true;
   const isCash = method === 'CASH';
+  
+  // Hitung hutang yang perlu dibuat jika bayar kurang
+  const debtAmount = isCash ? Math.max(0, totals.total - paidNum) : 0;
+  const canRecordDebt = debtAmount > 0 && customer?.id;
+  
+  // Validasi: bayar lunas atau punya hutang
+  const paidValid = isCash ? paidNum >= totals.total : true;
 
   const submit = async () => {
-    if (!paidValid) {
-      setError('Jumlah bayar kurang dari total transaksi');
-      return;
+    if (isCash) {
+      if (canRecordDebt) {
+        // Bayar kurang → wajib pilih catat hutang
+        if (!recordDebt) {
+          setError('Jumlah bayar kurang dari total. Centang "Catat sebagai hutang" untuk melanjutkan.');
+          return;
+        }
+        if (!debtDueDate) {
+          setError('Tanggal jatuh tempo hutang wajib diisi');
+          return;
+        }
+      } else if (paidNum < totals.total) {
+        setError('Jumlah bayar kurang dari total transaksi');
+        return;
+      }
     }
     setSubmitting(true);
     setError(null);
@@ -777,6 +829,12 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
         notes: notes || null,
         tax: taxAmount,
         additional_cost: additionalCost || 0,
+        // Data hutang jika bayar kurang
+        record_debt: recordDebt ? {
+          amount: debtAmount,
+          due_date: debtDueDate,
+          notes: debtNotes || null,
+        } : null,
       });
     } catch (e) {
       setError(getErrorMessage(e, 'Transaksi gagal'));
@@ -803,11 +861,11 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
             <Button
               onClick={submit}
               loading={submitting}
-              disabled={!paidValid}
+              disabled={isCash && !paidValid && !canRecordDebt}
               className="px-6"
             >
               <Banknote className="h-5 w-5" />
-              Proses Pembayaran
+              {isCash && canRecordDebt && recordDebt ? `Bayar ${formatRupiah(paidNum)} · Hutang ${formatRupiah(debtAmount)}` : 'Proses Pembayaran'}
             </Button>
           </div>
         </div>
@@ -939,6 +997,23 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
           </div>
         )}
 
+        {/* Hutang pelanggan - tampil jika ada */}
+        {customer?.id && debtStats && Number(debtStats.pending_debt || 0) > 0 && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <h5 className="text-sm font-semibold text-amber-800">Hutang Berjalan</h5>
+                <p className="mt-0.5 text-sm text-amber-700">
+                  Hutang yang perlu dilunasi: <b>{formatRupiah(debtStats.pending_debt)}</b>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Non-Cash Payment Message */}
         {!isCash && (
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
@@ -956,6 +1031,52 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Catat Hutang Baru — muncul jika bayar kurang + pelanggan terdaftar */}
+        {isCash && customer?.id && !customer?.is_general && debtAmount > 0 && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50/50 p-4">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={recordDebt}
+                onChange={(e) => setRecordDebt(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+              />
+              <div className="flex-1">
+                <span className="text-sm font-semibold text-amber-800">Catat sebagai hutang</span>
+                <p className="mt-0.5 text-xs text-amber-700">
+                  Sisa yang belum dibayar: <b>{formatRupiah(debtAmount)}</b> akan dicatat sebagai hutang pelanggan ini.
+                </p>
+              </div>
+            </label>
+
+            {recordDebt && (
+              <div className="mt-3 ml-7 space-y-2">
+                <div>
+                  <label className="text-xs font-medium text-amber-800">Tanggal Jatuh Tempo *</label>
+                  <input
+                    type="date"
+                    value={debtDueDate}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setDebtDueDate(e.target.value)}
+                    className="mt-0.5 w-full rounded-lg border border-amber-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-amber-800">Catatan (opsional)</label>
+                  <input
+                    type="text"
+                    value={debtNotes}
+                    onChange={(e) => setDebtNotes(e.target.value)}
+                    placeholder="cth: hutang mingguan"
+                    className="mt-0.5 w-full rounded-lg border border-amber-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    maxLength={500}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
