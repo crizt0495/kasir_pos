@@ -10,7 +10,7 @@ import { useApi } from '../hooks/useApi.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { computeTotals, computeTax, computeChange } from '../utils/cart.js';
-import { formatRupiah, formatNumber, formatQty, formatDateTime, paymentMethodLabel } from '../utils/format.js';
+import { formatRupiah, formatNumber, formatQty, formatDateTime, formatDate, paymentMethodLabel } from '../utils/format.js';
 import { Button } from '../components/ui/Button.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Input, Select, Field, Textarea } from '../components/ui/Form.jsx';
@@ -764,6 +764,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [recordDebt, setRecordDebt] = useState(false);
+  const [showDebtDueDate, setShowDebtDueDate] = useState(false);
   const [debtDueDate, setDebtDueDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 30);
@@ -801,10 +802,10 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
     }
   }, [open, customer?.id]);
 
-  // Tombol bisa diklik jika: bayar cukup, atau bisa catat hutang (dan sudah ceklist + tanggal)
+  // Tombol bisa diklik jika: bayar cukup, atau pelanggan terdaftar (otomatis catat hutang)
   const canSubmit = isDebtMethod
-    ? validDebtCustomer && Boolean(debtDueDate)
-    : paidNum >= totals.total || (canRecordDebt && recordDebt && debtDueDate);
+    ? validDebtCustomer
+    : paidNum >= totals.total || (canRecordDebt);
 
   const submit = async () => {
     if (isDebtMethod) {
@@ -812,25 +813,11 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
         setError('Hutang hanya untuk pelanggan terdaftar. Pilih pelanggan terlebih dahulu.');
         return;
       }
-      if (!debtDueDate) {
-        setError('Tanggal jatuh tempo hutang wajib diisi');
-        return;
-      }
     } else if (isCash) {
       const isShort = paidNum < totals.total;
-      if (isShort) {
-        if (!validDebtCustomer) {
-          setError('Jumlah bayar kurang dari total. Silakan pilih pelanggan terdaftar untuk mencatat hutang, atau lengkapi pembayaran.');
-          return;
-        }
-        if (!recordDebt) {
-          setError('Jumlah bayar kurang dari total. Centang "Catat sebagai hutang" untuk melanjutkan.');
-          return;
-        }
-        if (!debtDueDate) {
-          setError('Tanggal jatuh tempo hutang wajib diisi');
-          return;
-        }
+      if (isShort && !validDebtCustomer) {
+        setError('Jumlah bayar kurang dari total. Pilih pelanggan terdaftar untuk mencatat hutang, atau lengkapi pembayaran.');
+        return;
       }
     }
     setSubmitting(true);
@@ -843,7 +830,8 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
         tax: taxAmount,
         additional_cost: additionalCost || 0,
       };
-      if (canRecordDebt && (isDebtMethod || recordDebt)) {
+      // Otomatis catat hutang jika bayar kurang & pelanggan terdaftar
+      if (canRecordDebt && (isDebtMethod || paidNum < totals.total)) {
         payload.record_debt = {
           amount: debtAmount,
           due_date: debtDueDate,
@@ -1104,49 +1092,48 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
           </div>
         )}
 
-        {/* Catat Hutang (bayar kurang) — hanya muncul di metode cash */}
+        {/* Info hutang otomatis (bayar kurang) — pelanggan terdaftar, tidak perlu centang */}
         {!isDebtMethod && isCash && customer?.id && !customer?.is_general && debtAmount > 0 && (
           <div className="rounded-xl border border-amber-300 bg-amber-50/50 p-4">
-            <label className="flex cursor-pointer items-start gap-3">
-              <input
-                type="checkbox"
-                checked={recordDebt}
-                onChange={(e) => setRecordDebt(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
-              />
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+              </div>
               <div className="flex-1">
-                <span className="text-sm font-semibold text-amber-800">Catat sebagai hutang</span>
+                <p className="text-sm font-semibold text-amber-800">Sisa otomatis dicatat sebagai hutang</p>
                 <p className="mt-0.5 text-xs text-amber-700">
-                  Sisa yang belum dibayar: <b>{formatRupiah(debtAmount)}</b> akan dicatat sebagai hutang pelanggan ini.
+                  <b>{formatRupiah(debtAmount)}</b> akan ditagih ke <b>{customer?.name}</b> dengan jatuh tempo {formatDate(debtDueDate)}.
                 </p>
-              </div>
-            </label>
-
-            {recordDebt && (
-              <div className="mt-3 ml-7 space-y-2">
-                <div>
-                  <label className="text-xs font-medium text-amber-800">Tanggal Jatuh Tempo *</label>
-                  <input
-                    type="date"
-                    value={debtDueDate}
-                    min={new Date().toISOString().split('T')[0]}
-                    onChange={(e) => setDebtDueDate(e.target.value)}
-                    className="mt-0.5 w-full rounded-lg border border-amber-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
-                  />
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowDebtDueDate((v) => !v)}
+                    className="text-xs font-medium text-amber-700 underline hover:text-amber-800"
+                  >
+                    {showDebtDueDate ? 'Sembunyikan' : 'Ubah jatuh tempo'}
+                  </button>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-amber-800">Catatan (opsional)</label>
-                  <input
-                    type="text"
-                    value={debtNotes}
-                    onChange={(e) => setDebtNotes(e.target.value)}
-                    placeholder="cth: hutang mingguan"
-                    className="mt-0.5 w-full rounded-lg border border-amber-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
-                    maxLength={500}
-                  />
-                </div>
+                {showDebtDueDate && (
+                  <div className="mt-2 space-y-2">
+                    <input
+                      type="date"
+                      value={debtDueDate}
+                      min={new Date().toISOString().split('T')[0]}
+                      onChange={(e) => setDebtDueDate(e.target.value)}
+                      className="w-full rounded-lg border border-amber-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    />
+                    <input
+                      type="text"
+                      value={debtNotes}
+                      onChange={(e) => setDebtNotes(e.target.value)}
+                      placeholder="Catatan (opsional)"
+                      className="w-full rounded-lg border border-amber-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                      maxLength={500}
+                    />
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         )}
 
