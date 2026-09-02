@@ -16,6 +16,7 @@
 -- ============================================================
 -- 1. TABEL RIWAYAT PEMBAYARAN HUTANG
 -- ============================================================
+
 create table if not exists public.debt_payments (
   id              uuid primary key default gen_random_uuid(),
   debt_id         uuid not null references public.customer_debts(id) on delete cascade,
@@ -68,6 +69,7 @@ $$;
 --    Logika sama dengan versi 0012 yang sudah diverifikasi E2E,
 --    hanya menambah insert riwayat pembayaran.
 -- ============================================================
+
 create or replace function public.fn_pay_debt(
   p_debt_id      uuid,
   p_amount       numeric,
@@ -165,6 +167,7 @@ $$;
 -- 3. FN_PAY_DEBT — OVERLOAD 5-ARG (payment_method + notes)
 --    Dipakai UI bayar hutang bila ingin mencatat metode.
 -- ============================================================
+
 create or replace function public.fn_pay_debt(
   p_debt_id        uuid,
   p_amount         numeric,
@@ -260,6 +263,7 @@ $$;
 -- ============================================================
 -- 4. FN_GET_DEBT_PAYMENT_HISTORY — riwayat pembayaran per hutang
 -- ============================================================
+
 create or replace function public.fn_get_debt_payment_history(p_debt_id uuid)
 returns jsonb
 language plpgsql
@@ -312,6 +316,7 @@ $$;
 -- ============================================================
 -- 5. FN_GET_DEBT_SUMMARY — ringkasan hutang untuk dashboard/laporan
 -- ============================================================
+
 create or replace function public.fn_get_debt_summary(
   p_from date default null,
   p_to   date default null
@@ -384,7 +389,9 @@ $$;
 -- ============================================================
 -- 6. FN_CANCEL_DEBT — pembatalan/void hutang dengan alasan
 --    Hutang TIDAK dihapus (tetap di audit), ditandai cancelled.
--- ============================================================create or replace function public.fn_cancel_debt(
+-- ============================================================
+
+create or replace function public.fn_cancel_debt(
   p_debt_id     uuid,
   p_reason      text,
   p_created_by  uuid
@@ -452,6 +459,7 @@ $$;
 -- ============================================================
 -- 6. GRANT & INDEX
 -- ============================================================
+
 grant execute on function public.fn_pay_debt(uuid, numeric, uuid) to service_role;
 grant execute on function public.fn_pay_debt(uuid, numeric, uuid, text, text) to service_role;
 grant execute on function public.fn_get_debt_payment_history(uuid) to service_role;
