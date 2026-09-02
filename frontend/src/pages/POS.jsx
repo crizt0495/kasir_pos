@@ -1179,9 +1179,14 @@ function CustomerModal({ open, onClose, query, setQuery, results, generalCustome
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-600">
                     <User className="h-5 w-5" />
                   </div>
-                  <div>
-                    <p className="font-medium text-slate-800">{c.name}</p>
-                    <p className="text-sm text-slate-500">{c.phone || '-'}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-slate-800 truncate">{c.name}</p>
+                    <p className="text-sm text-slate-500 truncate">{c.phone || '-'}</p>
+                    {(c.pending_debt || c.total_debt) && (
+                      <p className="text-xs text-amber-600 font-medium mt-0.5">
+                        Hutang: {formatRupiah(c.pending_debt || c.total_debt)}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="text-xs text-slate-400">Pilih</div>
