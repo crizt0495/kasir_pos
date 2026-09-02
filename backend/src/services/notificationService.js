@@ -219,6 +219,43 @@ export async function notifyNewSale(sale) {
         });
       }
     }
+
+    // 4) Hutang notification — catat di notification_logs bila ada shortfall
+    //    Fire-and-forget, tidak boleh menggagalkan transaksi (spec §18)
+    const cashReceived = Number(sale?.payments?.[0]?.cash_received);
+    const total = Number(sale?.total || 0);
+    if (sale?.payments?.[0]?.cash_received != null && cashReceived < total && cashReceived >= 0) {
+      const debtAmount = total - cashReceived;
+      const cName = sale.customer?.name || 'Umum';
+      const cKasir = sale.cashier?.profiles?.full_name || sale.cashier?.username || '-';
+      const debtBody =
+        `Pelanggan: ${cName}\nNo. Transaksi: ${sale.invoice_number}\n` +
+        `Total: Rp${total.toLocaleString('id-ID')}\nDibayar: Rp${cashReceived.toLocaleString('id-ID')}\n` +
+        `Hutang: Rp${debtAmount.toLocaleString('id-ID')}\nKasir: ${cKasir}\n` +
+        `Tanggal: ${new Date(sale.created_at).toLocaleString('id-ID')}`;
+      const debtPayload = {
+        invoice_number: sale.invoice_number,
+        sale_id: sale.id,
+        customer_id: sale.customer_id,
+        debt_amount: debtAmount,
+        cashier_id: sale.cashier_id,
+      };
+
+      for (const userId of recipients) {
+        try {
+          await logNotification({
+            user_id: userId,
+            type: 'DEBT',
+            title: '💰 HUTANG BARU',
+            body: debtBody,
+            payload: debtPayload,
+            status: 'sent',
+          });
+        } catch {
+          /* abaikan */
+        }
+      }
+    }
   } catch (err) {
     try {
       await logNotification({

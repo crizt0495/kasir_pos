@@ -22,6 +22,7 @@ router.get('/reports/products', requirePermission('reports.view'), requireExport
 router.get('/reports/inventory', requirePermission('reports.view'), requireExport, asyncHandler(report.inventoryReport));
 router.get('/reports/cashier', requirePermission('reports.view'), requireExport, asyncHandler(report.cashierReport));
 router.get('/reports/purchases', requirePermission('reports.view'), requireExport, asyncHandler(report.purchasesReport));
+router.get('/reports/debts', requirePermission('reports.view'), requireExport, asyncHandler(report.debtReport));
 
 router.get('/dashboard/summary', requirePermission('dashboard.view'), asyncHandler(report.dashboardSummary));
 router.get('/dashboard/charts', requirePermission('dashboard.view'), asyncHandler(report.dashboardCharts));

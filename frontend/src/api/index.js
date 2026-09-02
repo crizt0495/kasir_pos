@@ -47,6 +47,8 @@ export const customersApi = {
   listDebts: (params) => api.get('/customer-debts', { params }).then((r) => r.data),
   createDebt: (payload) => api.post('/customer-debts', payload).then((r) => r.data),
   payDebt: (id, payload) => api.post(`/customer-debts/${id}/pay`, payload).then((r) => r.data),
+  cancelDebt: (id, payload) => api.post(`/customer-debts/${id}/cancel`, payload).then((r) => r.data),
+  paymentHistory: (id) => api.get(`/customer-debts/${id}/payment-history`).then((r) => r.data),
 };
 
 export const suppliersApi = {
@@ -142,6 +144,7 @@ export const reportsApi = {
   inventory: (params) => api.get('/reports/inventory', { params }).then((r) => r.data),
   cashier: (params) => api.get('/reports/cashier', { params }).then((r) => r.data),
   purchases: (params) => api.get('/reports/purchases', { params }).then((r) => r.data),
+  debts: (params) => api.get('/reports/debts', { params }).then((r) => r.data),
   /** Unduh laporan sebagai CSV (butuh permission reports.export) */
   exportCsv: async (path, params, filename) => {
     const res = await api.get(path, { params: { ...params, export: 'csv' }, responseType: 'blob' });

@@ -69,6 +69,31 @@ export default function Receipt({ sale, store, pos }) {
         )}
       </div>
 
+      {/* Tampilkan info hutang (spec §19) bila pembayaran kurang dari total */}
+      {(() => {
+        const cashReceived = Number(sale?.payments?.[0]?.cash_received);
+        const total = Number(sale?.total || 0);
+        const isDebt = sale?.payments?.[0]?.cash_received != null && cashReceived < total;
+        if (!isDebt) return null;
+        return (
+          <>
+            <Divider />
+            <div className="space-y-0.5 border-2 border-black p-2">
+              <div className="text-center">
+                <p className="font-bold">SISA HUTANG</p>
+                <p className="text-sm font-bold">{formatRupiah(total - cashReceived)}</p>
+              </div>
+              <Row label="TOTAL" value={formatRupiah(total)} />
+              <Row label="DIBAYAR" value={formatRupiah(cashReceived)} />
+              <Row label="SISA HUTANG" value={<span className="font-bold">{formatRupiah(total - cashReceived)}</span>} />
+              <div className="text-center pt-1">
+                <p className="font-bold">STATUS: BELUM LUNAS</p>
+              </div>
+            </div>
+          </>
+        );
+      })()}
+
       <Divider />
 
       <div className="text-center leading-relaxed">

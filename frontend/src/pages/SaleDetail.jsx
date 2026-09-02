@@ -205,6 +205,25 @@ export default function SaleDetail() {
                     <div className="flex justify-between"><span className="text-slate-500">Kembali</span><span>{formatRupiah(s.payments[0].change_amount)}</span></div>
                   </>
                 )}
+                {(() => {
+                  const cashReceived = Number(s.payments?.[0]?.cash_received);
+                  const total = Number(s.total || 0);
+                  if (s.payments?.[0]?.cash_received != null && cashReceived < total) {
+                    return (
+                      <>
+                        <div className="flex justify-between border-t border-amber-200 pt-2">
+                          <span className="text-amber-600 font-semibold">Sisa Hutang</span>
+                          <span className="font-bold text-amber-700">{formatRupiah(total - cashReceived)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-amber-600">Status</span>
+                          <span className="font-medium text-amber-700">BELUM LUNAS</span>
+                        </div>
+                      </>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             </Card>
           </div>

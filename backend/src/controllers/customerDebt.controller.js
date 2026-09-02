@@ -91,11 +91,19 @@ export const createDebt = asyncHandler(async (req, res) => {
 export const payDebt = asyncHandler(async (req, res) => {
   const body = req.body;
 
-  const { data: result, error } = await supabase.rpc('fn_pay_debt', {
+  // Gunakan overload 5-arg bila payment_method/notes dikirim,
+  // selain itu fallback ke overload 3-arg (backward compatible).
+  const rpcArgs = {
     p_debt_id: req.params.id,
     p_amount: body.amount,
     p_created_by: req.user.id,
-  });
+  };
+  const payload =
+    body.payment_method || body.notes
+      ? { ...rpcArgs, p_payment_method: body.payment_method || 'CASH', p_notes: body.notes || null }
+      : rpcArgs;
+
+  const { data: result, error } = await supabase.rpc('fn_pay_debt', payload);
   if (error) throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
 
   const debt = await getDebtFromId(req.params.id);
@@ -105,11 +113,50 @@ export const payDebt = asyncHandler(async (req, res) => {
     action: 'DEBT_PAID',
     module: 'customer_debts',
     recordId: req.params.id,
-    newData: { amount_paid: result.amount_paid, debt_status: result.status },
+    newData: { amount_paid: result.amount_paid, debt_status: result.status, payment_method: body.payment_method || 'CASH' },
     req,
   });
 
   return ok(res, { ...result, debt }, 'Pembayaran hutang berhasil');
+});
+
+// Riwayat pembayaran hutang (spec §9) — via debt_payments
+export const getDebtPaymentHistory = asyncHandler(async (req, res) => {
+  const { data, error } = await supabase.rpc('fn_get_debt_payment_history', {
+    p_debt_id: req.params.id,
+  });
+  if (error) throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
+
+  return ok(res, data);
+});
+
+// Pembatalan/void hutang dengan alasan (spec §20) — hutang tidak dihapus
+export const cancelDebt = asyncHandler(async (req, res) => {
+  const { reason } = req.body;
+  if (!reason || reason.trim() === '') {
+    throw badRequest('Alasan pembatalan wajib diisi');
+  }
+
+  const { data: result, error } = await supabase.rpc('fn_cancel_debt', {
+    p_debt_id: req.params.id,
+    p_reason: reason,
+    p_created_by: req.user.id,
+  });
+  if (error) throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
+
+  const debt = await getDebtFromId(req.params.id);
+
+  await writeAudit({
+    user: req.user,
+    action: 'DEBT_CANCELLED',
+    module: 'customer_debts',
+    recordId: req.params.id,
+    oldData: { status: req.body.oldStatus },
+    newData: { status: 'cancelled', reason },
+    req,
+  });
+
+  return ok(res, { ...result, debt }, 'Hutang berhasil dibatalkan');
 });
 
 export const getDebtStats = asyncHandler(async (req, res) => {

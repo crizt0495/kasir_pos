@@ -31,6 +31,7 @@ const TABS = [
   { key: 'inventory', label: 'Stok' },
   { key: 'cashier', label: 'Kasir' },
   { key: 'purchases', label: 'Pembelian' },
+  { key: 'debts', label: 'Hutang / Piutang' },
 ];
 
 const EXPORT_PATHS = {
@@ -40,6 +41,7 @@ const EXPORT_PATHS = {
   inventory: '/reports/inventory',
   cashier: '/reports/cashier',
   purchases: '/reports/purchases',
+  debts: '/reports/debts',
 };
 
 export default function Reports() {
@@ -59,7 +61,7 @@ export default function Reports() {
   );
 
   const d = data.data;
-  const hasDateRange = ['sales', 'profit'].includes(tab);
+  const hasDateRange = ['sales', 'profit', 'debts'].includes(tab);
   const showDatePicker = hasDateRange ? period === 'custom' : true;
 
   const runExport = async (fmt, fn) => {
@@ -181,6 +183,18 @@ export default function Reports() {
                 <SummaryCard label="Periode" value={`${d.from} → ${d.to}`} />
               </>
             )}
+            {tab === 'debts' && (
+              <>
+                <SummaryCard label="Total Piutang" value={formatRupiah(d.totals?.total_debt)} highlight />
+                <SummaryCard label="Sudah Dibayar" value={formatRupiah(d.totals?.total_paid)} />
+                <SummaryCard label="Sisa Belum Bayar" value={formatRupiah(d.totals?.total_pending)} />
+                <SummaryCard label="Jatuh Tempo" value={formatRupiah(d.totals?.total_overdue)} />
+                <SummaryCard label="Pelanggan Berhutang" value={formatNumber(d.totals?.customers_count)} />
+                <SummaryCard label="Catatan Hutang" value={formatNumber(d.totals?.records_count)} />
+                <SummaryCard label="Belum Lunas" value={formatNumber(d.totals?.pending_count)} />
+                <SummaryCard label="Periode" value={`${d.from} → ${d.to}`} />
+              </>
+            )}
           </div>
 
           {/* Grafik utk penjualan & profit */}
@@ -221,6 +235,7 @@ export default function Reports() {
             {tab === 'inventory' && <InventoryTable d={d} />}
             {tab === 'cashier' && <CashierTable d={d} />}
             {tab === 'purchases' && <PurchasesTable d={d} />}
+            {tab === 'debts' && <DebtsTable d={d} />}
           </Card>
         </div>
       )}
@@ -434,6 +449,61 @@ function PurchasesTable({ d }) {
           <div className="flex gap-6">
             <span className="w-24 text-right text-slate-500">{formatNumber(s.count)} pembelian</span>
             <span className="w-28 text-right font-semibold">{formatRupiah(s.total)}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const DEBT_REPORT_COLORS = {
+  pending: 'bg-warning-100 text-warning-700',
+  partial: 'bg-amber-100 text-amber-700',
+  paid: 'bg-success-100 text-success-700',
+  overdue: 'bg-danger-100 text-danger-700',
+  cancelled: 'bg-slate-100 text-slate-500',
+};
+
+const DEBT_REPORT_LABELS = {
+  pending: 'Belum Bayar',
+  partial: 'Sebagian',
+  paid: 'Lunas',
+  overdue: 'Jatuh Tempo',
+  cancelled: 'Dibatalkan',
+};
+
+function DebtsTable({ d }) {
+  return (
+    <div className="divide-y divide-slate-100">
+      {!d.debts?.length && <EmptyState title="Belum ada data hutang" />}
+      {d.debts?.map((debt) => (
+        <div key={debt.id} className="px-4 py-3 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="font-medium text-slate-800">{debt.customer?.name || '-'}</p>
+              <p className="text-xs text-slate-400">
+                {formatDate(debt.created_at)} · {debt.customer?.phone || '-'}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="text-right">
+                <p className="text-xs text-slate-400">Total</p>
+                <p className="font-mono">{formatRupiah(debt.amount)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-slate-400">Dibayar</p>
+                <p className="font-mono text-emerald-600">{formatRupiah(debt.paid_amount)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-slate-400">Sisa</p>
+                <p className={`font-mono font-semibold ${Math.max(0, Number(debt.remaining_amount)) > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
+                  {formatRupiah(debt.remaining_amount)}
+                </p>
+              </div>
+              <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${DEBT_REPORT_COLORS[debt.status] || 'bg-slate-100'}`}>
+                {DEBT_REPORT_LABELS[debt.status] || debt.status}
+              </span>
+            </div>
           </div>
         </div>
       ))}

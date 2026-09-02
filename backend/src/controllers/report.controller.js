@@ -468,6 +468,64 @@ export const purchasesReport = asyncHandler(async (req, res) => {
 });
 
 // ============================================================
+// LAPORAN HUTANG / PIUTANG (spec §15)
+// ============================================================
+export const debtReport = asyncHandler(async (req, res) => {
+  const period = ['daily', 'weekly', 'monthly', 'custom'].includes(req.query.period) ? req.query.period : 'daily';
+  const { start, end } = buildRange(period, req.query.from, req.query.to);
+  const startIso = toIso(start);
+  const endIso = toIso(end, true);
+
+  let debtsQuery = supabase
+    .from('customer_debts')
+    .select(
+      'id, customer:customers(id, name, phone), amount, paid_amount, remaining_amount, due_date, status, created_at, sale_id',
+      { count: 'exact' }
+    )
+    .neq('status', 'cancelled');
+
+  if (req.query.customer_id) debtsQuery = debtsQuery.eq('customer_id', req.query.customer_id);
+  if (req.query.status) debtsQuery = debtsQuery.eq('status', req.query.status);
+  debtsQuery = debtsQuery.gte('created_at', startIso).lte('created_at', endIso);
+
+  const { data: debts, count } = await debtsQuery.order('created_at', { ascending: false });
+
+  const rows = debts || [];
+  const totals = {
+    total_debt: rows.reduce((a, d) => a + Number(d.amount || 0), 0),
+    total_pending: rows.reduce((a, d) => a + Math.max(0, Number(d.remaining_amount || 0)), 0),
+    total_paid: rows.reduce((a, d) => a + Number(d.paid_amount || 0), 0),
+    total_overdue: rows.reduce((a, d) => a + (d.status === 'overdue' ? Math.max(0, Number(d.remaining_amount || 0)) : 0), 0),
+    records_count: count || 0,
+    customers_count: new Set(rows.map((d) => d.customer_id)).size,
+    pending_count: rows.filter((d) => d.status === 'pending' || d.status === 'partial').length,
+  };
+
+  const result = { period, from: start, to: end, totals, debts: rows };
+
+  if (req.query.export === 'csv') {
+    const csv = toCsv(rows, [
+      { key: (r) => r.customer?.name || '-', label: 'Pelanggan' },
+      { key: 'amount', label: 'Total Hutang' },
+      { key: 'paid_amount', label: 'Sudah Dibayar' },
+      { key: 'remaining_amount', label: 'Sisa Hutang' },
+      { key: 'due_date', label: 'Jatuh Tempo' },
+      { key: 'status', label: 'Status' },
+    ]);
+    return csvResponse(res, csv, `laporan-hutang-${start}-${end}.csv`);
+  }
+  if (req.query.export === 'xlsx') {
+    const workbook = await buildExcel('debt', result, { from: start, to: end });
+    return excelResponse(res, workbook, `laporan-hutang-${start}-${end}.xlsx`);
+  }
+  if (req.query.export === 'pdf') {
+    const buffer = await buildPdf('debt', result, { from: start, to: end });
+    return pdfResponse(res, buffer, `laporan-hutang-${start}-${end}.pdf`);
+  }
+  return ok(res, result);
+});
+
+// ============================================================
 // DASHBOARD — ringkasan
 // ============================================================
 export const dashboardSummary = asyncHandler(async (req, res) => {
@@ -519,6 +577,18 @@ export const dashboardSummary = asyncHandler(async (req, res) => {
     });
   }
 
+  // Ringkasan hutang (additive — graceful jika migration 0014 belum di-apply)
+  let debt = { total_pending: 0, paid_today: 0, new_debt_today: 0, count_pending: 0 };
+  try {
+    const { data: debtSummary } = await supabase.rpc('fn_get_debt_summary', {
+      p_from: today,
+      p_to: today,
+    });
+    if (debtSummary) debt = debtSummary;
+  } catch {
+    // abaikan jika fn belum ada
+  }
+
   return ok(res, {
     today_sales: todaySales,
     today_transactions: todayCount,
@@ -530,6 +600,10 @@ export const dashboardSummary = asyncHandler(async (req, res) => {
     total_customers: customersRes.count || 0,
     purchases_today: purchasesToday,
     open_cash: Math.round(openCash * 100) / 100,
+    total_pending_debt: Number(debt.total_pending || 0),
+    pending_debt_count: Number(debt.count_pending || 0),
+    today_paid_debt: Number(debt.paid_today || 0),
+    today_new_debt: Number(debt.new_debt_today || 0),
   });
 });
 

@@ -16,4 +16,8 @@ router.get('/customer-debts/detail/:id', requirePermission('customers.view'), as
 router.post('/customer-debts', requirePermission('customers.create'), validate(createDebtSchema), asyncHandler(customerDebt.createDebt));
 router.post('/customer-debts/:id/pay', requirePermission('customers.update'), validate(payDebtSchema), asyncHandler(customerDebt.payDebt));
 
+// Riwayat pembayaran (spec §9) — path berbeda dari /:customer_id (2-level)
+router.get('/customer-debts/:id/payment-history', requirePermission('customers.view'), asyncHandler(customerDebt.getDebtPaymentHistory));
+router.post('/customer-debts/:id/cancel', requirePermission('customers.update'), asyncHandler(customerDebt.cancelDebt));
+
 export default router;

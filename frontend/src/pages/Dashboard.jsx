@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import {
   Banknote, ReceiptText, Package, AlertTriangle, Users, ShoppingBag, TrendingUp, Wallet,
+  HandCoins, BadgeDollarSign, History,
 } from 'lucide-react';
 import { Card } from '../components/ui/DataTable.jsx';
 import { StatCard, Skeleton, ErrorState, EmptyState, Badge } from '../components/ui/Feedback.jsx';
@@ -60,16 +61,48 @@ export default function Dashboard() {
       ) : summary.error ? (
         <ErrorState onRetry={summary.reload} />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Total Penjualan Hari Ini" value={formatRupiah(s.today_sales)} icon={Banknote} color="bg-emerald-500 text-white" />
-          <StatCard label="Jumlah Transaksi Hari Ini" value={formatNumber(s.today_transactions)} icon={ReceiptText} color="bg-primary-500 text-white" />
-          <StatCard label="Profit Hari Ini" value={formatRupiah(s.today_profit)} icon={TrendingUp} color="bg-sky-500 text-white" />
-          <StatCard label="Total Produk" value={formatNumber(s.total_products)} icon={Package} color="bg-slate-500 text-white" />
-          <StatCard label="Stok Menipis" value={formatNumber(s.low_stock)} icon={AlertTriangle} color="bg-amber-500 text-white" />
-          <StatCard label="Total Pelanggan" value={formatNumber(s.total_customers)} icon={Users} color="bg-violet-500 text-white" />
-          <StatCard label="Total Pembelian Hari Ini" value={formatRupiah(s.purchases_today)} icon={ShoppingBag} color="bg-rose-500 text-white" />
-          <StatCard label="Kas Saat Ini" value={formatRupiah(s.open_cash)} icon={Wallet} color="bg-teal-500 text-white" />
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard label="Total Penjualan Hari Ini" value={formatRupiah(s.today_sales)} icon={Banknote} color="bg-emerald-500 text-white" />
+            <StatCard label="Jumlah Transaksi Hari Ini" value={formatNumber(s.today_transactions)} icon={ReceiptText} color="bg-primary-500 text-white" />
+            <StatCard label="Profit Hari Ini" value={formatRupiah(s.today_profit)} icon={TrendingUp} color="bg-sky-500 text-white" />
+            <StatCard label="Total Produk" value={formatNumber(s.total_products)} icon={Package} color="bg-slate-500 text-white" />
+            <StatCard label="Stok Menipis" value={formatNumber(s.low_stock)} icon={AlertTriangle} color="bg-amber-500 text-white" />
+            <StatCard label="Total Pelanggan" value={formatNumber(s.total_customers)} icon={Users} color="bg-violet-500 text-white" />
+            <StatCard label="Total Pembelian Hari Ini" value={formatRupiah(s.purchases_today)} icon={ShoppingBag} color="bg-rose-500 text-white" />
+            <StatCard label="Kas Saat Ini" value={formatRupiah(s.open_cash)} icon={Wallet} color="bg-teal-500 text-white" />
+          </div>
+
+          {/* Ringkasan Hutang / Piutang (additive — memakai data dari summary) */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              label="Total Piutang"
+              value={formatRupiah(s.total_pending_debt)}
+              icon={HandCoins}
+              color="bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md shadow-amber-500/25"
+              sub={`${formatNumber(s.pending_debt_count)} transaksi belum lunas`}
+            />
+            <StatCard
+              label="Piutang Bertambah Hari Ini"
+              value={formatRupiah(s.today_new_debt)}
+              icon={BadgeDollarSign}
+              color="bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-md shadow-orange-500/25"
+            />
+            <StatCard
+              label="Pembayaran Piutang Hari Ini"
+              value={formatRupiah(s.today_paid_debt)}
+              icon={History}
+              color="bg-gradient-to-br from-success-400 to-success-600 text-white shadow-md shadow-success-500/25"
+            />
+            <StatCard
+              label="Uang Masuk (Hari Ini)"
+              value={formatRupiah(Number(s.today_sales) - Number(s.today_new_debt))}
+              icon={Banknote}
+              color="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md shadow-emerald-500/25"
+              sub="Penjualan dikurangi piutang baru"
+            />
+          </div>
+        </>
       )}
 
       {charts.loading ? (

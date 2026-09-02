@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Plus, AlertTriangle, CheckCircle2, Receipt, CreditCard, FileText } from 'lucide-react';
+import { Plus, AlertTriangle, CheckCircle2, Receipt, CreditCard, FileText, History, Ban } from 'lucide-react';
 import { customersApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
@@ -10,7 +10,7 @@ import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
   DataTable, SearchInput, Button, Modal, Field, Input, Textarea, Select, PageHeader,
-  StatCard, ProgressBar, CurrencyInput, Badge,
+  StatCard, ProgressBar, CurrencyInput, Badge, ConfirmDialog, Skeleton, ErrorState, EmptyState,
 } from '../components/ui/index.jsx';
 import {
   formatRupiah, formatDate, formatDateTime, debtStatusLabel, debtStatusColor,
@@ -52,6 +52,18 @@ export default function Debts() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailDebt, setDetailDebt] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  // Riwayat pembayaran (spec §9)
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyDebt, setHistoryDebt] = useState(null);
+  const [history, setHistory] = useState({ loading: false, data: null, error: null });
+
+  // Pembatalan hutang (spec §20)
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelDebt, setCancelDebt] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelSaving, setCancelSaving] = useState(false);
+  const [cancelError, setCancelError] = useState('');
 
   const list = useApi(
     () => customersApi.listDebts({
@@ -152,6 +164,44 @@ export default function Debts() {
       if (found) setDetailDebt(found);
     } catch { /* abaikan */ }
     setDetailLoading(false);
+  };
+
+  const openHistory = async (debt) => {
+    setHistoryDebt(debt);
+    setHistoryOpen(true);
+    setHistory({ loading: true, data: null, error: null });
+    try {
+      const res = await customersApi.paymentHistory(debt.id);
+      setHistory({ loading: false, data: res.data, error: null });
+    } catch (err) {
+      setHistory({ loading: false, data: null, error: getErrorMessage(err, 'Gagal memuat riwayat') });
+    }
+  };
+
+  const openCancel = (debt) => {
+    setCancelDebt(debt);
+    setCancelReason('');
+    setCancelError('');
+    setCancelOpen(true);
+  };
+
+  const saveCancel = async () => {
+    if (!cancelReason.trim()) {
+      setCancelError('Alasan pembatalan wajib diisi');
+      return;
+    }
+    setCancelSaving(true);
+    setCancelError('');
+    try {
+      await customersApi.cancelDebt(cancelDebt.id, { reason: cancelReason });
+      toast.success('Hutang berhasil dibatalkan');
+      setCancelOpen(false);
+      list.reload();
+    } catch (err) {
+      setCancelError(getErrorMessage(err, 'Gagal membatalkan hutang'));
+    } finally {
+      setCancelSaving(false);
+    }
   };
 
   const items = list.data?.items || [];
@@ -271,12 +321,31 @@ export default function Debts() {
                   </button>
                 )}
                 <button
+                  onClick={() => openHistory(r)}
+                  className="rounded-md p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+                  aria-label="Lihat riwayat pembayaran"
+                  title="Riwayat Pembayaran"
+                >
+                  <History className="h-4 w-4" />
+                </button>
+                <button
                   onClick={() => openDetail(r)}
                   className="rounded-md p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600 transition-colors"
                   aria-label="Lihat detail"
+                  title="Detail"
                 >
                   <FileText className="h-4 w-4" />
                 </button>
+                {can('customers.update') && r.status === 'pending' && Number(r.paid_amount || 0) === 0 && (
+                  <button
+                    onClick={() => openCancel(r)}
+                    className="rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                    aria-label="Batalkan hutang"
+                    title="Batalkan"
+                  >
+                    <Ban className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             ),
           },
@@ -457,6 +526,88 @@ export default function Debts() {
         )}
         {detailLoading && <p className="text-xs text-slate-400 text-center">Memuat detail...</p>}
       </Modal>
+
+      {/* Modal: Riwayat Pembayaran (spec §9) */}
+      <Modal
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        title="Riwayat Pembayaran Hutang"
+        size="lg"
+        footer={<Button variant="secondary" onClick={() => setHistoryOpen(false)}>Tutup</Button>}
+      >
+        {historyDebt && (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-1.5 text-sm">
+              <DetailRow label="Pelanggan" value={historyDebt.customer?.name} />
+              <DetailRow label="Total Hutang" value={formatRupiah(historyDebt.amount)} />
+              <DetailRow label="Sudah Dibayar" value={<span className="font-mono text-emerald-600">{formatRupiah(historyDebt.paid_amount)}</span>} />
+              <DetailRow
+                label="Sisa"
+                value={
+                  <span className={`font-mono font-semibold ${Math.max(0, Number(historyDebt.amount) - Number(historyDebt.paid_amount)) > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
+                    {formatRupiah(Math.max(0, Number(historyDebt.amount) - Number(historyDebt.paid_amount)))}
+                  </span>
+                }
+              />
+            </div>
+
+            <div>
+              <h4 className="mb-2 text-sm font-semibold text-slate-900">Riwayat Pembayaran</h4>
+              {history.loading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12" />)}
+                </div>
+              ) : history.error ? (
+                <ErrorState message={history.error} onRetry={() => openHistory(historyDebt)} />
+              ) : !history.data?.payments?.length ? (
+                <EmptyState title="Belum ada pembayaran" description="Hutang ini belum pernah dibayar" icon={Receipt} />
+              ) : (
+                <div className="overflow-hidden rounded-xl border border-slate-200">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Tanggal</th>
+                        <th className="px-4 py-2 text-left">Metode</th>
+                        <th className="px-4 py-2 text-right">Jumlah</th>
+                        <th className="px-4 py-2 text-left">Catatan</th>
+                        <th className="px-4 py-2 text-left">Oleh</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {history.data.payments.map((p) => (
+                        <tr key={p.id}>
+                          <td className="px-4 py-2 text-xs text-slate-600">{formatDateTime(p.paid_at)}</td>
+                          <td className="px-4 py-2 text-xs">{p.payment_method || 'CASH'}</td>
+                          <td className="px-4 py-2 text-right font-mono font-semibold text-emerald-600">{formatRupiah(p.amount)}</td>
+                          <td className="px-4 py-2 text-xs text-slate-500">{p.notes || '-'}</td>
+                          <td className="px-4 py-2 text-xs text-slate-500">{p.created_by_name || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal: Pembatalan Hutang (spec §20) */}
+      <ConfirmDialog
+        open={cancelOpen}
+        onClose={() => setCancelOpen(false)}
+        onConfirm={saveCancel}
+        loading={cancelSaving}
+        title="Batalkan Hutang"
+        message={
+          cancelDebt
+            ? `Hutang ${formatRupiah(cancelDebt.amount)} atas nama ${cancelDebt.customer?.name || '-'} akan ditandai sebagai DIBATALKAN. Tindakan ini tidak dapat dibatalkan. Alasan akan dicatat di audit log.${cancelError ? `\n\n${cancelError}` : ''}`
+            : ''
+        }
+        confirmText="Ya, batalkan"
+        cancelText="Batal"
+        size="md"
+      />
     </div>
   );
 }
