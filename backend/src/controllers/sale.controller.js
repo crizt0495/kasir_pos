@@ -106,6 +106,7 @@ export const createSale = asyncHandler(async (req, res) => {
       String(e.message || '').includes('schema cache'));
 
   if (isFunctionNotFound(error)) {
+    console.warn('[createSale] fn_create_sale p_allow_partial not found, retrying without it');
     const retry = await supabase.rpc('fn_create_sale', {
       p_cashier_id: req.user.id,
       p_created_by: req.user.id,
@@ -121,6 +122,16 @@ export const createSale = asyncHandler(async (req, res) => {
     });
     result = retry.data;
     error = retry.error;
+  }
+
+  if (error) {
+    console.error('[createSale] RPC error:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      body: { customer_id: body.customer_id, payment_method: body.payment_method, cash_received: body.cash_received, items_count: body.items?.length },
+    });
   }
 
   handleRpcError(error);
