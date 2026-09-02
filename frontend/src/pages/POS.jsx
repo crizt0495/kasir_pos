@@ -813,7 +813,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
     try {
       const payload = {
         payment_method: method,
-        cash_received: isCash ? paidNum : null,
+        cash_received: isCash && paidNum > 0 ? paidNum : null,
         notes: notes || null,
         tax: taxAmount,
         additional_cost: additionalCost || 0,
