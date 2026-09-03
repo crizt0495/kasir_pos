@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Save, Store, Settings as SettingsIcon, Receipt, Percent, Boxes, UserCog, AlertTriangle, Bell } from 'lucide-react';
 import { settingsApi, notificationsApi } from '../api/index.js';
+import { subscribePush } from '../components/layout/NotificationsBell';
 import { useApi } from '../hooks/useApi.js';
 import { settingsSchema } from '../schemas/index.js';
 import { validateSchema } from '../utils/validation.js';
@@ -26,6 +27,25 @@ export default function Settings() {
   const settings = useApi(() => settingsApi.get().then((r) => r.data), []);
   const [saving, setSaving] = useState(false);
   const [testSending, setTestSending] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
+  const [pushStatus, setPushStatus] = useState(null); // null | 'subscribed' | 'denied' | 'vapid-missing'
+
+  const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
+
+  const checkPushStatus = async () => {
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) { setPushStatus('vapid-missing'); return; }
+      if (!VAPID_PUBLIC_KEY) { setPushStatus('vapid-missing'); return; }
+      if (Notification.permission === 'denied') { setPushStatus('denied'); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      setPushStatus(sub ? 'subscribed' : 'none');
+    } catch {
+      setPushStatus('vapid-missing');
+    }
+  };
+
+  useEffect(() => { checkPushStatus(); }, []);
 
   const s = settings.data || {};
 
@@ -270,6 +290,40 @@ export default function Settings() {
                   onChange={(e) => update('notification', { channels: { ...(form.notification.channels || {}), web_push: e.target.checked } })}
                   disabled={!form.notification.enabled}
                 />
+                <div className="flex flex-wrap items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                  <span className="text-xs text-slate-500">
+                    Status Web Push di perangkat ini:{' '}
+                    <b className="text-slate-700">
+                      {pushStatus === 'subscribed' ? 'Teraktifkan ✓' : pushStatus === 'denied' ? 'Ditolak browser' : pushStatus === 'vapid-missing' ? 'VAPID belum dikonfigurasi' : 'Belum aktif'}
+                    </b>
+                  </span>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    icon={Bell}
+                    loading={subscribing}
+                    disabled={!form.notification.enabled || !VAPID_PUBLIC_KEY}
+                    onClick={async () => {
+                      setSubscribing(true);
+                      try {
+                        await subscribePush();
+                        await checkPushStatus();
+                        toast.success('Web Push aktif di perangkat ini');
+                      } catch (err) {
+                        if (err?.name === 'NotAllowedError') {
+                          setPushStatus('denied');
+                          toast.error('Izin notifikasi ditolak browser — aktifkan lewat ikon 🔒 di address bar');
+                        } else {
+                          toast.error(getErrorMessage(err, 'Gagal mengaktifkan Web Push'));
+                        }
+                      } finally {
+                        setSubscribing(false);
+                      }
+                    }}
+                  >
+                    Aktifkan Web Push
+                  </Button>
+                </div>
                 <Checkbox
                   label="SMS (via Fonnte/Twilio)"
                   checked={form.notification.channels?.sms === true}

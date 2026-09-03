@@ -16,8 +16,8 @@ function urlBase64ToUint8Array(base64String) {
   return output;
 }
 
-/** Daftarkan subscription Web Push ke backend (Owner) */
-async function subscribePush() {
+/** Daftarkan subscription Web Push ke backend (Owner). Dipakai Settings & Bell. */
+export async function subscribePush() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !VAPID_PUBLIC_KEY) return;
   try {
     if (Notification.permission === 'denied') return;
