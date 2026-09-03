@@ -67,7 +67,7 @@ export default function Permissions() {
         description="Kelola hak akses granular per role. Aktifkan/nonaktifkan di kolom role; role sistem (Owner) dikunci."
         actions={
           can('permissions.view') && (
-            <Button variant="secondary" size="sm" onClick={matrix.reload} icon={<RefreshCw className="h-4 w-4" />}>
+            <Button variant="secondary" size="sm" onClick={matrix.reload} icon={RefreshCw}>
               Muat Ulang
             </Button>
           )
