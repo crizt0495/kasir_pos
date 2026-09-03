@@ -107,8 +107,6 @@ export default function Settings() {
       const res = await notificationsApi.sendTest();
       const r = res.data || {};
       const parts = [];
-      if (r.sms) parts.push(`SMS: ${r.sms.status === 'sent' ? 'OK' : `gagal (${r.sms.error || r.sms.status})`}`);
-      if (r.telegram) parts.push(`Telegram: ${r.telegram.status === 'sent' ? 'OK' : `gagal (${r.telegram.error || r.telegram.status})`}`);
       if (r.web_push) parts.push(`Web Push: ${(r.web_push?.sent || 0) > 0 ? 'OK' : `tidak ada penerima${r.web_push?.skipped ? ' (' + r.web_push.skipped + ')' : ''}`}`);
       if (parts.length) {
         toast.success('Hasil uji notifikasi: ' + parts.join(' · '));
@@ -324,56 +322,14 @@ export default function Settings() {
                     Aktifkan Web Push
                   </Button>
                 </div>
-                <Checkbox
-                  label="SMS (via Fonnte/Twilio)"
-                  checked={form.notification.channels?.sms === true}
-                  onChange={(e) => update('notification', { channels: { ...(form.notification.channels || {}), sms: e.target.checked } })}
-                  disabled={!form.notification.enabled}
-                />
-                <Checkbox
-                  label="Telegram Bot"
-                  checked={form.notification.channels?.telegram === true}
-                  onChange={(e) => update('notification', { channels: { ...(form.notification.channels || {}), telegram: e.target.checked } })}
-                  disabled={!form.notification.enabled}
-                />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <Field
-                label="Nomor HP Owner (SMS)"
-                hint="Contoh: 628123456789"
-                error={errors.notification?.owner_phone}
-              >
-                <Input
-                  value={form.notification.owner_phone || ''}
-                  onChange={(e) => update('notification', { owner_phone: e.target.value })}
-                  placeholder="628xxxxxxxxxx"
-                  disabled={!form.notification.enabled || form.notification.channels?.sms !== true}
-                  error={!!errors.notification?.owner_phone}
-                />
-              </Field>
-              <Field
-                label="Telegram Chat ID (Owner)"
-                hint="Angka chat id owner. Kosongkan untuk pakai TELEGRAM_CHAT_ID di .env"
-                error={errors.notification?.telegram_chat_id}
-              >
-                <Input
-                  value={form.notification.telegram_chat_id || ''}
-                  onChange={(e) => update('notification', { telegram_chat_id: e.target.value })}
-                  placeholder="123456789"
-                  disabled={!form.notification.enabled || form.notification.channels?.telegram !== true}
-                  error={!!errors.notification?.telegram_chat_id}
-                />
-              </Field>
-            </div>
-
             <div className="rounded-xl bg-slate-50 p-4 text-xs text-slate-500">
-              <p className="font-medium text-slate-600">Catatan setup channel:</p>
+              <p className="font-medium text-slate-600">Cara kerja:</p>
               <ul className="mt-1.5 list-disc space-y-1 pl-4">
-                <li><b>Web Push</b> — butuh VAPID keys di <code>.env</code>; Owner harus buka aplikasi di browser HP lalu mengaktifkan lonceng notifikasi, dan install aplikasinya ke layar utama.</li>
-                <li><b>SMS</b> — butuh API token provider (Fonnte/Twilio) di <code>.env</code>; nomor HP diisi di sini.</li>
-                <li><b>Telegram</b> — butuh <code>TELEGRAM_BOT_TOKEN</code> di <code>.env</code>; chat id bisa diisi di sini.</li>
+                <li>Owner harus buka aplikasi di browser HP, klik <b>Aktifkan Web Push</b>, lalu izinkan notifikasi di browser.</li>
+                <li>Install aplikasi ke layar utama HP agar tetap menerima notifikasi saat tertutup (PWA).</li>
               </ul>
             </div>
 
