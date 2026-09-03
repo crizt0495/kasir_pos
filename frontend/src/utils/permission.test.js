@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { hasPermission, hasAnyPermission } from './permission.js';
 
 const admin = { permissions: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.delete'] };
-const cashier = { permissions: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create'] };
+const cashier = { permissions: ['pos.access', 'sales.view', 'sales.create', 'products.view', 'customers.view'] };
 
 describe('hasPermission', () => {
   it('true bila punya permission tunggal', () => {

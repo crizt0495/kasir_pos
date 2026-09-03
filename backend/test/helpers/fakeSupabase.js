@@ -29,7 +29,7 @@ const permissionRows = [
 /** Kode permission per role (sumber tunggal kebenaran relasi role↔permission) */
 const rolePermissionCodes = {
   [ownerRoleId]: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.create', 'products.delete', 'roles.view', 'reports.view', 'reports.export', 'inventory.view', 'inventory.adjust', 'customers.view', 'customers.create', 'customers.update', 'customers.delete', 'users.view', 'users.create', 'users.update', 'users.delete'],
-  [kasirRoleId]: ['dashboard.view', 'products.view', 'customers.view', 'customers.create', 'customers.update'],
+  [kasirRoleId]: ['pos.access', 'products.view', 'customers.view', 'customers.create', 'customers.update'],
 };
 
 /** Role dengan role_permissions sudah "di-join" (bentuk yang dipakai loadUserAuth) */
