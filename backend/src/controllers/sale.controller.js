@@ -95,6 +95,7 @@ export const createSale = asyncHandler(async (req, res) => {
     p_notes: body.notes || null,
     p_session_id: body.session_id || null,
     p_allow_partial: hasDebt,
+    p_record_debt: body.record_debt ?? null,
   });
 
   // Fallback: jika migration 0013 belum di-apply, tanpa p_allow_partial
@@ -106,7 +107,7 @@ export const createSale = asyncHandler(async (req, res) => {
       String(e.message || '').includes('schema cache'));
 
   if (isFunctionNotFound(error)) {
-    console.warn('[createSale] fn_create_sale p_allow_partial not found, retrying without it');
+    console.warn('[createSale] fn_create_sale versi 0014 (dgn p_record_debt) tidak ditemukan, retry ke versi 0013 (p_allow_partial)');
     const retry = await supabase.rpc('fn_create_sale', {
       p_cashier_id: req.user.id,
       p_created_by: req.user.id,
@@ -119,6 +120,7 @@ export const createSale = asyncHandler(async (req, res) => {
       p_cash_received: body.cash_received ?? null,
       p_notes: body.notes || null,
       p_session_id: body.session_id || null,
+      p_allow_partial: body.record_debt != null,
     });
     result = retry.data;
     error = retry.error;

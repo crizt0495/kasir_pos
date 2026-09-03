@@ -21,6 +21,14 @@ export const createSaleSchema = z.object({
   cash_received: z.coerce.number().min(0).nullable().optional(),
   notes: z.string().trim().max(1000).nullable().optional(),
   session_id: z.string().uuid().nullable().optional(),
+  record_debt: z
+    .object({
+      amount: z.coerce.number().positive('Jumlah hutang harus lebih dari 0'),
+      due_date: z.string().date('Tanggal jatuh tempo tidak valid').nullable().optional(),
+      notes: z.string().trim().max(1000).nullable().optional(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export const refundItemSchema = z.object({

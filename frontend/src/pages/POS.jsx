@@ -170,19 +170,9 @@ export default function POS() {
         session_id: sessionId || null,
         discount: Number(cart.discount) || 0,
       });
-      // Catat hutang baru jika bayar kurang
+      // Hutang dicatat atomik di dalam fn_create_sale (server) dari record_debt
       if (payload.record_debt && cart.customer?.id) {
-        try {
-          await customersApi.createDebt({
-            customer_id: cart.customer.id,
-            amount: payload.record_debt.amount,
-            due_date: payload.record_debt.due_date,
-            notes: payload.record_debt.notes || `Hutang dari transaksi ${res.data?.sale?.invoice_number || ''}`,
-          });
-          toast.success(`Hutang ${formatRupiah(payload.record_debt.amount)} berhasil dicatat`);
-        } catch (err) {
-          toast.error(getErrorMessage(err, 'Gagal mencatat hutang'));
-        }
+        toast.success(`Hutang ${formatRupiah(payload.record_debt.amount)} berhasil dicatat`);
       }
       setLastSale(res.data.sale);
       cart.clear();
