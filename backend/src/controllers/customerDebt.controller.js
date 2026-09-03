@@ -91,17 +91,15 @@ export const createDebt = asyncHandler(async (req, res) => {
 export const payDebt = asyncHandler(async (req, res) => {
   const body = req.body;
 
-  // Gunakan overload 5-arg bila payment_method/notes dikirim,
-  // selain itu fallback ke overload 3-arg (backward compatible).
-  const rpcArgs = {
+  // Selalu gunakan overload 5-arg (payment_method + notes).
+  // Parameter default di DB: p_payment_method='CASH', p_notes=null.
+  const payload = {
     p_debt_id: req.params.id,
     p_amount: body.amount,
     p_created_by: req.user.id,
+    p_payment_method: body.payment_method || 'CASH',
+    p_notes: body.notes || null,
   };
-  const payload =
-    body.payment_method || body.notes
-      ? { ...rpcArgs, p_payment_method: body.payment_method || 'CASH', p_notes: body.notes || null }
-      : rpcArgs;
 
   const { data: result, error } = await supabase.rpc('fn_pay_debt', payload);
   if (error) throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
