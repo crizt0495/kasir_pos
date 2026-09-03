@@ -103,7 +103,17 @@ pos-app/
    - `supabase/migrations/0005_profit_sharing.sql`
    - `supabase/migrations/0006_grants.sql`
    - `supabase/migrations/0007_opname_datetime.sql`
+   - `supabase/migrations/0008_bigdata_performance.sql`
+   - `supabase/migrations/0009_materialized_views.sql`
+   - `supabase/migrations/0010_remove_kasir_dashboard_permission.sql`
+   - `supabase/migrations/0011_ganti_password_admin.sql`
+   - `supabase/migrations/0012_customer_debt.sql`
+   - `supabase/migrations/0013_allow_partial_payment.sql`
+   - `supabase/migrations/0014_debt_payments_and_cancel.sql`
+   - `supabase/migrations/0015_fix_cancel_debt_double_subtract.sql`
 4. Jalankan `supabase/seed.sql` terakhir.
+
+> **Penting:** migrasi `0013`, `0014`, dan `0015` wajib dijalankan berurutan di SQL Editor jika tidak memakai Supabase CLI — migrasi `0015` memperbaiki bug penghitungan `pending_debt`/`total_debt` saat hutang dibatalkan (double-subtract) dan melakukan rekonsiliasi data yang sudah terlanjur salah. Jika sudah pernah migrasi lama, cukup jalankan yang belum pernah dieksekusi secara berurutan.
 
 > `0006_grants.sql` memberikan hak akses DML ke role API (anon/authenticated/service_role) —
 > diperlukan agar PostgREST bisa membaca tabel di lingkungan lokal. Keamanan tetap dijaga RLS
