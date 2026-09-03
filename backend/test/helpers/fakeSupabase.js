@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { randomUUID } from 'node:crypto';
 
 const ADMIN_PASSWORD = 'Admin2026!x';
 const LIMITED_PASSWORD = 'Limited123!';
@@ -27,7 +28,7 @@ const permissionRows = [
 
 /** Kode permission per role (sumber tunggal kebenaran relasi role↔permission) */
 const rolePermissionCodes = {
-  [ownerRoleId]: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.create', 'products.delete', 'roles.view', 'reports.view', 'reports.export', 'inventory.view', 'inventory.adjust', 'customers.view', 'customers.create', 'customers.update', 'customers.delete'],
+  [ownerRoleId]: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.create', 'products.delete', 'roles.view', 'reports.view', 'reports.export', 'inventory.view', 'inventory.adjust', 'customers.view', 'customers.create', 'customers.update', 'customers.delete', 'users.view', 'users.create', 'users.update', 'users.delete'],
   [kasirRoleId]: ['dashboard.view', 'products.view', 'customers.view', 'customers.create', 'customers.update'],
 };
 
@@ -157,7 +158,12 @@ function matchesFilter(row, filters) {
     if (op === 'eq') return value === val;
     if (op === 'neq') return value !== val;
     if (op === 'ilike') return String(value || '').toLowerCase().includes(String(val).replace(/%/g, '').toLowerCase());
-    if (op === 'in') return Array.isArray(val) && val.includes(value);
+    if (op === 'in') {
+      // PostgREST: .in.(a,b) — buang kurung pembungkus bila ada
+      const cleaned = String(val || '').replace(/^\(|\)$/g, '');
+      const list = Array.isArray(cleaned) ? cleaned : cleaned.split(',').filter(Boolean);
+      return list.includes(value);
+    }
     if (op === 'gte') return Number(value) >= Number(val);
     if (op === 'lte') return Number(value) <= Number(val);
     return true;
@@ -182,10 +188,61 @@ export function createFakeSupabase() {
       }
 
       function getRows() {
+        if (state.table === 'v_users') {
+          // View turunan: selaraskan secara live dengan users + profiles + roles
+          for (const u of store.users) {
+            u.roles = (u.user_roles || []).map((ur) => ur.role).filter(Boolean);
+          }
+          const derived = store.users.map((u) => {
+            const joined = joinUsers(u);
+            return {
+              id: u.id,
+              username: u.username,
+              is_active: u.is_active,
+              must_change_password: u.must_change_password,
+              token_version: u.token_version,
+              last_login_at: u.last_login_at,
+              full_name: (joined.profiles || {}).full_name,
+              email: (joined.profiles || {}).email,
+              phone: (joined.profiles || {}).phone,
+              avatar_url: (joined.profiles || {}).avatar_url ?? null,
+              roles: joined.roles || [],
+              created_at: u.created_at,
+            };
+          });
+          return applyQuery(derived);
+        }
+        if (state.table === 'users') {
+          const source = store.users || [];
+          return applyQuery(source).map(joinUsers);
+        }
         const source = store[state.table] || [];
+        return applyQuery(source);
+      }
+
+      function joinUsers(row) {
+        // Emulasi join relasi: embed profil & user_roles untuk tabel users
+        if (!row) return row;
+        const prof = store.profiles.find((p) => p.id === row.id) || row.profiles;
+        const urs =
+          (store.user_roles || []).filter((ur) => ur.user_id === row.id) ||
+          row.user_roles;
+        const roles = urs
+          .map((ur) => ur.role)
+          .filter(Boolean);
+        return {
+          ...row,
+          profiles: prof ?? row.profiles ?? null,
+          user_roles: urs.length ? urs : row.user_roles || [],
+          roles,
+        };
+      }
+
+      function applyQuery(source) {
         let rows = source.filter((r) => matchesFilter(r, state.filters));
         if (state.orFilters.length) {
-          rows = rows.filter((r) => matchesFilter(r, state.orFilters));
+          // PostgREST .or() = SALAH SATU (OR) yang cocok
+          rows = rows.filter((r) => state.orFilters.some((f) => matchesFilter(r, [f])));
         }
         if (state.orderBy && rows.length) {
           rows = [...rows].sort((a, b) => {
@@ -225,11 +282,92 @@ export function createFakeSupabase() {
         single() { state.mode = 'single'; return q; },
         insert(rows) {
           const list = Array.isArray(rows) ? rows : [rows];
-          if (state.table === 'audit_logs') store.audit_logs.push(...list);
+          if (state.table === 'audit_logs') {
+            store.audit_logs.push(...list);
+            return { error: null, select: () => ({ single: () => ({ data: list[0] || null, error: null }), maybeSingle: () => ({ data: list[0] || null, error: null }) }) };
+          }
+          const created = list.map((row) => {
+            if (state.table === 'users') {
+              const id = row.id || randomUUID();
+              const user = { ...row, id, profile: row.profile ?? null };
+              if (user.profiles === undefined) user.profiles = {};
+              return user;
+            }
+            if (state.table === 'profiles') {
+              // Simpan di store.profiles + embed ke baris users agar join loadUserAuth konsisten
+              const prof = { avatar_url: null, ...row };
+              const parent = (store.users || []).find((u) => u.id === prof.id);
+              if (parent) parent.profiles = prof;
+              return prof;
+            }
+            return { ...row };
+          });
+          if (!store[state.table]) store[state.table] = [];
+          let pushed = created;
+          if (state.table === 'user_roles') {
+            // Ubah { user_id, role_id } menjadi bentuk dengan role terembed
+            pushed = created.map((ur) => ({
+              user_id: ur.user_id,
+              role: store.roles.find((r) => r.id === ur.role_id) || store.roles.find((r) => r.code === ur.role_id) || { id: ur.role_id, code: ur.role_id },
+            }));
+          }
+          store[state.table].push(...pushed);
+          return { error: null, select: () => ({ single: () => ({ data: pushed[0] || null, error: null }), maybeSingle: () => ({ data: pushed[0] || null, error: null }) }) };
+        },
+        update(patch) {
+          const target = () => store[state.table] || (store[state.table] = []);
+          const qUpdate = {
+            eq(col, val) {
+              const rows = target();
+              rows.forEach((r) => {
+                if (r[col] === val) Object.assign(r, { ...patch, updated_at: r.updated_at ?? new Date().toISOString() });
+              });
+              return qUpdate;
+            },
+            in(col, vals) {
+              const rows = target();
+              rows.forEach((r) => {
+                if (Array.isArray(vals) && vals.includes(r[col])) Object.assign(r, { ...patch });
+              });
+              return qUpdate;
+            },
+          };
+          return qUpdate;
+        },
+        upsert(rows) {
+          const list = Array.isArray(rows) ? rows : [rows];
+          list.forEach((row) => {
+            const arr = store[state.table] || (store[state.table] = []);
+            const idx = arr.findIndex((r) => r.id === row.id);
+            if (state.table === 'profiles') {
+              const parent = (store.users || []).find((u) => u.id === row.id);
+              if (parent) parent.profiles = { avatar_url: null, ...parent.profiles, ...row };
+            }
+            if (idx >= 0) arr[idx] = { ...arr[idx], ...row };
+            else arr.push({ ...row });
+          });
           return { error: null, select: () => ({ single: () => ({ data: list[0] || null, error: null }), maybeSingle: () => ({ data: list[0] || null, error: null }) }) };
         },
-        update() { return { eq: () => ({ error: null, select: () => ({ single: () => ({ data: {}, error: null }) }) }) }; },
-        delete() { return { eq: () => ({ error: null }) }; },
+        delete() {
+          const target = () => store[state.table] || (store[state.table] = []);
+          const qDelete = {
+            eq(col, val) {
+              const rows = target();
+              for (let i = rows.length - 1; i >= 0; i--) {
+                if (rows[i][col] === val) rows.splice(i, 1);
+              }
+              return qDelete;
+            },
+            in(col, vals) {
+              const rows = target();
+              for (let i = rows.length - 1; i >= 0; i--) {
+                if (Array.isArray(vals) && vals.includes(rows[i][col])) rows.splice(i, 1);
+              }
+              return qDelete;
+            },
+          };
+          return qDelete;
+        },
         then(resolve) {
           resolve(finish());
         },
