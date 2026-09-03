@@ -10,7 +10,7 @@ import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import {
   DataTable, SearchInput, Button, Modal, Field, Input, Textarea, Select, PageHeader,
-  StatCard, ProgressBar, CurrencyInput, Badge, ConfirmDialog, Skeleton, ErrorState, EmptyState,
+  StatCard, ProgressBar, CurrencyInput, Badge, Skeleton, ErrorState, EmptyState,
 } from '../components/ui/index.jsx';
 import {
   formatRupiah, formatDate, formatDateTime, debtStatusLabel, debtStatusColor,
@@ -593,21 +593,42 @@ export default function Debts() {
       </Modal>
 
       {/* Modal: Pembatalan Hutang (spec §20) */}
-      <ConfirmDialog
+      <Modal
         open={cancelOpen}
         onClose={() => setCancelOpen(false)}
-        onConfirm={saveCancel}
-        loading={cancelSaving}
         title="Batalkan Hutang"
-        message={
-          cancelDebt
-            ? `Hutang ${formatRupiah(cancelDebt.amount)} atas nama ${cancelDebt.customer?.name || '-'} akan ditandai sebagai DIBATALKAN. Tindakan ini tidak dapat dibatalkan. Alasan akan dicatat di audit log.${cancelError ? `\n\n${cancelError}` : ''}`
-            : ''
-        }
-        confirmText="Ya, batalkan"
-        cancelText="Batal"
         size="md"
-      />
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCancelOpen(false)} disabled={cancelSaving}>Batal</Button>
+            <Button variant="danger" onClick={saveCancel} loading={cancelSaving} disabled={!cancelReason.trim()}>Ya, batalkan</Button>
+          </>
+        }
+      >
+        {cancelDebt && (
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 rounded-xl bg-rose-50 p-4 text-sm text-rose-700">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+              <p>
+                Hutang <span className="font-semibold">{formatRupiah(cancelDebt.amount)}</span> atas nama{' '}
+                <span className="font-semibold">{cancelDebt.customer?.name || '-'}</span> akan ditandai sebagai{' '}
+                <span className="font-semibold">DIBATALKAN</span>. Tindakan ini tidak dapat dibatalkan. Alasan akan
+                dicatat di audit log.
+              </p>
+            </div>
+            <Field label="Alasan Pembatalan" required error={cancelError || (!cancelReason.trim() ? null : null)}>
+              <Textarea
+                rows={3}
+                maxLength={1000}
+                value={cancelReason}
+                onChange={(e) => { setCancelReason(e.target.value); setCancelError(''); }}
+                placeholder="Tuliskan alasan pembatalan hutang ini (wajib)"
+              />
+              <p className="mt-1 text-xs text-slate-400">Alasan wajib diisi dan akan dicatat di audit log.</p>
+            </Field>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
