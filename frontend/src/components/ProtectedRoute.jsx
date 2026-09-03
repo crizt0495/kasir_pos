@@ -20,11 +20,6 @@ export function RequireAuth({ children }) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  // Wajib ganti password (akun seed / reset admin)
-  if (user.must_change_password && location.pathname !== '/change-password') {
-    return <Navigate to="/change-password" replace />;
-  }
-
   return children;
 }
 
