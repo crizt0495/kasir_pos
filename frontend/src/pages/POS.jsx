@@ -466,12 +466,19 @@ export default function POS() {
             onClick={() => setShowCustomer(true)}
             className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition-all duration-200 hover:border-primary-400 hover:bg-primary-50/30"
           >
-            <span className="flex items-center gap-3">
+              <span className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white shadow-sm">
                 <Users className="h-5 w-5 text-slate-500" />
               </div>
-              <span className="font-semibold text-slate-800">
-                {cart.customer ? cart.customer.name : 'Pelanggan umum'}
+              <span className="min-w-0">
+                <span className="block font-semibold text-slate-800 truncate">
+                  {cart.customer ? cart.customer.name : 'Pelanggan umum'}
+                </span>
+                {cart.customer && !cart.customer.is_general && debtStats && Number(debtStats.pending_debt || 0) > 0 && (
+                  <span className="block text-xs font-medium text-amber-600 mt-0.5">
+                    Hutang: {formatRupiah(debtStats.pending_debt)}
+                  </span>
+                )}
               </span>
             </span>
             {cart.customer && (
