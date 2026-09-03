@@ -81,6 +81,7 @@ export default function UserForm() {
       return;
     }
     const payload = {
+      username: values.username,
       full_name: values.full_name,
       email: values.email || null,
       phone: values.phone || null,
@@ -88,7 +89,6 @@ export default function UserForm() {
       is_active: values.is_active,
     };
     if (!isEdit) {
-      payload.username = values.username;
       payload.password = values.password;
       payload.must_change_password = true; // user baru wajib ganti password pertama kali
     } else if (values.password) {
@@ -136,11 +136,14 @@ export default function UserForm() {
       <Card bodyClassName="p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {!isEdit && (
-              <Field label="Username" required error={errors.username?.message}>
-                <Input {...register('username')} error={errors.username} placeholder="cth: kasir2" disabled={isEdit} />
-              </Field>
-            )}
+            <Field
+              label="Username"
+              required
+              error={errors.username?.message}
+              hint={isEdit ? 'Mengubah username akan membuat user login ulang' : undefined}
+            >
+              <Input {...register('username')} error={errors.username} placeholder="cth: kasir2" />
+            </Field>
             <Field label="Nama Lengkap" required error={errors.full_name?.message}>
               <Input {...register('full_name')} error={errors.full_name} />
             </Field>

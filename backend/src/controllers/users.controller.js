@@ -134,6 +134,17 @@ export const updateUser = asyncHandler(async (req, res) => {
   }
 
   const userPatch = { updated_by: req.user.id };
+  // Perbarui username (normalisasi huruf kecil + cek unik + invalidasi session)
+  if (data.username && data.username !== existing.username) {
+    const newUsername = data.username.trim().toLowerCase();
+    if (newUsername !== existing.username) {
+      const { data: clash } = await supabase.from('users').select('id').eq('username', newUsername).maybeSingle();
+      if (clash) throw conflict('Username sudah digunakan', 'USERNAME_TAKEN');
+      userPatch.username = newUsername;
+      userPatch.token_version = existing.token_version + 1;
+      changes.username = newUsername;
+    }
+  }
   if (data.password) {
     userPatch.password_hash = await bcrypt.hash(data.password, 10);
     userPatch.must_change_password = data.must_change_password ?? true;

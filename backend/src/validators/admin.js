@@ -23,6 +23,13 @@ export const createUserSchema = z.object({
 });
 
 export const updateUserSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(3, 'Username minimal 3 karakter')
+    .max(50)
+    .regex(/^[a-zA-Z0-9_.-]+$/, 'Username hanya boleh huruf, angka, titik, garis bawah, dan strip')
+    .optional(),
   full_name: z.string().trim().min(1).max(255).optional(),
   email: z.string().trim().email('Email tidak valid').nullable().optional().or(z.literal('')),
   phone: z.string().trim().max(30).nullable().optional(),
