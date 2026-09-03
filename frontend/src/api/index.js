@@ -134,6 +134,7 @@ export const rolesApi = {
 
 export const permissionsApi = {
   list: () => api.get('/permissions').then((r) => r.data),
+  matrix: () => api.get('/permissions/matrix').then((r) => r.data),
 };
 
 // ---------- REPORTS ----------

@@ -110,3 +110,37 @@ describe('Role — CRUD dasar', () => {
     assert.equal(res.body.code, 'SYSTEM_ROLE');
   });
 });
+
+describe('Permission — matriks permission ↔ role', () => {
+  let admin;
+
+  before(async () => {
+    server = app.listen(0);
+    await new Promise((resolve) => server.once('listening', resolve));
+    admin = await loginAgent('admin', ADMIN_PASSWORD);
+  });
+
+  after(async () => {
+    server.close();
+  });
+
+  it('matrix → 200 berisi permissions & roles dengan permission_codes', async () => {
+    const res = await admin.get('/api/permissions/matrix');
+    assert.equal(res.status, 200);
+    assert.ok(Array.isArray(res.body.data.permissions));
+    assert.ok(res.body.data.permissions.some((p) => p.code === 'pos.access'));
+    assert.ok(Array.isArray(res.body.data.roles));
+    const owner = res.body.data.roles.find((r) => r.code === 'owner');
+    assert.ok(owner);
+    assert.equal(owner.is_system, true);
+    assert.ok(Array.isArray(owner.permission_codes));
+    assert.ok(owner.permission_codes.includes('pos.access'));
+  });
+
+  it('matrix hanya berisi permission yang aktif (bukan kode mati)', async () => {
+    const res = await admin.get('/api/permissions/matrix');
+    const dead = ['sales.update', 'sales.delete', 'inventory.create', 'inventory.update', 'returns.create', 'returns.update', 'returns.delete', 'profit.create', 'profit.update', 'profit.delete'];
+    const codes = res.body.data.permissions.map((p) => p.code);
+    dead.forEach((c) => assert.ok(!codes.includes(c), `kode mati ${c} seharusnya tidak ada`));
+  });
+});

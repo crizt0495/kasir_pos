@@ -34,5 +34,6 @@ router.delete('/roles/:id', requirePermission('roles.delete'), asyncHandler(role
 
 // Permissions
 router.get('/permissions', requirePermission('permissions.view'), asyncHandler(permissions.listPermissions));
+router.get('/permissions/matrix', requirePermission('permissions.view'), asyncHandler(permissions.getPermissionMatrix));
 
 export default router;
