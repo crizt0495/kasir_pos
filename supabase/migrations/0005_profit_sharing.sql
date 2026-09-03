@@ -40,11 +40,11 @@ select r.id, p.id from public.roles r cross join public.permissions p
 where r.code = 'owner'
 on conflict do nothing;
 
--- Kasir: hanya akses operasional transaksi (tidak berubah, tetap minimal)
+-- Kasir: hanya akses operasional transaksi (tanpa dashboard.view — konsisten dengan 0010)
 insert into public.role_permissions (role_id, permission_id)
 select r.id, p.id from public.roles r, public.permissions p
 where r.code = 'kasir' and (
-  p.code in ('dashboard.view', 'pos.access', 'sales.view', 'sales.create',
+  p.code in ('pos.access', 'sales.view', 'sales.create',
              'customers.view', 'customers.create', 'customers.update',
              'cashier.open', 'cashier.close', 'products.view')
 )
