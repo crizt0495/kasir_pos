@@ -22,6 +22,35 @@ async function replaceRolePermissions(roleId, codes) {
   return ids.length;
 }
 
+/** Permission "pintu" yang tak boleh dicabut dari role sendiri (hindari lockout) */
+const CRITICAL_PREFIX = ['roles.', 'users.', 'permissions.view', 'dashboard.view'];
+
+async function loadRolePermissionCodes(roleId) {
+  const { data } = await supabase
+    .from('role_permissions')
+    .select('permission:permissions(code)')
+    .eq('role_id', roleId);
+  return (data || []).map((rp) => rp.permission?.code).filter(Boolean);
+}
+
+/**
+ * Guard anti-lockout: bila user yang meminta mengedit ROLE YANG SEDANG DIPEGANGNYA
+ * sendiri, dilarang mencabut permission kritis dari role tersebut.
+ */
+function guardOwnRoleLockout(user, roleId, oldCodes, newCodes) {
+  const holdsIt = (user.roles || []).some((r) => r && String(r.id) === String(roleId));
+  if (!holdsIt) return;
+
+  const newSet = new Set(newCodes);
+  const removedCritical = oldCodes.filter((c) => newSet.has(c) !== true && CRITICAL_PREFIX.some((p) => c === p || c.startsWith(p)));
+  if (removedCritical.length) {
+    throw badRequest(
+      `Tidak dapat mencabut permission kritis (${removedCritical[0]}) dari role yang sedang Anda gunakan`,
+      'ROLE_LOCKOUT'
+    );
+  }
+}
+
 /** Invalidasi session semua user dengan role tsb (token_version++) */
 async function bumpUsersTokenVersion(roleId) {
   const { data: users } = await supabase.from('user_roles').select('user_id').eq('role_id', roleId);
@@ -108,18 +137,15 @@ export const updateRole = asyncHandler(async (req, res) => {
   if (exErr) throw exErr;
   if (!existing) throw notFound('Role tidak ditemukan');
 
-  // Proteksi role sistem: permission-nya tidak boleh diubah (hindari admin terkunci)
-  if (existing.is_system && permission_codes !== undefined) {
-    throw badRequest('Permission role sistem tidak dapat diubah', 'SYSTEM_ROLE');
-  }
-
   const patch = { updated_by: req.user.id };
   if (name !== undefined) patch.name = name;
   if (description !== undefined) patch.description = description;
   await supabase.from('roles').update(patch).eq('id', id);
 
   let permissionCount = null;
-  if (permission_codes !== undefined && !existing.is_system) {
+  if (permission_codes !== undefined) {
+    const oldCodes = await loadRolePermissionCodes(id);
+    guardOwnRoleLockout(req.user, id, oldCodes, permission_codes);
     permissionCount = await replaceRolePermissions(id, permission_codes);
     await bumpUsersTokenVersion(id); // session user di role ini di-invalidasi
   }
@@ -170,10 +196,8 @@ export const setRolePermissions = asyncHandler(async (req, res) => {
   const { data: existing } = await supabase.from('roles').select('id, name, is_system').eq('id', id).maybeSingle();
   if (!existing) throw notFound('Role tidak ditemukan');
 
-  // Proteksi role sistem: permission tidak boleh diubah lewat jalur mana pun
-  if (existing.is_system) {
-    throw badRequest('Permission role sistem tidak dapat diubah', 'SYSTEM_ROLE');
-  }
+  const oldCodes = await loadRolePermissionCodes(id);
+  guardOwnRoleLockout(req.user, id, oldCodes, permission_codes);
 
   const count = await replaceRolePermissions(id, permission_codes);
   await bumpUsersTokenVersion(id);

@@ -17,7 +17,7 @@ async function loginAgent(username, password) {
   return agent;
 }
 
-describe('Role — proteksi role sistem', () => {
+describe('Role — edit permission & anti-lockout', () => {
   let admin;
   let customRoleId;
 
@@ -43,23 +43,36 @@ describe('Role — proteksi role sistem', () => {
     customRoleId = res.body.data.id;
   });
 
-  it('setRolePermissions pada role sistem → 400 SYSTEM_ROLE', async () => {
+  it('setRolePermissions — mencabut permission kritis dari role sendiri (owner) → 400 ROLE_LOCKOUT', async () => {
     const res = await admin.put(`/api/roles/${ownerRoleId}/permissions`).send({
-      permission_codes: ['products.view'],
+      permission_codes: ['pos.access', 'sales.view'],
     });
     assert.equal(res.status, 400);
-    assert.equal(res.body.code, 'SYSTEM_ROLE');
+    assert.equal(res.body.code, 'ROLE_LOCKOUT');
   });
 
-  it('updateRole dengan permission_codes pada role sistem → 400 SYSTEM_ROLE', async () => {
+  it('setRolePermissions — mengubah permission non-kritis owner → 200 (role sistem diperbolehkan)', async () => {
+    const res = await admin.put(`/api/roles/${ownerRoleId}/permissions`).send({
+      permission_codes: [
+        'dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.create', 'products.delete',
+        'roles.view', 'roles.create', 'roles.update', 'roles.delete', 'permissions.view',
+        'reports.view', 'customers.view', 'customers.create', 'customers.update', 'customers.delete',
+        'users.view', 'users.create', 'users.update', 'users.delete',
+      ],
+    });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.success, true);
+  });
+
+  it('updateRole — mencabut permission kritis dari role yang TIDAK dipegang (kasir) → 200', async () => {
     const res = await admin.put(`/api/roles/${kasirRoleId}`).send({
       permission_codes: ['products.view'],
     });
-    assert.equal(res.status, 400);
-    assert.equal(res.body.code, 'SYSTEM_ROLE');
+    assert.equal(res.status, 200);
+    assert.equal(res.body.success, true);
   });
 
-  it('updateRole hanya name/description pada role sistem → 200 (tetap diizinkan)', async () => {
+  it('updateRole hanya name/description → 200', async () => {
     const res = await admin.put(`/api/roles/${kasirRoleId}`).send({
       name: 'Kasir Utama',
       description: 'Deskripsi baru',

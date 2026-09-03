@@ -24,6 +24,15 @@ const permissionRows = [
   { id: 'p-customers-create', code: 'customers.create', name: 'Tambah Pelanggan', module: 'customers' },
   { id: 'p-customers-update', code: 'customers.update', name: 'Ubah Pelanggan', module: 'customers' },
   { id: 'p-customers-delete', code: 'customers.delete', name: 'Hapus Pelanggan', module: 'customers' },
+  { id: 'p-roles-create', code: 'roles.create', name: 'Tambah Role', module: 'roles' },
+  { id: 'p-roles-update', code: 'roles.update', name: 'Ubah Role', module: 'roles' },
+  { id: 'p-roles-delete', code: 'roles.delete', name: 'Hapus Role', module: 'roles' },
+  { id: 'p-permissions-view', code: 'permissions.view', name: 'Lihat Permission', module: 'permissions' },
+  { id: 'p-users-view', code: 'users.view', name: 'Lihat User', module: 'users' },
+  { id: 'p-users-create', code: 'users.create', name: 'Tambah User', module: 'users' },
+  { id: 'p-users-update', code: 'users.update', name: 'Ubah User', module: 'users' },
+  { id: 'p-users-delete', code: 'users.delete', name: 'Hapus User', module: 'users' },
+  { id: 'p-inventory-adjust', code: 'inventory.adjust', name: 'Penyesuaian Stok', module: 'inventory' },
 ];
 
 /** Kode permission per role (sumber tunggal kebenaran relasi role↔permission) */
@@ -312,6 +321,14 @@ export function createFakeSupabase() {
             pushed = created.map((ur) => ({
               user_id: ur.user_id,
               role: store.roles.find((r) => r.id === ur.role_id) || store.roles.find((r) => r.code === ur.role_id) || { id: ur.role_id, code: ur.role_id },
+            }));
+          }
+          if (state.table === 'role_permissions') {
+            // Ubah { role_id, permission_id } menjadi bentuk dengan permission terembed
+            pushed = created.map((rp) => ({
+              role_id: rp.role_id,
+              permission_id: rp.permission_id,
+              permission: { code: (store.permissions.find((p) => p.id === rp.permission_id) || {}).code },
             }));
           }
           store[state.table].push(...pushed);

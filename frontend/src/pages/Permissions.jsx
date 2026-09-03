@@ -39,10 +39,6 @@ export default function Permissions() {
   const roles = matrix.data?.roles || [];
 
   const toggle = async (role, code) => {
-    if (!role || role.is_system) {
-      toast.info('Permission role sistem tidak dapat diubah');
-      return;
-    }
     setSaving(`${role.id}:${code}`);
     try {
       const nextSet = new Set(roleSets[role.id] || []);
@@ -64,7 +60,7 @@ export default function Permissions() {
     <div className="space-y-4">
       <PageHeader
         title="Permissions"
-        description="Kelola hak akses granular per role. Aktifkan/nonaktifkan di kolom role; role sistem (Owner) dikunci."
+        description="Kelola hak akses granular per role termasuk Owner. Permission kritis (roles.*, users.*, permissions.view) tidak bisa dicabut dari role yang sedang Anda gunakan."
         actions={
           can('permissions.view') && (
             <Button variant="secondary" size="sm" onClick={matrix.reload} icon={RefreshCw}>
@@ -143,7 +139,7 @@ function PermissionGroup({ module, perms, roles, roleSets, editable, saving, onT
           </td>
           {roles.map((r) => {
             const checked = roleSets[r.id]?.has(p.code) || false;
-            const disabled = !editable || r.is_system || saving !== null;
+            const disabled = !editable || saving !== null;
             return (
               <td key={r.id} className="px-3 py-2.5 text-center">
                 <div className="flex justify-center">
@@ -158,7 +154,7 @@ function PermissionGroup({ module, perms, roles, roleSets, editable, saving, onT
                       focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
                       disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label={`${p.name} untuk ${r.name}`}
-                    title={r.is_system ? 'Role sistem dikunci' : `${r.name}: ${p.name}`}
+                    title={`${r.name}: ${p.name}`}
                   />
                 </div>
               </td>
