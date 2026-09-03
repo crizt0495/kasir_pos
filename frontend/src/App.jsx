@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore.js';
 import { RequireAuth, RequirePermission } from './components/ProtectedRoute.jsx';
+import { landingPath } from './utils/landing.js';
 import AppLayout from './components/layout/AppLayout.jsx';
 import { Toaster, Skeleton } from './components/ui/Feedback.jsx';
 
@@ -56,8 +57,8 @@ function PageFallback() {
 // Arahkan index "/" ke halaman yang sesuai hak akses:
 // kasir tanpa dashboard.view langsung ke /pos, bukan /dashboard.
 function HomeRedirect() {
-  const can = useAuthStore((s) => s.can);
-  return <Navigate to={can('dashboard.view') ? '/dashboard' : '/pos'} replace />;
+  const user = useAuthStore((s) => s.user);
+  return <Navigate to={landingPath(user)} replace />;
 }
 
 function AppRoutes() {

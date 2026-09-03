@@ -20,12 +20,6 @@ api.interceptors.response.use(
       if (status === 401 && !path.startsWith('/login') && !path.startsWith('/change-password')) {
         window.dispatchEvent(new CustomEvent('auth:expired'));
       }
-      if (status === 500 && (path.startsWith('/login') || error?.config?.url?.includes('/auth/'))) {
-        document.cookie = 'pos_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
-        if (!path.startsWith('/login')) {
-          window.location.href = '/login';
-        }
-      }
     } catch {
       /* swallow errors in interceptor to avoid cascading failures */
     }

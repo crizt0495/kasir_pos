@@ -6,7 +6,7 @@ import { Store, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { loginSchema } from '../schemas/index.js';
 import { authApi } from '../api/index.js';
 import { useAuthStore } from '../stores/authStore.js';
-import { hasPermission } from '../utils/permission.js';
+import { landingPath } from '../utils/landing.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { Button } from '../components/ui/Button.jsx';
@@ -41,8 +41,7 @@ export default function Login() {
       setSession(res.data);
       toast.success(`Selamat datang, ${res.data.profile?.full_name || res.data.username}!`);
       // Redirect ke halaman sesuai hak akses: kasir tanpa dashboard.view langsung ke POS
-      const canViewDashboard = hasPermission(res.data, 'dashboard.view');
-      const from = location.state?.from || (canViewDashboard ? '/dashboard' : '/pos');
+      const from = location.state?.from || landingPath(res.data);
       navigate(from, { replace: true });
     } catch (error) {
       toast.error(getErrorMessage(error, 'Login gagal, periksa username dan password'));
