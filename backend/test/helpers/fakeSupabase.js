@@ -28,7 +28,7 @@ const permissionRows = [
 
 /** Kode permission per role (sumber tunggal kebenaran relasi role↔permission) */
 const rolePermissionCodes = {
-  [ownerRoleId]: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.create', 'products.delete', 'roles.view', 'reports.view', 'reports.export', 'inventory.view', 'inventory.adjust', 'customers.view', 'customers.create', 'customers.update', 'customers.delete', 'users.view', 'users.create', 'users.update', 'users.delete'],
+  [ownerRoleId]: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.create', 'products.delete', 'roles.view', 'roles.create', 'roles.update', 'roles.delete', 'permissions.view', 'reports.view', 'reports.export', 'inventory.view', 'inventory.adjust', 'customers.view', 'customers.create', 'customers.update', 'customers.delete', 'users.view', 'users.create', 'users.update', 'users.delete'],
   [kasirRoleId]: ['pos.access', 'products.view', 'customers.view', 'customers.create', 'customers.update'],
 };
 
@@ -292,6 +292,9 @@ export function createFakeSupabase() {
               const user = { ...row, id, profile: row.profile ?? null };
               if (user.profiles === undefined) user.profiles = {};
               return user;
+            }
+            if (state.table === 'roles') {
+              return { ...row, id: row.id || randomUUID(), is_system: row.is_system ?? false };
             }
             if (state.table === 'profiles') {
               // Simpan di store.profiles + embed ke baris users agar join loadUserAuth konsisten

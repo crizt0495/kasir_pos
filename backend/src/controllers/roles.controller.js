@@ -108,13 +108,18 @@ export const updateRole = asyncHandler(async (req, res) => {
   if (exErr) throw exErr;
   if (!existing) throw notFound('Role tidak ditemukan');
 
+  // Proteksi role sistem: permission-nya tidak boleh diubah (hindari admin terkunci)
+  if (existing.is_system && permission_codes !== undefined) {
+    throw badRequest('Permission role sistem tidak dapat diubah', 'SYSTEM_ROLE');
+  }
+
   const patch = { updated_by: req.user.id };
   if (name !== undefined) patch.name = name;
   if (description !== undefined) patch.description = description;
   await supabase.from('roles').update(patch).eq('id', id);
 
   let permissionCount = null;
-  if (permission_codes !== undefined) {
+  if (permission_codes !== undefined && !existing.is_system) {
     permissionCount = await replaceRolePermissions(id, permission_codes);
     await bumpUsersTokenVersion(id); // session user di role ini di-invalidasi
   }
@@ -162,8 +167,13 @@ export const setRolePermissions = asyncHandler(async (req, res) => {
   const id = req.params.id;
   const { permission_codes } = req.body;
 
-  const { data: existing } = await supabase.from('roles').select('id, name').eq('id', id).maybeSingle();
+  const { data: existing } = await supabase.from('roles').select('id, name, is_system').eq('id', id).maybeSingle();
   if (!existing) throw notFound('Role tidak ditemukan');
+
+  // Proteksi role sistem: permission tidak boleh diubah lewat jalur mana pun
+  if (existing.is_system) {
+    throw badRequest('Permission role sistem tidak dapat diubah', 'SYSTEM_ROLE');
+  }
 
   const count = await replaceRolePermissions(id, permission_codes);
   await bumpUsersTokenVersion(id);

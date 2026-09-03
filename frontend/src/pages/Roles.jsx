@@ -57,6 +57,10 @@ export default function Roles() {
   };
 
   const openPerms = async (role) => {
+    if (role.is_system) {
+      toast.info('Permission role sistem tidak dapat diubah');
+      return;
+    }
     setPermRole(role);
     setSelectedPerms([]);
     try {
@@ -163,7 +167,12 @@ export default function Roles() {
               { key: 'actions', header: 'Aksi', render: (r) => (
                 <div className="flex gap-1">
                   {can('roles.update') && (
-                    <button onClick={() => openPerms(r)} className="rounded-md px-2 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-50">
+                    <button
+                      onClick={() => openPerms(r)}
+                      disabled={r.is_system}
+                      className="rounded-md px-2 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      title={r.is_system ? 'Permission role sistem tidak dapat diubah' : undefined}
+                    >
                       Atur Permission
                     </button>
                   )}
@@ -211,7 +220,7 @@ export default function Roles() {
                 <div className="flex justify-end gap-1">
                   {can('roles.update') && (
                     <>
-                      <button onClick={(e) => { e.stopPropagation(); openPerms(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                      <button onClick={(e) => { e.stopPropagation(); openPerms(r); }} disabled={r.is_system} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors disabled:cursor-not-allowed disabled:opacity-40">
                         Permission
                       </button>
                       <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
