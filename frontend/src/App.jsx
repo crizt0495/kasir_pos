@@ -38,6 +38,7 @@ const Permissions = lazy(() => import('./pages/Permissions.jsx'));
 const AuditLogs = lazy(() => import('./pages/AuditLogs.jsx'));
 const Settings = lazy(() => import('./pages/Settings.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
+const Forbidden = lazy(() => import('./pages/Forbidden.jsx'));
 
 function PageFallback() {
   return (
@@ -75,6 +76,7 @@ function AppRoutes() {
         >
           <Route index element={<HomeRedirect />} />
         <Route path="change-password" element={<ChangePassword />} />
+          <Route path="forbidden" element={<Forbidden />} />
         <Route
           path="dashboard"
           element={

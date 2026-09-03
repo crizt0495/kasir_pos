@@ -27,12 +27,16 @@ export function RequireAuth({ children }) {
  *  - string: wajib punya permission tersebut
  *  - array : cukup punya SALAH SATU (sesuai filter menu di Sidebar) */
 export function RequirePermission({ permission, children, fallback = '/login' }) {
+  const user = useAuthStore((s) => s.user);
   const can = useAuthStore((s) => s.can);
   const hasAny = useAuthStore((s) => s.hasAny);
   const location = useLocation();
   const allowed = Array.isArray(permission) ? hasAny(permission) : can(permission);
   if (!allowed) {
-    return <Navigate to={fallback} state={{ from: location.pathname }} replace />;
+    // User SUDAH login tapi tak berhak: jangan balik ke /login (mati di situ),
+    // arahkan ke halaman "Akses Ditolak" agar tidak terjadi loop login.
+    const destination = user ? '/forbidden' : fallback;
+    return <Navigate to={destination} state={{ from: location.pathname }} replace />;
   }
   return children;
 }
