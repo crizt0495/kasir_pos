@@ -110,11 +110,11 @@ select public.enable_crud_policies('returns', 'returns');
 select public.enable_crud_policies('return_items', 'returns');
 select public.enable_crud_policies('expenses', 'expenses');
 
--- Inventory movements: view + create (create = inventory.create, adjust = inventory.adjust)
+-- Inventory movements: view + adjust (hanya adjust, inventory.create dihapus dari registry)
 create policy inventory_movements_select on public.inventory_movements
   for select using (public.has_permission('inventory.view'));
 create policy inventory_movements_insert on public.inventory_movements
-  for insert with check (public.has_permission('inventory.create') or public.has_permission('inventory.adjust'));
+  for insert with check (public.has_permission('inventory.adjust'));
 
 -- Cash sessions: view + open + close
 create policy cash_sessions_select on public.cash_sessions
