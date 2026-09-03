@@ -79,15 +79,22 @@ export default function POS() {
   }, [generalCustomer.data, cart.customer, cart.setCustomer]);
 
   // Muat statistik hutang pelanggan terdaftar (bukan Umum)
-  useEffect(() => {
+  const loadDebtStats = useCallback(async () => {
     if (cart.customer?.id && !cart.customer?.is_general) {
-      customersApi.debtStats(cart.customer.id)
-        .then((r) => setDebtStats(r.data))
-        .catch(() => setDebtStats(null));
+      try {
+        const r = await customersApi.debtStats(cart.customer.id);
+        setDebtStats(r.data);
+      } catch {
+        setDebtStats(null);
+      }
     } else {
       setDebtStats(null);
     }
   }, [cart.customer?.id, cart.customer?.is_general]);
+
+  useEffect(() => {
+    loadDebtStats();
+  }, [loadDebtStats]);
 
   const taxAmount = useMemo(() => {
     if (!taxEnabled) return 0;
@@ -181,6 +188,9 @@ export default function POS() {
       cart.clear();
       setShowCheckout(false);
       setShowReceipt(true);
+      // Refresh data hutang & daftar pelanggan agar info hutang selalu terbaru
+      loadDebtStats();
+      customerResults.reload();
       if (settings?.pos?.auto_print_receipt === true) {
         setTimeout(() => window.print(), 400);
       }
