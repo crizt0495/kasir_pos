@@ -52,6 +52,13 @@ function PageFallback() {
   );
 }
 
+// Arahkan index "/" ke halaman yang sesuai hak akses:
+// kasir tanpa dashboard.view langsung ke /pos, bukan /dashboard.
+function HomeRedirect() {
+  const can = useAuthStore((s) => s.can);
+  return <Navigate to={can('dashboard.view') ? '/dashboard' : '/pos'} replace />;
+}
+
 function AppRoutes() {
   return (
     <Suspense fallback={<PageFallback />}>
@@ -66,7 +73,7 @@ function AppRoutes() {
             </RequireAuth>
           }
         >
-          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route index element={<HomeRedirect />} />
         <Route path="change-password" element={<ChangePassword />} />
         <Route
           path="dashboard"
