@@ -13,7 +13,7 @@ import { safeSearch } from '../utils/sanitize.js';
 const CUSTOMER_SELECT = '*, sales: sales(status, total)';
 // Daftar: kolom minimal — agregat transaksi dihitung via fn_customers_stats
 // (jangan embed seluruh riwayat sales per pelanggan di daftar)
-const CUSTOMER_LIST_SELECT = 'id, name, phone, email, is_general, created_at';
+const CUSTOMER_LIST_SELECT = 'id, name, phone, email, is_general, created_at, pending_debt, total_debt';
 
 export const listCustomers = asyncHandler(async (req, res) => {
   const { page, pageSize } = getPagination(req.query);
