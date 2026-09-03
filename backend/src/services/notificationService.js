@@ -128,20 +128,108 @@ async function logNotification(entry) {
   }
 }
 
+/** Cari semua user yang punya permission notifications.view (Owner). */
+export async function findOwnerUsers() {
+  const { data: userRows } = await supabase
+    .from('user_roles')
+    .select('user_id, role:roles!inner(role_permissions!inner(permission:permissions!inner(code)))')
+    .eq('role.role_permissions.permission.code', 'notifications.view');
+
+  return [...new Set((userRows || []).map((ur) => ur.user_id).filter(Boolean))];
+}
+
+/** Kirim Web Push ke semua subscription milik para owner. */
+async function sendToOwnersWebPush(recipients, title, body, payload) {
+  let pushSent = 0;
+  let pushFailed = 0;
+  for (const userId of recipients) {
+    const { data: subs } = await supabase
+      .from('notification_subscriptions')
+      .select('*')
+      .eq('user_id', userId);
+
+    for (const sub of subs || []) {
+      const err = await sendWebPush(sub, { title, body, ...payload });
+      if (err) {
+        pushFailed += 1;
+        await logNotification({ user_id: userId, type: 'SALE', title, body, payload: { ...payload, endpoint: sub.endpoint }, status: 'failed', error: String(err).slice(0, 500) });
+      } else {
+        pushSent += 1;
+        await logNotification({ user_id: userId, type: 'SALE', title, body, payload, status: 'sent' });
+      }
+    }
+  }
+  return { pushSent, pushFailed };
+}
+
+/**
+ * Kirim notifikasi uji (test) melalui semua channel yang aktif.
+ * Dipakai dari halaman Settings sehingga owner bisa memverifikasi
+ * konfigurasi (SMS/Telegram/Web Push) tanpa harus melakukan transaksi.
+ */
+export async function sendTestNotification(recipients) {
+  const notifSettings = await loadNotifSettings();
+  const results = {};
+
+  if (notifSettings.channels.web_push && recipients.length) {
+    const { pushSent, pushFailed } = await sendToOwnersWebPush(
+      recipients,
+      '🔔 Notifikasi Uji',
+      'Ini notifikasi uji dari POS. Jika Anda menerima ini, Web Push sudah berfungsi.',
+      { type: 'test', at: Date.now() }
+    );
+    results.web_push = { sent: pushSent, failed: pushFailed };
+  } else if (notifSettings.channels.web_push) {
+    results.web_push = { sent: 0, failed: 0, skipped: 'Tidak ada owner dengan subscription' };
+  }
+
+  if (notifSettings.channels.sms) {
+    const ownerPhone = notifSettings.owner_phone || env.SMS_TO;
+    if (ownerPhone) {
+      const smsErr = await sendSMS('Notifikasi uji dari POS — SMS ke HP Owner berfungsi.', { to: ownerPhone });
+      await logNotification({
+        user_id: recipients[0] || null,
+        type: 'SALE_SMS',
+        title: 'SMS',
+        body: 'Notifikasi uji dari POS',
+        payload: { type: 'test' },
+        status: smsErr ? 'failed' : 'sent',
+        error: smsErr ? smsErr.slice(0, 500) : null,
+      });
+      results.sms = smsErr ? { status: 'failed', error: smsErr } : { status: 'sent' };
+    } else {
+      results.sms = { status: 'skipped', error: 'Nomor HP owner belum diisi' };
+    }
+  }
+
+  if (notifSettings.channels.telegram) {
+    const tgChatId = notifSettings.telegram_chat_id || env.TELEGRAM_CHAT_ID;
+    if (tgChatId && env.TELEGRAM_BOT_TOKEN) {
+      const tgErr = await sendTelegram('🔔 Notifikasi uji dari POS — Telegram berfungsi.', tgChatId);
+      await logNotification({
+        user_id: recipients[0] || null,
+        type: 'SALE_TG',
+        title: 'Telegram',
+        body: 'Notifikasi uji dari POS',
+        payload: { type: 'test' },
+        status: tgErr ? 'failed' : 'sent',
+        error: tgErr ? tgErr.slice(0, 500) : null,
+      });
+      results.telegram = tgErr ? { status: 'failed', error: tgErr } : { status: 'sent' };
+    } else {
+      results.telegram = { status: 'skipped', error: 'Telegram belum dikonfigurasi (bot token / chat id)' };
+    }
+  }
+
+  return results;
+}
+
 /**
  * Kirim notifikasi penjualan ke Owner (semua user dengan permission
- * notifications.view) via Web Push + fallback Telegram.
+ * notifications.view) via Web Push + SMS + Telegram.
  *
  * FIRE-AND-FORGET: fungsi ini TIDAK PERNAH melempar error. Kegagalan
- * notifikasi hanya dicatat di notification_logs (status failed) dan
- * TIDAK menyebabkan transaksi gagal / rollback.
- */
-/**
- * Kirim notifikasi penjualan ke Owner via channel yang aktif:
- * Web Push + SMS + Telegram.
- *
- * FIRE-AND-FORGET: fungsi ini TIDAK PERNAH melempar error. Kegagalan
- * tidak dicatat di notification_logs dan TIDAK menyebabkan transaksi gagal.
+ * tidak dicatat dan TIDAK menyebabkan transaksi gagal / rollback.
  */
 export async function notifyNewSale(sale) {
   try {
@@ -157,35 +245,13 @@ export async function notifyNewSale(sale) {
       `POS: ${sale.invoice_number} Rp${Number(sale.total || 0).toLocaleString('id-ID')}` +
       ` ${sale.payment_method || '-'} ${customerName} ${dateShort}`;
 
-    // Cari user yang punya permission notifications.view (Owner)
-    const { data: userRows } = await supabase
-      .from('user_roles')
-      .select('user_id, role:roles!inner(role_permissions(permission:permissions(code)))')
-      .eq('role.role_permissions.permission.code', 'notifications.view');
-
-    const recipients = [...new Set((userRows || []).map((ur) => ur.user_id).filter(Boolean))];
+    // Cari user yang punya permission notifications.view (Owner).
+    // Semua level embebed pakai !inner agar filter benar-benar menyaring.
+    const recipients = await findOwnerUsers();
 
     // 1) Web Push
     if (notifSettings.channels.web_push) {
-      let pushSent = 0;
-      let pushFailed = 0;
-      for (const userId of recipients) {
-        const { data: subs } = await supabase
-          .from('notification_subscriptions')
-          .select('*')
-          .eq('user_id', userId);
-
-        for (const sub of subs || []) {
-          const err = await sendWebPush(sub, { title, body, ...payload });
-          if (err) {
-            pushFailed += 1;
-            await logNotification({ user_id: userId, type: 'SALE', title, body, payload: { ...payload, endpoint: sub.endpoint }, status: 'failed', error: String(err).slice(0, 500) });
-          } else {
-            pushSent += 1;
-            await logNotification({ user_id: userId, type: 'SALE', title, body, payload, status: 'sent' });
-          }
-        }
-      }
+      await sendToOwnersWebPush(recipients, title, body, payload);
     }
 
     // 2) SMS
@@ -194,6 +260,7 @@ export async function notifyNewSale(sale) {
       if (ownerPhone) {
         const smsErr = await sendSMS(smsMessage, { to: ownerPhone });
         await logNotification({
+          user_id: recipients[0] || null,
           type: 'SALE_SMS',
           title: 'SMS',
           body: smsMessage,
@@ -210,6 +277,7 @@ export async function notifyNewSale(sale) {
       if (tgChatId && env.TELEGRAM_BOT_TOKEN) {
         const tgErr = await sendTelegram(`${title}\n\n${body}`, tgChatId);
         await logNotification({
+          user_id: recipients[0] || null,
           type: 'SALE_TG',
           title,
           body,

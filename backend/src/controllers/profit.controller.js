@@ -3,6 +3,7 @@ import { getPagination, buildPage, fetchPage, countSignature } from '../utils/pa
 import { ok, created } from '../utils/response.js';
 import { notFound, AppError, extractPgMessage } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { findOwnerUsers, sendTestNotification as runChannelTest } from '../services/notificationService.js';
 
 // ============================================================
 // BAGI HASIL 2,5% TAHUNAN
@@ -244,4 +245,10 @@ export const unsubscribePush = asyncHandler(async (req, res) => {
     .eq('endpoint', endpoint);
   if (error) throw error;
   return ok(res, null, 'Berhenti berlangganan notifikasi');
+});
+
+export const sendTestNotification = asyncHandler(async (req, res) => {
+  const recipients = await findOwnerUsers();
+  const results = await runChannelTest(recipients);
+  return ok(res, results, 'Notifikasi uji terkirim');
 });

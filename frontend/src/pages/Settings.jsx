@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Save, Store, Settings as SettingsIcon, Receipt, Percent, Boxes, UserCog, AlertTriangle, Bell } from 'lucide-react';
-import { settingsApi } from '../api/index.js';
+import { settingsApi, notificationsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { settingsSchema } from '../schemas/index.js';
 import { validateSchema } from '../utils/validation.js';
@@ -25,6 +25,7 @@ export default function Settings() {
   const [tab, setTab] = useState('store');
   const settings = useApi(() => settingsApi.get().then((r) => r.data), []);
   const [saving, setSaving] = useState(false);
+  const [testSending, setTestSending] = useState(false);
 
   const s = settings.data || {};
 
@@ -77,6 +78,27 @@ export default function Settings() {
       toast.error(getErrorMessage(error, 'Gagal menyimpan pengaturan'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const sendTest = async () => {
+    setTestSending(true);
+    try {
+      const res = await notificationsApi.sendTest();
+      const r = res.data || {};
+      const parts = [];
+      if (r.sms) parts.push(`SMS: ${r.sms.status === 'sent' ? 'OK' : `gagal (${r.sms.error || r.sms.status})`}`);
+      if (r.telegram) parts.push(`Telegram: ${r.telegram.status === 'sent' ? 'OK' : `gagal (${r.telegram.error || r.telegram.status})`}`);
+      if (r.web_push) parts.push(`Web Push: ${(r.web_push?.sent || 0) > 0 ? 'OK' : `tidak ada penerima${r.web_push?.skipped ? ' (' + r.web_push.skipped + ')' : ''}`}`);
+      if (parts.length) {
+        toast.success('Hasil uji notifikasi: ' + parts.join(' · '));
+      } else {
+        toast.info('Tidak ada channel eksternal aktif. Web Push perlu browser owner yang subscribe.');
+      }
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Gagal mengirim notifikasi uji'));
+    } finally {
+      setTestSending(false);
     }
   };
 
@@ -299,6 +321,22 @@ export default function Settings() {
                 <li><b>SMS</b> — butuh API token provider (Fonnte/Twilio) di <code>.env</code>; nomor HP diisi di sini.</li>
                 <li><b>Telegram</b> — butuh <code>TELEGRAM_BOT_TOKEN</code> di <code>.env</code>; chat id bisa diisi di sini.</li>
               </ul>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+              <div>
+                <p className="text-sm font-medium text-slate-700">Uji notifikasi penjualan</p>
+                <p className="text-xs text-slate-400">Kirim notifikasi uji melalui channel yang aktif untuk memastikan konfigurasi berfungsi.</p>
+              </div>
+              <Button
+                icon={Bell}
+                variant="secondary"
+                onClick={sendTest}
+                loading={testSending}
+                disabled={!form.notification.enabled}
+              >
+                Kirim Notifikasi Uji
+              </Button>
             </div>
           </div>
         </Card>

@@ -27,5 +27,6 @@ router.get('/notifications', requirePermission('notifications.view'), asyncHandl
 router.post('/notifications/read-all', requirePermission('notifications.view'), asyncHandler(profit.markNotificationsRead));
 router.post('/notifications/subscribe', validate(subscribeSchema), asyncHandler(profit.subscribePush));
 router.post('/notifications/unsubscribe', validate(unsubscribeSchema), asyncHandler(profit.unsubscribePush));
+router.post('/notifications/test', requirePermission('notifications.view'), asyncHandler(profit.sendTestNotification));
 
 export default router;

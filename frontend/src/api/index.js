@@ -197,6 +197,7 @@ export const notificationsApi = {
   readAll: () => api.post('/notifications/read-all').then((r) => r.data),
   subscribe: (payload) => api.post('/notifications/subscribe', payload).then((r) => r.data),
   unsubscribe: (payload) => api.post('/notifications/unsubscribe', payload).then((r) => r.data),
+  sendTest: () => api.post('/notifications/test').then((r) => r.data),
 };
 
 // ---------- AUDIT & SETTINGS & SEARCH ----------
