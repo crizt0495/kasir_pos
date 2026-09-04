@@ -76,9 +76,10 @@ export default function Debts() {
 
   const summary = useApi(async () => {
     const items = list.data?.items || [];
-    const totalDebt = items.reduce((s, d) => s + Number(d.amount || 0), 0);
-    const totalPaid = items.reduce((s, d) => s + Number(d.paid_amount || 0), 0);
-    const pendingDebt = items.reduce((s, d) => s + Math.max(0, Number(d.amount || 0) - Number(d.paid_amount || 0)), 0);
+    const active = items.filter((d) => d.status !== 'cancelled');
+    const totalDebt = active.reduce((s, d) => s + Number(d.amount || 0), 0);
+    const totalPaid = active.reduce((s, d) => s + Number(d.paid_amount || 0), 0);
+    const pendingDebt = active.reduce((s, d) => s + Math.max(0, Number(d.remaining_amount ?? (Number(d.amount || 0) - Number(d.paid_amount || 0)))), 0);
     const pendingCount = items.filter((d) => d.status === 'pending' || d.status === 'partial').length;
     const overdueCount = items.filter((d) => d.status === 'overdue').length;
     return { totalDebt, totalPaid, pendingDebt, pendingCount, overdueCount, total: list.data?.total || 0 };
@@ -284,7 +285,10 @@ export default function Debts() {
           {
             key: 'remaining', header: 'Sisa',
             render: (r) => {
-              const rem = Math.max(0, Number(r.amount || 0) - Number(r.paid_amount || 0));
+              if (r.status === 'cancelled') {
+                return <span className="font-semibold font-mono text-slate-400">-</span>;
+              }
+              const rem = Math.max(0, Number(r.remaining_amount ?? (Number(r.amount || 0) - Number(r.paid_amount || 0))));
               return <span className={`font-semibold font-mono ${rem > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>{formatRupiah(rem)}</span>;
             },
           },

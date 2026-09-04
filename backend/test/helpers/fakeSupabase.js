@@ -431,9 +431,10 @@ export function createFakeSupabase() {
       }
       if (fn === 'fn_get_customer_debt_stats') {
         const debts = (store.customer_debts || []).filter((d) => d.customer_id === args.p_customer_id);
-        const totalDebt = debts.reduce((s, d) => s + (d.amount || 0), 0);
-        const totalPaid = debts.reduce((s, d) => s + (d.paid_amount || 0), 0);
-        const pendingDebt = debts.reduce((s, d) => s + Math.max(0, (d.amount || 0) - (d.paid_amount || 0)), 0);
+        const active = debts.filter((d) => d.status !== 'cancelled');
+        const totalDebt = active.reduce((s, d) => s + (d.amount || 0), 0);
+        const totalPaid = active.reduce((s, d) => s + (d.paid_amount || 0), 0);
+        const pendingDebt = active.reduce((s, d) => s + Math.max(0, (d.amount || 0) - (d.paid_amount || 0)), 0);
         return Promise.resolve({ data: { total_debt: totalDebt, total_paid: totalPaid, pending_debt: pendingDebt, debt_count: debts.length }, error: null });
       }
       if (fn === 'fn_get_debt_summary') {
