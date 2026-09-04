@@ -121,10 +121,10 @@ export function StatCard({ label, value, icon: Icon, color = 'bg-primary-50 text
   return (
     <div className={`group card-hover rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm ${className}`}>
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-slate-500 truncate">{label}</p>
-          <p className="mt-1.5 text-2xl font-bold text-slate-900 truncate tracking-tight font-mono">{value}</p>
-          {sub && <p className="mt-1 text-xs text-slate-400">{sub}</p>}
+          <p className="mt-1.5 text-xl sm:text-2xl font-bold text-slate-900 break-words tracking-tight font-mono">{value}</p>
+          {sub && <p className="mt-1 text-xs text-slate-400 break-words">{sub}</p>}
           {trend && (
             <p className={`mt-2 flex items-center gap-1 text-xs font-medium ${trendUp ? 'text-success-600' : 'text-danger-600'}`}>
               <span className="h-3.5 w-3.5" aria-hidden="true">
