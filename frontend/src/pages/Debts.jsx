@@ -75,6 +75,17 @@ export default function Debts() {
   );
 
   const summary = useApi(async () => {
+    const stats = list.data?.stats;
+    if (stats) {
+      return {
+        totalDebt: Number(stats.total_debt || 0),
+        totalPaid: Number(stats.total_paid || 0),
+        pendingDebt: Number(stats.pending_debt || 0),
+        pendingCount: Number(stats.pending_count || 0),
+        overdueCount: Number(stats.overdue_count || 0),
+        total: list.data?.total || 0,
+      };
+    }
     const items = list.data?.items || [];
     const active = items.filter((d) => d.status !== 'cancelled');
     const totalDebt = active.reduce((s, d) => s + Number(d.amount || 0), 0);

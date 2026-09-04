@@ -11,25 +11,53 @@ export const listDebts = asyncHandler(async (req, res) => {
   const q = safeSearch(req.query.search);
   const { status, customer_id } = req.query;
 
-  const result = await fetchPage({
-    buildQuery: (select, opts) => {
-      let query = supabase.from('customer_debts').select(select, opts);
-      if (customer_id) query = query.eq('customer_id', customer_id);
-      if (status) query = query.eq('status', status);
-      if (q) query = query.or(`notes.ilike.%${q}%`);
-      return query;
-    },
-    select:
-      'id, amount, paid_amount, remaining_amount, due_date, status, notes, created_at, customer:customers(id, name, phone), created_by_user:users!customer_debts_created_by_fkey(id, username, profiles(full_name))',
-    signature: countSignature('customer_debts', [status, customer_id, q]),
-    page,
-    pageSize,
-    orderBy: 'created_at',
-    ascending: false,
-  });
+  const baseFilters = { customer_id, q };
 
-  return ok(res, result);
+  const [listResult, stats] = await Promise.all([
+    fetchPage({
+      buildQuery: (select, opts) => {
+        let query = supabase.from('customer_debts').select(select, opts);
+        if (customer_id) query = query.eq('customer_id', customer_id);
+        if (status) query = query.eq('status', status);
+        if (q) query = query.or(`notes.ilike.%${q}%`);
+        return query;
+      },
+      select:
+        'id, amount, paid_amount, remaining_amount, due_date, status, notes, created_at, customer:customers(id, name, phone), created_by_user:users!customer_debts_created_by_fkey(id, username, profiles(full_name))',
+      signature: countSignature('customer_debts', [status, customer_id, q]),
+      page,
+      pageSize,
+      orderBy: 'created_at',
+      ascending: false,
+    }),
+    getGlobalDebtStats(baseFilters),
+  ]);
+
+  return ok(res, { ...listResult, stats });
 });
+
+async function getGlobalDebtStats({ customer_id, q }) {
+  let query = supabase
+    .from('customer_debts')
+    .select('amount, paid_amount, remaining_amount, status, due_date')
+    .neq('status', 'cancelled');
+  
+  if (customer_id) query = query.eq('customer_id', customer_id);
+  if (q) query = query.or(`notes.ilike.%${q}%`);
+
+  const { data: debts, error } = await query;
+  if (error) throw error;
+
+  const rows = debts || [];
+  return {
+    total_debt: rows.reduce((a, d) => a + Number(d.amount || 0), 0),
+    total_paid: rows.reduce((a, d) => a + Number(d.paid_amount || 0), 0),
+    pending_debt: rows.reduce((a, d) => a + Math.max(0, Number(d.remaining_amount || 0)), 0),
+    pending_count: rows.filter((d) => d.status === 'pending' || d.status === 'partial').length,
+    overdue_count: rows.filter((d) => d.status === 'overdue').length,
+    total_count: rows.length,
+  };
+}
 
 export const listDebtsByCustomer = asyncHandler(async (req, res) => {
   const { page, pageSize } = getPagination(req.query, 20);
