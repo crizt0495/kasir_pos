@@ -76,6 +76,28 @@ describe('Customer Debt — uji alur pembayaran hutang', () => {
     assert.ok(Array.isArray(res.body.data.items));
   });
 
+  it('ringkasan hutang global konsisten & exclude cancelled → valid', async () => {
+    const agent = await loginAgent('admin', ADMIN_PASSWORD);
+    const res = await agent.get('/api/customer-debts');
+    assert.equal(res.status, 200);
+    const stats = res.body.data.stats;
+    assert.ok(stats, 'stats harus ada');
+    assert.equal(typeof stats.total_debt, 'number');
+    assert.equal(typeof stats.total_paid, 'number');
+    assert.equal(typeof stats.pending_debt, 'number');
+    assert.equal(typeof stats.pending_count, 'number');
+    assert.equal(typeof stats.overdue_count, 'number');
+    // pending_debt tidak boleh melebihi total_debt
+    assert.ok(stats.pending_debt <= stats.total_debt + 1e-6, 'sisa bayar tidak boleh melebihi total');
+    // pending_count harus konsisten: tidak termasuk paid maupun cancelled
+    assert.ok(stats.pending_count >= 0);
+    // Invariant: total_debt = total_paid + pending_debt (semua baris non-cancelled)
+    assert.ok(
+      Math.abs(stats.total_debt - (stats.total_paid + stats.pending_debt)) < 1e-6,
+      'total hutang harus sama dengan total dibayar + sisa bayar'
+    );
+  });
+
   it('melihat riwayat hutang per pelanggan → 200 (bug listDebtsByCustomer)', async () => {
     const agent = await loginAgent('admin', ADMIN_PASSWORD);
     const res = await agent.get(`/api/customer-debts/${CUSTOMER}`);

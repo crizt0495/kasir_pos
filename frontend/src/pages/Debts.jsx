@@ -76,6 +76,7 @@ export default function Debts() {
 
   const summary = useApi(async () => {
     const stats = list.data?.stats;
+    const tableTotal = list.data?.total || 0;
     if (stats) {
       return {
         totalDebt: Number(stats.total_debt || 0),
@@ -83,17 +84,20 @@ export default function Debts() {
         pendingDebt: Number(stats.pending_debt || 0),
         pendingCount: Number(stats.pending_count || 0),
         overdueCount: Number(stats.overdue_count || 0),
-        total: list.data?.total || 0,
+        total: tableTotal,
       };
     }
     const items = list.data?.items || [];
     const active = items.filter((d) => d.status !== 'cancelled');
     const totalDebt = active.reduce((s, d) => s + Number(d.amount || 0), 0);
     const totalPaid = active.reduce((s, d) => s + Number(d.paid_amount || 0), 0);
-    const pendingDebt = active.reduce((s, d) => s + Math.max(0, Number(d.remaining_amount ?? (Number(d.amount || 0) - Number(d.paid_amount || 0)))), 0);
-    const pendingCount = items.filter((d) => d.status === 'pending' || d.status === 'partial').length;
+    const pendingDebt = active.reduce((s, d) => {
+      if (d.status === 'paid' || d.status === 'cancelled') return s;
+      return s + Math.max(0, Number(d.remaining_amount ?? (Number(d.amount || 0) - Number(d.paid_amount || 0))));
+    }, 0);
+    const pendingCount = items.filter((d) => d.status !== 'paid' && d.status !== 'cancelled').length;
     const overdueCount = items.filter((d) => d.status === 'overdue').length;
-    return { totalDebt, totalPaid, pendingDebt, pendingCount, overdueCount, total: list.data?.total || 0 };
+    return { totalDebt, totalPaid, pendingDebt, pendingCount, overdueCount, total: tableTotal };
   }, [list.data]);
 
   const { isValid: createValid, errors: createErrors } = useMemo(

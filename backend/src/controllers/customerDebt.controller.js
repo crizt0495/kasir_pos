@@ -11,7 +11,7 @@ export const listDebts = asyncHandler(async (req, res) => {
   const q = safeSearch(req.query.search);
   const { status, customer_id } = req.query;
 
-  const baseFilters = { customer_id, q };
+  const statsFilters = { status, customer_id, q };
 
   const [listResult, stats] = await Promise.all([
     fetchPage({
@@ -30,18 +30,23 @@ export const listDebts = asyncHandler(async (req, res) => {
       orderBy: 'created_at',
       ascending: false,
     }),
-    getGlobalDebtStats(baseFilters),
+    getGlobalDebtStats(statsFilters),
   ]);
 
   return ok(res, { ...listResult, stats });
 });
 
-async function getGlobalDebtStats({ customer_id, q }) {
+async function getGlobalDebtStats({ status, customer_id, q }) {
   let query = supabase
     .from('customer_debts')
-    .select('amount, paid_amount, remaining_amount, status, due_date')
-    .neq('status', 'cancelled');
-  
+    .select('amount, paid_amount, status');
+
+  if (status) {
+    query = query.eq('status', status);
+  } else {
+    query = query.neq('status', 'cancelled');
+  }
+
   if (customer_id) query = query.eq('customer_id', customer_id);
   if (q) query = query.or(`notes.ilike.%${q}%`);
 
@@ -52,8 +57,11 @@ async function getGlobalDebtStats({ customer_id, q }) {
   return {
     total_debt: rows.reduce((a, d) => a + Number(d.amount || 0), 0),
     total_paid: rows.reduce((a, d) => a + Number(d.paid_amount || 0), 0),
-    pending_debt: rows.reduce((a, d) => a + Math.max(0, Number(d.remaining_amount || 0)), 0),
-    pending_count: rows.filter((d) => d.status === 'pending' || d.status === 'partial').length,
+    pending_debt: rows.reduce((a, d) => {
+      if (d.status === 'paid' || d.status === 'cancelled') return a;
+      return a + Math.max(0, Number(d.amount || 0) - Number(d.paid_amount || 0));
+    }, 0),
+    pending_count: rows.filter((d) => d.status !== 'paid' && d.status !== 'cancelled').length,
     overdue_count: rows.filter((d) => d.status === 'overdue').length,
     total_count: rows.length,
   };
