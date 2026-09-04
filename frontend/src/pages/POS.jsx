@@ -804,8 +804,12 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
     }
   }, [open, customer?.id]);
 
-  // Tombol bisa diklik jika: bayar cukup, atau pelanggan terdaftar (otomatis catat hutang)
-  const canSubmit = paidNum >= totals.total || (canRecordDebt);
+  // Tombol bisa diklik jika:
+  // - CASH: bayar cukup ATAU pelanggan terdaftar (rekam hutang)
+  // - Non-cash: otomatis terverifikasi, selama ada item di keranjang
+  const canSubmit = isCash
+    ? (paidNum >= totals.total || canRecordDebt)
+    : (totals.total > 0);
 
   const submit = async () => {
     if (isCash) {
