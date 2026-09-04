@@ -23,6 +23,43 @@ describe('Reports (semua jenis laporan)', () => {
     server.close();
   });
 
+  it('dashboard summary → 200 dengan seluruh field numerik valid', async () => {
+    const res = await agent.get('/api/dashboard/summary');
+    assert.equal(res.status, 200);
+    const d = res.body.data;
+    for (const k of [
+      'today_sales',
+      'today_gross_sales',
+      'today_transactions',
+      'today_refund',
+      'today_profit',
+      'total_products',
+      'low_stock',
+      'out_of_stock',
+      'total_customers',
+      'purchases_today',
+      'open_cash',
+      'total_pending_debt',
+      'pending_debt_count',
+      'today_paid_debt',
+      'today_new_debt',
+    ]) {
+      assert.equal(typeof d[k], 'number', `${k} harus number`);
+    }
+    assert.equal(d.today_gross_sales - d.today_refund, d.today_sales);
+  });
+
+  it('dashboard charts → 200 dengan shape valid', async () => {
+    const res = await agent.get('/api/dashboard/charts');
+    assert.equal(res.status, 200);
+    const d = res.body.data;
+    assert.ok(Array.isArray(d.sales_7_days));
+    assert.equal(d.sales_7_days.length, 7);
+    assert.equal(typeof d.payment_methods, 'object');
+    assert.ok(Array.isArray(d.top_products));
+    assert.ok(Array.isArray(d.category_sales));
+  });
+
   it('laporan penjualan → 200 (sudah ada sebelumnya)', async () => {
     const res = await agent.get('/api/reports/sales?period=daily');
     assert.equal(res.status, 200);

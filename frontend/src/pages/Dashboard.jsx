@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import {
   Banknote, ReceiptText, Package, AlertTriangle, Users, ShoppingBag, TrendingUp, Wallet,
-  HandCoins, BadgeDollarSign, History,
+  HandCoins, BadgeDollarSign, History, RotateCcw,
 } from 'lucide-react';
 import { Card } from '../components/ui/DataTable.jsx';
 import { StatCard, Skeleton, ErrorState, EmptyState, Badge } from '../components/ui/Feedback.jsx';
@@ -63,14 +63,20 @@ export default function Dashboard() {
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="Total Penjualan Hari Ini" value={formatRupiah(s.today_sales)} icon={Banknote} color="bg-emerald-500 text-white" />
-            <StatCard label="Jumlah Transaksi Hari Ini" value={formatNumber(s.today_transactions)} icon={ReceiptText} color="bg-primary-500 text-white" />
-            <StatCard label="Profit Hari Ini" value={formatRupiah(s.today_profit)} icon={TrendingUp} color="bg-sky-500 text-white" />
-            <StatCard label="Total Produk" value={formatNumber(s.total_products)} icon={Package} color="bg-slate-500 text-white" />
-            <StatCard label="Stok Menipis" value={formatNumber(s.low_stock)} icon={AlertTriangle} color="bg-amber-500 text-white" />
-            <StatCard label="Total Pelanggan" value={formatNumber(s.total_customers)} icon={Users} color="bg-violet-500 text-white" />
-            <StatCard label="Total Pembelian Hari Ini" value={formatRupiah(s.purchases_today)} icon={ShoppingBag} color="bg-rose-500 text-white" />
-            <StatCard label="Kas Saat Ini" value={formatRupiah(s.open_cash)} icon={Wallet} color="bg-teal-500 text-white" />
+            <StatCard
+              label="Total Penjualan Hari Ini"
+              value={formatRupiah(s.today_sales)}
+              icon={Banknote}
+              color="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md shadow-emerald-500/25"
+              sub={s.today_refund > 0 ? `Setelah retur ${formatRupiah(s.today_refund)}` : 'Setelah dikurangi retur'}
+            />
+            <StatCard label="Jumlah Transaksi Hari Ini" value={formatNumber(s.today_transactions)} icon={ReceiptText} color="bg-gradient-to-br from-primary-400 to-primary-600 text-white shadow-md shadow-primary-500/25" />
+            <StatCard label="Profit Hari Ini" value={formatRupiah(s.today_profit)} icon={TrendingUp} color="bg-gradient-to-br from-sky-400 to-sky-600 text-white shadow-md shadow-sky-500/25" />
+            <StatCard label="Total Produk" value={formatNumber(s.total_products)} icon={Package} color="bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-md shadow-slate-500/25" />
+            <StatCard label="Stok Menipis" value={formatNumber(s.low_stock)} icon={AlertTriangle} color="bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md shadow-amber-500/25" sub={s.out_of_stock > 0 ? `${formatNumber(s.out_of_stock)} produk habis` : null} />
+            <StatCard label="Total Pelanggan" value={formatNumber(s.total_customers)} icon={Users} color="bg-gradient-to-br from-violet-400 to-violet-600 text-white shadow-md shadow-violet-500/25" />
+            <StatCard label="Total Pembelian Hari Ini" value={formatRupiah(s.purchases_today)} icon={ShoppingBag} color="bg-gradient-to-br from-rose-400 to-rose-600 text-white shadow-md shadow-rose-500/25" />
+            <StatCard label="Kas Saat Ini" value={formatRupiah(s.open_cash)} icon={Wallet} color="bg-gradient-to-br from-teal-400 to-teal-600 text-white shadow-md shadow-teal-500/25" />
           </div>
 
           {/* Ringkasan Hutang / Piutang (additive — memakai data dari summary) */}
@@ -95,11 +101,13 @@ export default function Dashboard() {
               color="bg-gradient-to-br from-success-400 to-success-600 text-white shadow-md shadow-success-500/25"
             />
             <StatCard
-              label="Uang Masuk (Hari Ini)"
-              value={formatRupiah(Number(s.today_sales) - Number(s.today_new_debt))}
+              label="Uang Masuk Hari Ini"
+              value={formatRupiah(
+                Number(s.today_sales || 0) - Number(s.today_new_debt || 0) + Number(s.today_paid_debt || 0),
+              )}
               icon={Banknote}
               color="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md shadow-emerald-500/25"
-              sub="Penjualan dikurangi piutang baru"
+              sub="Penjualan bersih + pembayaran piutang"
             />
           </div>
         </>

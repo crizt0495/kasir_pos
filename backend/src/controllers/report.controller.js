@@ -99,7 +99,8 @@ async function fetchSaleItemsInRange(startIso, endIso) {
     .select('id')
     .gte('created_at', startIso)
     .lte('created_at', endIso)
-    .neq('status', 'cancelled');
+    .neq('status', 'cancelled')
+    .neq('status', 'refunded');
   const ids = (sales || []).map((s) => s.id);
   const results = [];
   for (let i = 0; i < ids.length; i += 900) {
@@ -543,15 +544,16 @@ export const dashboardSummary = asyncHandler(async (req, res) => {
   ]);
 
   const validSales = (salesRes.data || []).filter((s) => s.status !== 'cancelled');
-  const todaySales = validSales.reduce((a, s) => a + Number(s.total), 0);
-  const todayCount = validSales.length;
+  const activeSales = validSales.filter((s) => s.status !== 'refunded');
+  const todayGrossSales = validSales.reduce((a, s) => a + Number(s.total), 0);
   const todayRefund = (returnsRes.data || []).reduce((a, r) => a + Number(r.total_refund), 0);
+  const todaySales = Math.round((todayGrossSales - todayRefund) * 100) / 100;
+  const todayCount = activeSales.length;
 
-  // Profit memakai snapshot harga beli saat transaksi (sudah dikoreksi retur)
   const profit = validSales.reduce((a, s) => a + Number(s.profit || 0), 0);
 
   const products = productsRes.data || [];
-  const lowStock = products.filter((p) => Number(p.stock) <= Number(p.min_stock) && Number(p.stock) > 0).length;
+  const lowStock = products.filter((p) => Number(p.stock) <= Number(p.min_stock)).length;
   const outOfStock = products.filter((p) => Number(p.stock) <= 0).length;
 
   const purchasesToday = (purchasesRes.data || [])
@@ -591,6 +593,7 @@ export const dashboardSummary = asyncHandler(async (req, res) => {
 
   return ok(res, {
     today_sales: todaySales,
+    today_gross_sales: Math.round(todayGrossSales * 100) / 100,
     today_transactions: todayCount,
     today_refund: todayRefund,
     today_profit: Math.round(profit * 100) / 100,
@@ -624,7 +627,7 @@ export const dashboardCharts = asyncHandler(async (req, res) => {
     .select('total, created_at, payment_method, status')
     .gte('created_at', startIso7)
     .lte('created_at', endIsoToday);
-  const valid7 = (sales7 || []).filter((s) => s.status !== 'cancelled');
+  const valid7 = (sales7 || []).filter((s) => s.status !== 'cancelled' && s.status !== 'refunded');
 
   const days = [];
   for (let i = 0; i < 7; i += 1) {

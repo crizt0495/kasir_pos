@@ -159,6 +159,11 @@ const store = {
   debt_payments: [],
   audit_logs: [],
   settings: [{ key: 'inventory', value: { allow_negative_stock: false } }, { key: 'invoice', value: { prefix: 'INV' } }],
+  sales: [],
+  returns: [],
+  purchases: [],
+  cash_sessions: [],
+  cash_transactions: [],
 };
 
 function matchesFilter(row, filters) {
@@ -430,6 +435,25 @@ export function createFakeSupabase() {
         const totalPaid = debts.reduce((s, d) => s + (d.paid_amount || 0), 0);
         const pendingDebt = debts.reduce((s, d) => s + Math.max(0, (d.amount || 0) - (d.paid_amount || 0)), 0);
         return Promise.resolve({ data: { total_debt: totalDebt, total_paid: totalPaid, pending_debt: pendingDebt, debt_count: debts.length }, error: null });
+      }
+      if (fn === 'fn_get_debt_summary') {
+        return Promise.resolve({
+          data: {
+            total_pending: 150000,
+            total_paid: 40000,
+            total_overdue: 0,
+            total_all: 190000,
+            count_pending: 1,
+            count_paid: 1,
+            count_overdue: 0,
+            count_partial: 1,
+            count_all: 2,
+            customers_with_debt: 1,
+            paid_today: 25000,
+            new_debt_today: 50000,
+          },
+          error: null,
+        });
       }
       return Promise.resolve({ data: {}, error: null });
     },
