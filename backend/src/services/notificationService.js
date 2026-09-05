@@ -238,12 +238,12 @@ export async function notifyNewSale(sale) {
 
     const { title, body, payload } = buildSaleNotification(sale);
 
-    // Pesan singkat untuk SMS
+    // Pesan SMS ringkas utk HP owner
     const customerName = sale.customer?.name || 'Umum';
-    const dateShort = new Date(sale.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    const dateShort = new Date(sale.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
     const smsMessage =
-      `POS: ${sale.invoice_number} Rp${Number(sale.total || 0).toLocaleString('id-ID')}` +
-      ` ${sale.payment_method || '-'} ${customerName} ${dateShort}`;
+      `${sale.invoice_number} - ${customerName} - ` +
+      `Rp${Number(sale.total || 0).toLocaleString('id-ID')} (${sale.payment_method || '-'}) ${dateShort}`;
 
     // Cari user yang punya permission notifications.view (Owner).
     // Semua level embebed pakai !inner agar filter benar-benar menyaring.
