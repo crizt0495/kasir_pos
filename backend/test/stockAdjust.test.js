@@ -77,11 +77,12 @@ const fakeSB = (() => {
       if (newStock < 0) return Promise.resolve({ data: null, error: { message: 'Stok tidak boleh negatif' } });
 
       product.stock = newStock;
+      const movementType = q > 0 ? 'ADJUSTMENT_IN' : 'ADJUSTMENT_OUT';
       inventory_movements.push({
-        product_id: product.id, type: 'ADJUSTMENT', quantity: q,
+        product_id: product.id, type: movementType, quantity: q,
         before_stock: product.stock - q, after_stock: product.stock,
       });
-      return Promise.resolve({ data: { product_id: product.id, stock: newStock, delta: q }, error: null });
+      return Promise.resolve({ data: { product_id: product.id, stock: newStock, delta: q, type: movementType }, error: null });
     },
   };
 })();
@@ -142,7 +143,7 @@ describe('fitur stok — adjustStock', () => {
     assert.equal(caught.status, 400);
   });
 
-  it('terima quantity positif valid dan tulis movement', async () => {
+  it('terima quantity positif valid dan tulis movement ADJUSTMENT_IN', async () => {
     const req = {
       user: { id: 'user-1' },
       body: { product_id: 'prod-1', quantity: 10, reason: 'restock' },
@@ -153,12 +154,13 @@ describe('fitur stok — adjustStock', () => {
     assert.equal(response.status, 200);
     assert.equal(response.body.data.stock, 110);
     assert.equal(response.body.data.delta, 10);
+    assert.equal(response.body.data.type, 'ADJUSTMENT_IN');
   });
 
-  it('terima quantity negatif yang tidak lewat batas', async () => {
+  it('terima quantity negatif yang tidak lewat batas (ADJUSTMENT_OUT)', async () => {
     const req = {
       user: { id: 'user-1' },
-      body: { product_id: 'prod-1', quantity: -5, reason: 'rusak' },
+      body: { product_id: 'prod-1', quantity: -5, reason: 'Barang rusak' },
     };
     let response = null;
     const reply = { status(s) { response = { status: s }; return this; }, json(b) { response.body = b; return this; } };
@@ -166,5 +168,6 @@ describe('fitur stok — adjustStock', () => {
     assert.equal(response.status, 200);
     assert.equal(response.body.data.stock, 105);
     assert.equal(response.body.data.delta, -5);
+    assert.equal(response.body.data.type, 'ADJUSTMENT_OUT');
   });
 });

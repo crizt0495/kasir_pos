@@ -15,6 +15,8 @@ const TYPE_BADGES = {
   SALE_RETURN: 'bg-sky-100 text-sky-700',
   PURCHASE: 'bg-violet-100 text-violet-700',
   ADJUSTMENT: 'bg-amber-100 text-amber-700',
+  ADJUSTMENT_IN: 'bg-emerald-100 text-emerald-700',
+  ADJUSTMENT_OUT: 'bg-amber-100 text-amber-800',
   STOCK_OPNAME: 'bg-slate-100 text-slate-700',
 };
 
@@ -25,6 +27,8 @@ const TYPE_LABELS = {
   SALE_RETURN: 'Retur Penjualan',
   PURCHASE: 'Pembelian',
   ADJUSTMENT: 'Penyesuaian',
+  ADJUSTMENT_IN: 'Penyesuaian (+)',
+  ADJUSTMENT_OUT: 'Penyesuaian (−)',
   STOCK_OPNAME: 'Stock Opname',
 };
 

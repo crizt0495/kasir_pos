@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { SlidersHorizontal, Boxes } from 'lucide-react';
+import { SlidersHorizontal, ArrowUp, ArrowDown } from 'lucide-react';
 import { inventoryApi, categoriesApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
@@ -16,6 +16,31 @@ import { Badge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatQty, formatRupiah } from '../utils/format.js';
 
+// Arah penyesuaian (bertambah / berkurang)
+const DIRECTIONS = [
+  { value: 'in', label: 'Stok Bertambah', icon: ArrowUp, color: 'emerald' },
+  { value: 'out', label: 'Stok Berkurang', icon: ArrowDown, color: 'amber' },
+];
+
+// Kategori alasan untuk stok berkurang
+const REASON_CATEGORIES = {
+  in: [
+    { value: 'restock', label: 'Stok fisik berbeda (lebih)' },
+    { value: 'received_extra', label: 'Bonus / tambahan dari supplier' },
+    { value: 'correction_in', label: 'Koreksi sistem (stok kurang tercatat)' },
+    { value: 'other_in', label: 'Lainnya' },
+  ],
+  out: [
+    { value: 'damaged', label: 'Barang rusak' },
+    { value: 'expired', label: 'Kadaluarsa' },
+    { value: 'lost', label: 'Hilang / tidak ditemukan' },
+    { value: 'supplier_return', label: 'Retur ke supplier' },
+    { value: 'correction_out', label: 'Koreksi sistem (stok lebih tercatat)' },
+    { value: 'sample', label: 'Barang sampel / dipinjam' },
+    { value: 'other_out', label: 'Lainnya' },
+  ],
+};
+
 export default function Inventory() {
   const { can } = usePermission();
   const [search, setSearch] = useState('');
@@ -25,7 +50,7 @@ export default function Inventory() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [adjusting, setAdjusting] = useState(null);
-  const [form, setForm] = useState({ quantity: '', reason: '' });
+  const [form, setForm] = useState({ direction: 'in', reason_category: 'restock', quantity: '', reason: '' });
   const [saving, setSaving] = useState(false);
   const [confirming, setConfirming] = useState(null);
 
@@ -37,13 +62,34 @@ export default function Inventory() {
 
   const openAdjust = (p) => {
     setAdjusting(p);
-    setForm({ quantity: '', reason: '' });
+    setForm({ direction: 'in', reason_category: 'restock', quantity: '', reason: '' });
   };
 
+  // Pilihan kategori tersedia sesuai arah yang dipilih
+  const reasonOptions = REASON_CATEGORIES[form.direction];
+  const categoryOption = reasonOptions.find((c) => c.value === form.reason_category) || reasonOptions[0];
+
+  // Alasan penuh = label kategori + catatan tambahan (opsional)
+  const appendNote = form.reason?.trim();
+  const fullReason = appendNote ? `${categoryOption.label} — ${appendNote}` : categoryOption.label;
+
+  // Jumlah bertanda: arah menentukan +/−
+  const computedQty = form.quantity === '' || !Number.isFinite(Number(form.quantity))
+    ? Number.NaN
+    : (form.direction === 'out' ? -Math.abs(Number(form.quantity)) : Math.abs(Number(form.quantity)));
+
   const adjustValidation = useMemo(
-    () => validateSchema(adjustStockSchema, { product_id: adjusting?.id, ...form }),
-    [adjusting, form]
+    () => validateSchema(adjustStockSchema, { product_id: adjusting?.id, quantity: computedQty, reason: fullReason }),
+    [adjusting, computedQty, fullReason]
   );
+
+  const changeDirection = (dir) => {
+    setForm((f) => ({
+      ...f,
+      direction: dir,
+      reason_category: REASON_CATEGORIES[dir][0].value,
+    }));
+  };
 
   // Validasi lalu tampilkan dialog konfirmasi sebelum stok benar-benar diubah
   const requestAdjust = () => {
@@ -53,8 +99,8 @@ export default function Inventory() {
     }
     setConfirming({
       product: adjusting,
-      quantity: Number(form.quantity),
-      reason: form.reason.trim(),
+      quantity: computedQty,
+      reason: fullReason,
     });
   };
 
@@ -175,27 +221,71 @@ export default function Inventory() {
           <div className="rounded-lg bg-slate-50 p-3 text-sm">
             <p className="text-slate-500">Stok saat ini: <b className="text-slate-800">{formatQty(adjusting?.stock)}</b> {adjusting?.unit?.short_name || adjusting?.unit?.name || ''}</p>
             <p className="mt-1 text-xs text-slate-400">
-              Masukkan angka <b>positif</b> untuk menambah stok, <b>negatif</b> untuk mengurangi. Perubahan tercatat di pergerakan stok.
+              Pilih arah perubahan lalu isi jumlah dan alasan. Perubahan tercatat di pergerakan stok.
             </p>
           </div>
-          <Field label="Jumlah penyesuaian" required error={form.quantity === '' ? null : adjustValidation.errors.quantity}>
+
+          <Field label="Arah perubahan" required>
+            <div className="grid grid-cols-2 gap-2">
+              {DIRECTIONS.map((d) => {
+                const Icon = d.icon;
+                const active = form.direction === d.value;
+                const activeCls = d.color === 'emerald'
+                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-500/25'
+                  : 'bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-500/25';
+                return (
+                  <button
+                    key={d.value}
+                    type="button"
+                    onClick={() => changeDirection(d.value)}
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
+                      active
+                        ? activeCls
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                    aria-pressed={active}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    {d.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+
+          <Field label="Kategori alasan" required>
+            <Select
+              value={form.reason_category}
+              onChange={(e) => setForm((f) => ({ ...f, reason_category: e.target.value }))}
+            >
+              {reasonOptions.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </Select>
+          </Field>
+
+          <Field
+            label={form.direction === 'out' ? 'Jumlah berkurang' : 'Jumlah bertambah'}
+            required
+            error={form.quantity === '' ? null : adjustValidation.errors.quantity}
+          >
             <Input
               type="text"
-              inputMode="numeric"
+              inputMode="decimal"
               value={form.quantity}
               onChange={(e) => {
                 const raw = e.target.value;
-                // Terima kosong, "-", angka, dan desimal — validasi penuh dilakukan oleh schema
-                if (raw === '' || raw === '-' || /^-?\d*\.?\d*$/.test(raw)) {
+                if (raw === '' || /^\d*\.?\d*$/.test(raw)) {
                   setForm((f) => ({ ...f, quantity: raw }));
                 }
               }}
-              placeholder="cth: 10 atau -5"
+              placeholder={form.direction === 'out' ? 'cth: 5' : 'cth: 10'}
               error={!!(form.quantity !== '' && adjustValidation.errors.quantity)}
             />
           </Field>
-          <Field label="Alasan" required error={adjustValidation.errors.reason} hint="Minimal 3 karakter">
-            <Textarea rows={2} maxLength={500} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="cth: barang rusak / stok fisik berbeda" error={!!adjustValidation.errors.reason} />
+
+          <Field label="Catatan (opsional)" hint="Detail tambahan, mis. 3 pcs pecah">
+            <Textarea rows={2} maxLength={500} value={form.reason} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} placeholder="Tambah keterangan jika perlu" />
           </Field>
         </div>
       </Modal>
@@ -206,7 +296,13 @@ export default function Inventory() {
         onConfirm={doAdjust}
         loading={saving}
         title="Konfirmasi penyesuaian stok?"
-        message={`${confirming?.product?.name}: stok ${formatQty(confirming?.product?.stock)} → ${formatQty(Number(confirming?.product?.stock || 0) + Number(confirming?.quantity || 0))} (${confirming?.quantity > 0 ? '+' : ''}${formatQty(confirming?.quantity)}). Alasan: "${confirming?.reason}". Perubahan tercatat di pergerakan stok.`}
+        message={
+          confirming
+            ? `${confirming.product?.name}: stok ${formatQty(confirming.product?.stock)} → ${formatQty(
+                Number(confirming.product?.stock || 0) + Number(confirming.quantity || 0)
+              )} (${confirming.quantity > 0 ? '+' : ''}${formatQty(Math.abs(Number(confirming.quantity)))}). Alasan: "${confirming.reason}". Perubahan tercatat di pergerakan stok.`
+            : ''
+        }
         confirmText="Ya, sesuaikan stok"
       />
     </div>
