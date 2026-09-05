@@ -173,7 +173,7 @@ export default function Inventory() {
       >
         <div className="space-y-4">
           <div className="rounded-lg bg-slate-50 p-3 text-sm">
-            <p className="text-slate-500">Stok saat ini: <b className="text-slate-800">{formatQty(adjusting?.stock)}</b> {adjusting?.unit?.short_name}</p>
+            <p className="text-slate-500">Stok saat ini: <b className="text-slate-800">{formatQty(adjusting?.stock)}</b> {adjusting?.unit?.short_name || adjusting?.unit?.name || ''}</p>
             <p className="mt-1 text-xs text-slate-400">
               Masukkan angka <b>positif</b> untuk menambah stok, <b>negatif</b> untuk mengurangi. Perubahan tercatat di pergerakan stok.
             </p>

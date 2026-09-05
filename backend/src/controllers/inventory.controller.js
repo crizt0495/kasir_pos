@@ -21,7 +21,7 @@ export const listInventory = asyncHandler(async (req, res) => {
       let query = supabase.from('products').select(select, opts);
       if (q) query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%,barcode.ilike.%${q}%`);
       if (category_id) query = query.eq('category_id', category_id);
-      if (filter === 'low') query = query.lte('stock', 'min_stock');
+      if (filter === 'low') query = query.gt('stock', 0).lte('stock', 'min_stock');
       if (filter === 'out') query = query.lte('stock', 0);
       return query;
     },
@@ -33,10 +33,14 @@ export const listInventory = asyncHandler(async (req, res) => {
     ascending: true,
   });
 
+  // Batasi hingga 3 desimal agar konsisten dengan schema numeric(15,3)
+  const round3 = (n) => Math.round((Number(n) || 0) * 1000) / 1000;
   const items = result.items.map((p) => ({
     ...p,
-    is_low: Number(p.stock) <= Number(p.min_stock),
-    is_out: Number(p.stock) <= 0,
+    stock: round3(p.stock),
+    min_stock: round3(p.min_stock),
+    is_low: round3(p.stock) > 0 && round3(p.stock) <= round3(p.min_stock),
+    is_out: round3(p.stock) <= 0,
   }));
   return ok(res, { ...result, items });
 });
@@ -83,7 +87,15 @@ export const listMovements = asyncHandler(async (req, res) => {
     orderBy: 'created_at',
     ascending: false,
   });
-  return ok(res, result);
+  // Bulatkan qty agar tampilan tidak memunculkan trailing desimal
+  const round3 = (n) => Math.round((Number(n) || 0) * 1000) / 1000;
+  const items = (result.items || []).map((m) => ({
+    ...m,
+    quantity: round3(m.quantity),
+    before_stock: round3(m.before_stock),
+    after_stock: round3(m.after_stock),
+  }));
+  return ok(res, { ...result, items });
 });
 
 // ============================================================

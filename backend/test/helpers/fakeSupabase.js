@@ -184,18 +184,24 @@ function collectLeaves(node, segments) {
 
 function matchesFilter(row, filters) {
   return filters.every(({ op, col, val }) => {
+    // Dukungan perbandingan kolom-ke-kolom (mis. stock <= min_stock):
+    // jika nilai filter adalah nama kolom yang ada di row, ambil nilai rows tsb.
+    let rhs = val;
+    if (typeof val === 'string' && col !== val && val in row) rhs = row[val];
     const leaves = col.includes('.') ? collectLeaves(row, col.split('.')) : (row[col] == null ? [] : [row[col]]);
-    if (op === 'eq') return leaves.includes(val);
-    if (op === 'neq') return !leaves.includes(val);
-    if (op === 'ilike') return leaves.some((v) => String(v || '').toLowerCase().includes(String(val).replace(/%/g, '').toLowerCase()));
+    if (op === 'eq') return leaves.includes(rhs);
+    if (op === 'neq') return !leaves.includes(rhs);
+    if (op === 'ilike') return leaves.some((v) => String(v || '').toLowerCase().includes(String(rhs).replace(/%/g, '').toLowerCase()));
     if (op === 'in') {
       // PostgREST: .in.(a,b) — buang kurung pembungkus bila ada
-      const cleaned = String(val || '').replace(/^\(|\)$/g, '');
+      const cleaned = String(rhs || '').replace(/^\(|\)$/g, '');
       const list = Array.isArray(cleaned) ? cleaned : cleaned.split(',').filter(Boolean);
       return leaves.some((v) => list.includes(v));
     }
-    if (op === 'gte') return leaves.some((v) => Number(v) >= Number(val));
-    if (op === 'lte') return leaves.some((v) => Number(v) <= Number(val));
+    if (op === 'gt') return leaves.some((v) => Number(v) > Number(rhs));
+    if (op === 'gte') return leaves.some((v) => Number(v) >= Number(rhs));
+    if (op === 'lt') return leaves.some((v) => Number(v) < Number(rhs));
+    if (op === 'lte') return leaves.some((v) => Number(v) <= Number(rhs));
     return true;
   });
 }
@@ -293,6 +299,8 @@ export function createFakeSupabase() {
         select() { return q; },
         eq(col, val) { state.filters.push({ op: 'eq', col, val }); return q; },
         neq(col, val) { state.filters.push({ op: 'neq', col, val }); return q; },
+        gt(col, val) { state.filters.push({ op: 'gt', col, val }); return q; },
+        lt(col, val) { state.filters.push({ op: 'lt', col, val }); return q; },
         ilike(col, val) { state.filters.push({ op: 'ilike', col, val }); return q; },
         in(col, val) { state.filters.push({ op: 'in', col, val }); return q; },
         gte(col, val) { state.filters.push({ op: 'gte', col, val }); return q; },

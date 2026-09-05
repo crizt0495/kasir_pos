@@ -111,8 +111,8 @@ export default function Movements() {
                 <option value="">Semua Jenis</option>
                 {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </Select>
-              <Field className="w-full sm:w-40"><Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} /></Field>
-              <Field className="w-full sm:w-40"><Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} /></Field>
+              <Field label="Dari" className="w-full sm:w-40"><Input type="date" value={from} max={to || undefined} onChange={(e) => { setFrom(e.target.value); setPage(1); }} /></Field>
+              <Field label="Sampai" className="w-full sm:w-40"><Input type="date" value={to} min={from || undefined} onChange={(e) => { setTo(e.target.value); setPage(1); }} /></Field>
             </div>
           </>
         }
