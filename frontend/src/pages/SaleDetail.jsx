@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Printer, RotateCcw, ReceiptText } from 'lucide-react';
+import { ArrowLeft, Printer, RotateCcw, ReceiptText, Plus, Minus } from 'lucide-react';
 import { salesApi, settingsApi, cashierApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
@@ -47,6 +47,35 @@ export default function SaleDetail() {
   }, 0);
 
   const refundRounding = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
+  // Item yang masih bisa diretur (sisa > 0)
+  const refundableItems = (s?.items || []).filter((item) => remaining(item) > 0);
+
+  // Item yang sedang dipilih qty-nya > 0
+  const selectedCount = refundableItems.filter((i) => Number(refundItems[i.id] || 0) > 0).length;
+  const totalSelectedQty = refundableItems.reduce(
+    (sum, i) => sum + Math.max(0, Number(refundItems[i.id] || 0)),
+    0
+  );
+
+  // Pilih semua: isi qty = sisa untuk setiap item
+  const selectAll = () => {
+    if (!s?.items) return;
+    const next = {};
+    s.items.forEach((item) => {
+      const rem = remaining(item);
+      if (rem > 0) next[item.id] = rem;
+    });
+    setRefundItems(next);
+  };
+
+  // Stepper +/- qty retur
+  const stepQty = (itemId, delta, rem) => {
+    const cur = Number(refundItems[itemId] || 0);
+    if (!Number.isFinite(cur) || !Number.isFinite(rem)) return;
+    const next = Math.max(0, Math.min(rem, cur + delta));
+    setRefundItems((prev) => ({ ...prev, [itemId]: next === 0 ? '' : String(next) }));
+  };
 
   const refundValidation = useMemo(() => {
     const errors = { items: '', reason: '' };
@@ -266,69 +295,191 @@ export default function SaleDetail() {
               onClick={() => setConfirmRefund(true)}
               disabled={!refundValidation.isValid || submitting || totalRefund <= 0}
             >
-              <RotateCcw className="h-4 w-4" /> Refund {totalRefund > 0 ? formatRupiah(refundRounding(totalRefund)) : ''}
+              <RotateCcw className="h-4 w-4" />
+              {totalRefund > 0 ? `Refund ${formatRupiah(refundRounding(totalRefund))}` : 'Refund'}
             </Button>
           </>
         }
       >
         <div className="space-y-4">
-          <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
-            Pilih item dan jumlah yang diretur. Stok akan kembali, dan jika penjualan tunai, uang dikembalikan dari kas.
-          </div>
-          {refundValidation.errors.items && (
-            <p className="-mt-2 text-xs text-danger-600" role="alert">{refundValidation.errors.items}</p>
-          )}
-          <div className="space-y-2">
-            {(s?.items || []).map((item) => {
-              const rem = remaining(item);
-              if (rem <= 0) return null;
-              const qty = refundItems[item.id] ?? '';
-              const qtyNum = qty === '' ? 0 : Number(qty);
-              const over = qty !== '' && qtyNum > rem;
-              const unit = Number(item.quantity > 0 ? (Number(item.subtotal || 0) / Number(item.quantity)) : 0);
-              return (
-                <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-800">{item.product?.name}</p>
-                    <p className="text-xs text-slate-400">
-                      Terjual {formatQty(item.quantity)} · Sisa retur {formatQty(rem)} · {formatRupiah(unit)}/pcs
-                    </p>
-                    {over && <p className="mt-0.5 text-xs text-danger-600" role="alert">Maksimal {formatQty(rem)}</p>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {qtyNum > 0 && (
-                      <span className="whitespace-nowrap text-xs font-medium text-emerald-700">
-                        {formatRupiah(refundRounding(qtyNum * unit))}
-                      </span>
-                    )}
-                    <Input
-                      type="text"
-                      inputMode="decimal"
-                      value={qty}
-                      placeholder="0"
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        if (raw === '' || /^\d*\.?\d*$/.test(raw)) {
-                          setRefundItems((prev) => ({ ...prev, [item.id]: raw }));
-                        }
-                      }}
-                      className="w-24 text-right"
-                      error={over}
-                      aria-label={`Jumlah retur ${item.product?.name || 'item'}`}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {totalRefund > 0 && (
-            <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
-              <span className="text-slate-500">Total Refund</span>
-              <span className="font-bold text-danger-600">{formatRupiah(refundRounding(totalRefund))}</span>
+          {/* Ringkasan transaksi */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-900">{s?.invoice_number}</p>
+                <p className="text-xs text-slate-500">
+                  {s?.customer?.name || 'Umum'} · {s ? formatDateTime(s.created_at) : ''}
+                </p>
+              </div>
+              {s?.payment_method && (
+                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${paymentMethodColor(s.payment_method)}`}>
+                  {paymentMethodLabel(s.payment_method)}
+                </span>
+              )}
             </div>
+          </div>
+
+          <div className="rounded-lg border border-amber-200/70 bg-amber-50 p-3 text-sm text-amber-800">
+            <p className="font-medium">Cara retur:</p>
+            <ol className="mt-1 list-decimal space-y-0.5 pl-5 text-xs">
+              <li>Pilih item dan jumlah yang diretur (pakai stepper atau ketik).</li>
+              <li>Isi alasan retur (wajib, min. 3 karakter).</li>
+              <li>Stok kembali otomatis; uang dikembalikan jika tunai.</li>
+            </ol>
+          </div>
+
+          {/* Header daftar item + aksi cepat */}
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-slate-700">Item Transaksi</p>
+            <button
+              type="button"
+              onClick={selectAll}
+              className="text-xs font-medium text-primary-600 hover:text-primary-700 hover:underline"
+            >
+              Pilih semua
+            </button>
+          </div>
+
+          {refundValidation.errors.items && (
+            <p className="text-xs text-danger-600" role="alert">{refundValidation.errors.items}</p>
           )}
-          <Field label="Alasan Retur" required error={refundValidation.errors.reason}>
-            <Textarea rows={2} maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="cth: produk rusak / salah barang" error={!!refundValidation.errors.reason} />
+
+          <div className="overflow-hidden rounded-xl border border-slate-200">
+            {/* Header kolom */}
+            <div className="hidden border-b border-slate-200 bg-slate-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:grid sm:grid-cols-[1fr_5rem_5.5rem_6.5rem] sm:gap-3">
+              <span>Produk</span>
+              <span className="text-center">Sisa</span>
+              <span className="text-center">Jumlah</span>
+              <span className="text-right">Subtotal</span>
+            </div>
+
+            <ul className="divide-y divide-slate-100">
+              {(s?.items || []).map((item) => {
+                const rem = remaining(item);
+                if (rem <= 0) {
+                  return (
+                    <li key={item.id} className="grid grid-cols-1 gap-2 px-4 py-3 sm:grid-cols-[1fr_5rem_5.5rem_6.5rem] sm:items-center sm:gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm text-slate-500 line-through">{item.product?.name || '-'}</p>
+                        <p className="text-xs text-slate-400">{item.product?.sku || ''}</p>
+                      </div>
+                      <div className="col-span-3 text-xs text-slate-400 sm:text-center">
+                        Sudah diretur seluruhnya
+                      </div>
+                    </li>
+                  );
+                }
+                const qty = refundItems[item.id] ?? '';
+                const qtyNum = qty === '' ? 0 : Number(qty);
+                const over = qty !== '' && qtyNum > rem;
+                const unit = Number(item.quantity > 0 ? (Number(item.subtotal || 0) / Number(item.quantity)) : 0);
+                const lineTotal = qtyNum > 0 ? qtyNum * unit : 0;
+                return (
+                  <li key={item.id} className="grid grid-cols-1 gap-3 px-4 py-3 sm:grid-cols-[1fr_5rem_5.5rem_6.5rem] sm:items-center sm:gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-800">{item.product?.name || '-'}</p>
+                      <p className="mt-0.5 text-xs text-slate-400">
+                        {formatRupiah(unit)}/pcs
+                        {item.discount > 0 && Number(item.discount) > 0 && (
+                          <span className="ml-1 text-emerald-600">· diskon {formatRupiah(item.discount)}</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <span className="inline-flex items-center justify-center rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+                        {formatQty(rem)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => stepQty(item.id, -1, rem)}
+                        disabled={qtyNum <= 0}
+                        aria-label={`Kurangi jumlah retur ${item.product?.name || 'item'}`}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        value={qty}
+                        placeholder="0"
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          if (raw === '' || /^\d*\.?\d*$/.test(raw)) {
+                            setRefundItems((prev) => ({ ...prev, [item.id]: raw }));
+                          }
+                        }}
+                        className="w-16 text-center"
+                        error={over}
+                        aria-label={`Jumlah retur ${item.product?.name || 'item'}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => stepQty(item.id, +1, rem)}
+                        disabled={qtyNum >= rem}
+                        aria-label={`Tambah jumlah retur ${item.product?.name || 'item'}`}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <div className="text-right">
+                      {lineTotal > 0 ? (
+                        <span className="font-mono text-sm font-semibold text-emerald-700">
+                          {formatRupiah(refundRounding(lineTotal))}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-300">—</span>
+                      )}
+                    </div>
+                    {over && (
+                      <p className="col-span-full -mt-1 text-xs text-danger-600" role="alert">
+                        Maksimal {formatQty(rem)}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          {refundableItems.length === 0 && (
+            <p className="rounded-lg bg-slate-50 px-4 py-3 text-center text-sm text-slate-400">
+              Semua item pada transaksi ini sudah diretur seluruhnya.
+            </p>
+          )}
+
+          {/* Ringkasan total */}
+          <div className="overflow-hidden rounded-xl border border-slate-200">
+            <div className="space-y-1.5 px-4 py-3 text-sm">
+              <div className="flex justify-between text-slate-500">
+                <span>Item dipilih</span>
+                <span className="font-medium text-slate-700">{selectedCount}</span>
+              </div>
+              <div className="flex justify-between text-slate-500">
+                <span>Total qty diretur</span>
+                <span className="font-medium text-slate-700">{formatQty(totalSelectedQty)}</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2">
+                <span className="text-sm font-semibold text-slate-700">Total Refund</span>
+                <span className={`font-mono text-lg font-bold ${totalRefund > 0 ? 'text-danger-600' : 'text-slate-400'}`}>
+                  {formatRupiah(refundRounding(totalRefund))}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <Field label="Alasan Retur" required error={refundValidation.errors.reason} hint="Min. 3 karakter — cth: produk rusak, salah barang">
+            <Textarea
+              rows={2}
+              maxLength={1000}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="cth: produk rusak / salah barang"
+              error={!!refundValidation.errors.reason}
+            />
           </Field>
         </div>
       </Modal>
@@ -339,7 +490,7 @@ export default function SaleDetail() {
         onConfirm={doRefund}
         loading={submitting}
         title="Konfirmasi retur?"
-        message={`Total refund ${formatRupiah(refundRounding(totalRefund))} akan diproses. Stok kembali ke gudang. Transaksi ini akan ditandai sebagai retur.`}
+        message={`Total refund ${formatRupiah(refundRounding(totalRefund))} untuk ${selectedCount} item (${formatQty(totalSelectedQty)} qty) akan diproses. Stok kembali ke gudang dan status transaksi ditandai sebagai retur.`}
         confirmText="Ya, proses retur"
       />
 
