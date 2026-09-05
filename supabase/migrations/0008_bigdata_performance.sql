@@ -64,7 +64,7 @@ LANGUAGE sql STABLE
 AS $$
   SELECT s.customer_id,
          COUNT(*)::bigint AS total_transactions,
-         COALESCE(SUM(s.total), 0)::numeric(15, 2) AS total_spend
+         COALESCE(SUM(GREATEST(s.total - COALESCE((SELECT SUM(r.total_refund) FROM returns r WHERE r.sale_id = s.id), 0), 0)), 0)::numeric(15, 2) AS total_spend
   FROM sales s
   WHERE s.status <> 'cancelled' AND s.customer_id = ANY (p_ids)
   GROUP BY s.customer_id;

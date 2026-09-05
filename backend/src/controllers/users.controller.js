@@ -156,7 +156,8 @@ export const updateUser = asyncHandler(async (req, res) => {
     userPatch.token_version = existing.token_version + 1;
     changes.is_active = data.is_active;
   }
-  await supabase.from('users').update(userPatch).eq('id', id);
+  const { error: userErr } = await supabase.from('users').update(userPatch).eq('id', id);
+  if (userErr) throw userErr;
 
   const profilePatch = {};
   if (data.full_name !== undefined) profilePatch.full_name = data.full_name;
@@ -169,20 +170,15 @@ export const updateUser = asyncHandler(async (req, res) => {
 
   // Update roles
   if (data.roles) {
+    const newRoleIds = await resolveRoleIds(data.roles);
     if (id === req.user.id) {
-      const roleIds = await resolveRoleIds(data.roles);
-      const { data: selfRoles } = await supabase
-        .from('roles')
-        .select('id')
-        .in('code', ['owner'])
-        .in('id', roleIds);
-      const removingOwner =
-        oldRoles.some((r) => r === selfRoles?.[0]?.id) && !roleIds.includes(selfRoles?.[0]?.id);
-      if (removingOwner) {
+      const { data: ownerRole } = await supabase.from('roles').select('id').eq('code', 'owner').single();
+      const hasOwner = oldRoles.some((r) => r === ownerRole?.id);
+      const stillOwner = newRoleIds.includes(ownerRole?.id);
+      if (hasOwner && !stillOwner) {
         throw badRequest('Tidak dapat menghapus role Owner dari akun sendiri', 'SELF_ACTION');
       }
     }
-    const newRoleIds = await resolveRoleIds(data.roles);
     const toRemove = oldRoles.filter((r) => !newRoleIds.includes(r));
     const toAdd = newRoleIds.filter((r) => !oldRoles.includes(r));
     if (toRemove.length) {

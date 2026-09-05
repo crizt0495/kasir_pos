@@ -226,6 +226,16 @@ export const updateExpense = asyncHandler(async (req, res) => {
     .single();
   if (error) throw error;
 
+  // Sinkronkan cash_transactions terkait agar saldo sesi kas tetap akurat
+  if (req.body.amount != null && Number(req.body.amount) !== Number(existing.amount)) {
+    const { error: txErr } = await supabase
+      .from('cash_transactions')
+      .update({ amount: Number(expense.amount) })
+      .eq('reference_type', 'expense')
+      .eq('reference_id', expense.id);
+    if (txErr) throw txErr;
+  }
+
   await writeAudit({
     user: req.user,
     action: 'EXPENSE_UPDATED',

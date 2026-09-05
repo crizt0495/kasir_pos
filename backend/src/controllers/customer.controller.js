@@ -10,7 +10,7 @@ import { safeSearch } from '../utils/sanitize.js';
 // CUSTOMERS
 // ============================================================
 
-const CUSTOMER_SELECT = '*, sales: sales(status, total)';
+const CUSTOMER_SELECT = '*, sales: sales(status, total, returns: returns(total_refund))';
 // Daftar: kolom minimal — agregat transaksi dihitung via fn_customers_stats
 // (jangan embed seluruh riwayat sales per pelanggan di daftar)
 const CUSTOMER_LIST_SELECT = 'id, name, phone, email, is_general, created_at, pending_debt, total_debt';
@@ -62,6 +62,14 @@ export const getCustomer = asyncHandler(async (req, res) => {
   if (!data) throw notFound('Pelanggan tidak ditemukan');
 
   const validSales = (data.sales || []).filter((s) => s.status !== 'cancelled');
+  // total_spend = sum(sale.total) - sum(refunds pada sale tsb)
+  const totalSpend = validSales.reduce(
+    (sum, s) => {
+      const refund = (s.returns || []).reduce((rSum, r) => rSum + Number(r.total_refund || 0), 0);
+      return sum + Math.max(0, Number(s.total || 0) - refund);
+    },
+    0
+  );
 
   let debtStats = null;
   try {
@@ -75,7 +83,7 @@ export const getCustomer = asyncHandler(async (req, res) => {
     ...data,
     sales: undefined,
     total_transactions: validSales.length,
-    total_spend: validSales.reduce((sum, s) => sum + Number(s.total || 0), 0),
+    total_spend: totalSpend,
     debt_stats: debtStats,
   });
 });

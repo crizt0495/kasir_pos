@@ -120,7 +120,7 @@ export const createSale = asyncHandler(async (req, res) => {
       p_cash_received: body.cash_received ?? null,
       p_notes: body.notes || null,
       p_session_id: body.session_id || null,
-      p_allow_partial: body.record_debt != null,
+      p_allow_partial: hasDebt,
     });
     result = retry.data;
     error = retry.error;

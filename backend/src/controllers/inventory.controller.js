@@ -186,10 +186,16 @@ export const updateOpname = asyncHandler(async (req, res) => {
   if (existing.status !== 'draft') throw badRequest('Hanya stock opname draft yang dapat diubah', 'NOT_DRAFT');
 
   const { opname_date, notes, items } = req.body;
-  await supabase.from('stock_opnames').update({ opname_date, notes, updated_by: req.user.id }).eq('id', id);
+  if (!Array.isArray(items) || !items.length) throw badRequest('Daftar produk tidak boleh kosong', 'EMPTY_ITEMS');
 
-  await supabase.from('stock_opname_items').delete().eq('opname_id', id);
-  const { error: itemErr } = await supabase.from('stock_opname_items').insert(
+  const { error: upErr } = await supabase
+    .from('stock_opnames')
+    .update({ opname_date, notes, updated_by: req.user.id })
+    .eq('id', id);
+  if (upErr) throw upErr;
+
+  // Replace items: insert baru dulu (cek error), baru hapus yang lama
+  const { error: insErr } = await supabase.from('stock_opname_items').insert(
     items.map((i) => ({
       opname_id: id,
       product_id: i.product_id,
@@ -198,7 +204,9 @@ export const updateOpname = asyncHandler(async (req, res) => {
       reason: i.reason || null,
     }))
   );
-  if (itemErr) throw itemErr;
+  if (insErr) throw insErr;
+  const { error: delErr } = await supabase.from('stock_opname_items').delete().eq('opname_id', id);
+  if (delErr) throw delErr;
 
   await writeAudit({ user: req.user, action: 'STOCK_OPNAME_UPDATED', module: 'stock_opname', recordId: id, newData: { item_count: items.length }, req });
   return ok(res, { id }, 'Stock opname berhasil diperbarui');

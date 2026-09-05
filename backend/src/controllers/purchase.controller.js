@@ -83,46 +83,35 @@ export const updatePurchase = asyncHandler(async (req, res) => {
 
   const { supplier_id, invoice_number, purchase_date, discount, notes, items } = req.body;
 
-  // Hitung ulang subtotal & total di server (tidak percaya angka dari client)
-  let subtotal = 0;
-  for (const it of items) subtotal += Number(it.quantity) * Number(it.cost_price);
-  const total = subtotal - Number(discount || 0);
+  // Validasi awal sebelum RPC agar error terformat jelas ke client
+  if (!Array.isArray(items) || !items.length) throw badRequest('Daftar produk tidak boleh kosong', 'EMPTY_ITEMS');
+  for (const it of items) {
+    const qty = Number(it.quantity);
+    const cost = Number(it.cost_price);
+    if (!Number.isFinite(qty) || !Number.isFinite(cost) || qty < 0 || cost < 0) {
+      throw badRequest('Item pembelian mengandung nilai tidak valid', 'INVALID_ITEM');
+    }
+  }
 
-  const { data: purchase, error: upErr } = await supabase
-    .from('purchases')
-    .update({
-      supplier_id: supplier_id || null,
-      invoice_number: invoice_number || null,
-      purchase_date,
-      discount: discount || 0,
-      subtotal,
-      total,
-      notes: notes || null,
-      updated_by: req.user.id,
-    })
-    .eq('id', id)
-    .select('id')
-    .single();
-  if (upErr) throw upErr;
-
-  await supabase.from('purchase_items').delete().eq('purchase_id', id);
-  const { error: itemErr } = await supabase.from('purchase_items').insert(
-    items.map((i) => ({
-      purchase_id: id,
-      product_id: i.product_id,
-      quantity: i.quantity,
-      cost_price: i.cost_price,
-      subtotal: Number(i.quantity) * Number(i.cost_price),
-    }))
-  );
-  if (itemErr) throw itemErr;
+  // RPC atomik: header + replace items dalam satu transaksi Postgres
+  const { data: result, error } = await supabase.rpc('fn_update_purchase', {
+    p_purchase_id: id,
+    p_created_by: req.user.id,
+    p_supplier_id: supplier_id || null,
+    p_invoice_number: invoice_number || null,
+    p_purchase_date: purchase_date || null,
+    p_discount: Number(discount || 0),
+    p_notes: notes || null,
+    p_items: items,
+  });
+  if (error) throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
 
   await writeAudit({
     user: req.user,
     action: 'PURCHASE_UPDATED',
     module: 'purchases',
     recordId: id,
-    newData: { purchase_number: existing.purchase_number, total },
+    newData: { purchase_number: existing.purchase_number, total: result.total },
     req,
   });
   return ok(res, await fetchPurchaseDetail(id), 'Pembelian berhasil diperbarui');

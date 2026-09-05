@@ -165,6 +165,7 @@ const store = {
   purchases: [],
   cash_sessions: [],
   cash_transactions: [],
+  purchase_items: [],
   notification_logs: [],
   notification_subscriptions: [],
 };
@@ -419,6 +420,31 @@ export function createFakeSupabase() {
     rpc(fn, args) {
       if (fn === 'fn_create_sale') {
         return Promise.resolve({ data: { sale_id: '00000000-0000-0000-0000-000000000001', invoice_number: 'INV-20260815-000001', subtotal: 15000, discount: 0, tax: 0, additional_cost: 0, total: 15000, payment_method: 'CASH', cash_received: 20000, change: 5000 }, error: null });
+      }
+      if (fn === 'fn_update_purchase') {
+        // Atomik: hapus item lama, masukkan item baru, hitung total
+        const pid = args.p_purchase_id;
+        const purchase = (store.purchases || []).find((p) => p.id === pid);
+        if (!purchase) return Promise.resolve({ data: null, error: { message: 'Pembelian tidak ditemukan' } });
+        if (purchase.status !== 'draft') return Promise.resolve({ data: null, error: { message: 'Hanya pembelian draft yang dapat diubah' } });
+        if (!args.p_items || !args.p_items.length) return Promise.resolve({ data: null, error: { message: 'Daftar produk tidak boleh kosong' } });
+        store.purchase_items = (store.purchase_items || []).filter((i) => i.purchase_id !== pid);
+        let subtotal = 0;
+        for (const it of args.p_items) {
+          if (Number(it.quantity) <= 0) return Promise.resolve({ data: null, error: { message: 'Qty harus lebih dari 0' } });
+          if (Number(it.cost_price) < 0) return Promise.resolve({ data: null, error: { message: 'Harga beli tidak boleh negatif' } });
+          const sub = Number(it.quantity) * Number(it.cost_price);
+          store.purchase_items.push({ purchase_id: pid, product_id: it.product_id, quantity: it.quantity, cost_price: it.cost_price, subtotal: sub });
+          subtotal += sub;
+        }
+        const total = subtotal - Number(args.p_discount || 0);
+        purchase.supplier_id = args.p_supplier_id;
+        purchase.invoice_number = args.p_invoice_number;
+        purchase.discount = args.p_discount || 0;
+        purchase.notes = args.p_notes;
+        purchase.subtotal = subtotal;
+        purchase.total = total;
+        return Promise.resolve({ data: { purchase_id: pid, subtotal, discount: args.p_discount || 0, total }, error: null });
       }
       if (fn === 'fn_adjust_stock') {
         return Promise.resolve({ data: { product_id: args.p_product_id, stock: 55, delta: 5 }, error: null });
