@@ -42,6 +42,7 @@ export default function OpnameForm() {
   useEffect(() => {
     if (!isView) return;
     let cancelled = false;
+    setLoading(true);
     inventoryApi.opname(id).then((res) => {
       if (cancelled) return;
       setExisting(res.data);
@@ -62,7 +63,13 @@ export default function OpnameForm() {
   const itemReason = (productId) => itemReasons[productId] ?? '';
 
   const updateStock = (productId, value) => {
-    setItemStocks((prev) => ({ ...prev, [productId]: value }));
+    const n = Number(value);
+    // Batalkan nilai tidak valid / di luar rentang (min 0) agar tidak lolos ke server
+    if (value === '' || value == null) {
+      setItemStocks((prev) => ({ ...prev, [productId]: null }));
+    } else if (Number.isFinite(n) && n >= 0) {
+      setItemStocks((prev) => ({ ...prev, [productId]: n }));
+    }
   };
 
   const updateReason = (productId, value) => {
@@ -126,18 +133,23 @@ export default function OpnameForm() {
           reason: itemReasons[p.id] || null,
         })),
       };
+      let opnameId = id;
       if (isNew) {
         const res = await inventoryApi.createOpname(payload);
         toast.success('Stock opname dibuat');
-        navigate(`/inventory/opname/${res.data.id}`, { replace: true });
+        opnameId = res.data.id;
+        // Pindah ke mode edit agar tombol complete tersedia
+        navigate(`/inventory/opname/${opnameId}`, { replace: true });
       } else if (existing.status === 'draft' && can('stock_opname.update')) {
         await inventoryApi.updateOpname(id, payload);
         toast.success('Stock opname diperbarui');
       } else {
         toast.error('Tidak dapat mengubah opname yang sudah selesai');
+        setSaving(false);
+        return;
       }
-      if (complete && existing?.status === 'draft') {
-        await inventoryApi.completeOpname(id);
+      if (complete && opnameId) {
+        await inventoryApi.completeOpname(opnameId);
         toast.success('Stock opname selesai — stok sistem disesuaikan');
         navigate('/inventory/opname', { replace: true });
       }

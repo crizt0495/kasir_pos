@@ -4,7 +4,7 @@ export const adjustStockSchema = z.object({
   product_id: z.string().uuid('Produk tidak valid'),
   quantity: z.coerce
     .number({ required_error: 'Jumlah wajib diisi' })
-    .refine((v) => v !== 0, 'Jumlah penyesuaian tidak boleh 0'),
+    .refine((v) => Number.isFinite(v) && v !== 0, 'Jumlah penyesuaian harus angka valid dan tidak boleh 0'),
   reason: z.string({ required_error: 'Alasan wajib diisi' }).trim().min(3, 'Alasan minimal 3 karakter').max(500),
 });
 

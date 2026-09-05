@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { writeAudit } from '../services/auditService.js';
-import { getPagination, buildPage, fetchPage, countSignature } from '../utils/pagination.js';
+import { getPagination, buildPage, fetchPage, countSignature, invalidateCounts } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, conflict } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -81,6 +81,8 @@ export const createProduct = asyncHandler(async (req, res) => {
     newData: { sku: product.sku, name: product.name, sale_price: product.sale_price },
     req,
   });
+  invalidateCounts('inventory_products');
+  invalidateCounts('products');
   return created(res, product, 'Produk berhasil dibuat');
 });
 
@@ -108,6 +110,8 @@ export const updateProduct = asyncHandler(async (req, res) => {
     newData: { name: product.name, sale_price: product.sale_price },
     req,
   });
+  invalidateCounts('inventory_products');
+  invalidateCounts('products');
   return ok(res, product, 'Produk berhasil diperbarui');
 });
 
@@ -136,6 +140,8 @@ export const deleteProduct = asyncHandler(async (req, res) => {
     newData: { name: existing.name },
     req,
   });
+  invalidateCounts('inventory_products');
+  invalidateCounts('products');
   return ok(res, null, 'Produk berhasil dihapus');
 });
 

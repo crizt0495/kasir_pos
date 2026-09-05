@@ -108,7 +108,7 @@ export const roleSchema = z.object({
 
 export const adjustStockSchema = z.object({
   product_id: z.string().uuid('Produk tidak valid'),
-  quantity: z.coerce.number().refine((v) => v !== 0, 'Jumlah tidak boleh 0'),
+  quantity: z.coerce.number().refine((v) => Number.isFinite(v) && v !== 0, 'Jumlah penyesuaian harus angka valid dan tidak boleh 0'),
   reason: z.string().trim().min(3, 'Alasan minimal 3 karakter').max(500),
 });
 

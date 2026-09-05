@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { writeAudit } from '../services/auditService.js';
-import { getPagination, buildPage, fetchPage, countSignature, dateRange } from '../utils/pagination.js';
+import { getPagination, buildPage, fetchPage, countSignature, dateRange, invalidateCounts } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, badRequest, extractPgMessage, AppError } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -113,6 +113,8 @@ export const adjustStock = asyncHandler(async (req, res) => {
   if (error) {
     throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
   }
+  invalidateCounts('inventory_products');
+  invalidateCounts('products');
   return ok(res, data, 'Stok berhasil disesuaikan');
 });
 
@@ -232,6 +234,8 @@ export const completeOpname = asyncHandler(async (req, res) => {
   if (error) {
     throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
   }
+  invalidateCounts('inventory_products');
+  invalidateCounts('products');
   return ok(res, data, 'Stock opname selesai, stok sistem disesuaikan dengan stok fisik');
 });
 
