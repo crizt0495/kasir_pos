@@ -25,7 +25,7 @@ export default function Inventory() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [adjusting, setAdjusting] = useState(null);
-  const [form, setForm] = useState({ quantity: 0, reason: '' });
+  const [form, setForm] = useState({ quantity: '', reason: '' });
   const [saving, setSaving] = useState(false);
   const [confirming, setConfirming] = useState(null);
 
@@ -37,7 +37,7 @@ export default function Inventory() {
 
   const openAdjust = (p) => {
     setAdjusting(p);
-    setForm({ quantity: 0, reason: '' });
+    setForm({ quantity: '', reason: '' });
   };
 
   const adjustValidation = useMemo(
@@ -178,8 +178,8 @@ export default function Inventory() {
               Masukkan angka <b>positif</b> untuk menambah stok, <b>negatif</b> untuk mengurangi. Perubahan tercatat di pergerakan stok.
             </p>
           </div>
-          <Field label="Jumlah penyesuaian" required error={adjustValidation.errors.quantity}>
-            <Input type="number" step="any" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value === '' ? 0 : Number(e.target.value) })} placeholder="cth: 10 atau -5" error={!!adjustValidation.errors.quantity} />
+          <Field label="Jumlah penyesuaian" required error={form.quantity === '' ? null : adjustValidation.errors.quantity}>
+            <Input type="number" step="any" value={form.quantity} onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))} placeholder="cth: 10 atau -5" error={!!(form.quantity !== '' && adjustValidation.errors.quantity)} />
           </Field>
           <Field label="Alasan" required error={adjustValidation.errors.reason} hint="Minimal 3 karakter">
             <Textarea rows={2} maxLength={500} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="cth: barang rusak / stok fisik berbeda" error={!!adjustValidation.errors.reason} />
