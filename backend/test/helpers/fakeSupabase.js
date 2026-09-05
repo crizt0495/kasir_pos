@@ -33,11 +33,12 @@ const permissionRows = [
   { id: 'p-users-update', code: 'users.update', name: 'Ubah User', module: 'users' },
   { id: 'p-users-delete', code: 'users.delete', name: 'Hapus User', module: 'users' },
   { id: 'p-inventory-adjust', code: 'inventory.adjust', name: 'Penyesuaian Stok', module: 'inventory' },
+  { id: 'p-notifications-view', code: 'notifications.view', name: 'Lihat Notifikasi', module: 'notifications' },
 ];
 
 /** Kode permission per role (sumber tunggal kebenaran relasi role↔permission) */
 const rolePermissionCodes = {
-  [ownerRoleId]: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.create', 'products.delete', 'roles.view', 'roles.create', 'roles.update', 'roles.delete', 'permissions.view', 'reports.view', 'reports.export', 'inventory.view', 'inventory.adjust', 'customers.view', 'customers.create', 'customers.update', 'customers.delete', 'users.view', 'users.create', 'users.update', 'users.delete'],
+  [ownerRoleId]: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.create', 'products.delete', 'roles.view', 'roles.create', 'roles.update', 'roles.delete', 'permissions.view', 'reports.view', 'reports.export', 'inventory.view', 'inventory.adjust', 'customers.view', 'customers.create', 'customers.update', 'customers.delete', 'users.view', 'users.create', 'users.update', 'users.delete', 'notifications.view'],
   [kasirRoleId]: ['pos.access', 'products.view', 'customers.view', 'customers.create', 'customers.update'],
 };
 
@@ -164,22 +165,36 @@ const store = {
   purchases: [],
   cash_sessions: [],
   cash_transactions: [],
+  notification_logs: [],
+  notification_subscriptions: [],
 };
+
+function collectLeaves(node, segments) {
+  const [head, ...rest] = segments;
+  if (node == null) return [];
+  if (rest.length === 0) {
+    const leaf = node[head];
+    return Array.isArray(leaf) ? leaf : leaf == null ? [] : [leaf];
+  }
+  const child = node[head];
+  if (Array.isArray(child)) return child.flatMap((c) => collectLeaves(c, rest));
+  return collectLeaves(child, rest);
+}
 
 function matchesFilter(row, filters) {
   return filters.every(({ op, col, val }) => {
-    const value = row[col];
-    if (op === 'eq') return value === val;
-    if (op === 'neq') return value !== val;
-    if (op === 'ilike') return String(value || '').toLowerCase().includes(String(val).replace(/%/g, '').toLowerCase());
+    const leaves = col.includes('.') ? collectLeaves(row, col.split('.')) : (row[col] == null ? [] : [row[col]]);
+    if (op === 'eq') return leaves.includes(val);
+    if (op === 'neq') return !leaves.includes(val);
+    if (op === 'ilike') return leaves.some((v) => String(v || '').toLowerCase().includes(String(val).replace(/%/g, '').toLowerCase()));
     if (op === 'in') {
       // PostgREST: .in.(a,b) — buang kurung pembungkus bila ada
       const cleaned = String(val || '').replace(/^\(|\)$/g, '');
       const list = Array.isArray(cleaned) ? cleaned : cleaned.split(',').filter(Boolean);
-      return list.includes(value);
+      return leaves.some((v) => list.includes(v));
     }
-    if (op === 'gte') return Number(value) >= Number(val);
-    if (op === 'lte') return Number(value) <= Number(val);
+    if (op === 'gte') return leaves.some((v) => Number(v) >= Number(val));
+    if (op === 'lte') return leaves.some((v) => Number(v) <= Number(val));
     return true;
   });
 }
