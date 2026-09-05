@@ -38,7 +38,15 @@ export default function SaleDetail() {
     return Number(item.quantity) - returned;
   };
 
-  const totalRefund = (s?.items || []).reduce((sum, item) => sum + (Number(refundItems[item.id] || 0) * Number(item.price)), 0);
+  const totalRefund = (s?.items || []).reduce((sum, item) => {
+    const q = Number(refundItems[item.id] || 0);
+    if (q <= 0) return sum;
+    // Harga efektif per unit setelah diskon item = subtotal / quantity
+    const unit = Number(item.quantity > 0 ? (Number(item.subtotal || 0) / Number(item.quantity)) : 0);
+    return sum + q * unit;
+  }, 0);
+
+  const refundRounding = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
   const refundValidation = useMemo(() => {
     const errors = { items: '', reason: '' };
@@ -256,9 +264,9 @@ export default function SaleDetail() {
             <Button
               variant="danger"
               onClick={() => setConfirmRefund(true)}
-              disabled={!refundValidation.isValid || submitting}
+              disabled={!refundValidation.isValid || submitting || totalRefund <= 0}
             >
-              <RotateCcw className="h-4 w-4" /> Refund {totalRefund > 0 ? formatRupiah(totalRefund) : ''}
+              <RotateCcw className="h-4 w-4" /> Refund {totalRefund > 0 ? formatRupiah(refundRounding(totalRefund)) : ''}
             </Button>
           </>
         }
@@ -274,31 +282,51 @@ export default function SaleDetail() {
             {(s?.items || []).map((item) => {
               const rem = remaining(item);
               if (rem <= 0) return null;
-              const qty = Number(refundItems[item.id] || 0);
-              const over = qty > rem;
+              const qty = refundItems[item.id] ?? '';
+              const qtyNum = qty === '' ? 0 : Number(qty);
+              const over = qty !== '' && qtyNum > rem;
+              const unit = Number(item.quantity > 0 ? (Number(item.subtotal || 0) / Number(item.quantity)) : 0);
               return (
                 <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2.5">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-slate-800">{item.product?.name}</p>
                     <p className="text-xs text-slate-400">
-                      Terjual {formatQty(item.quantity)} · Sisa retur {formatQty(rem)} · {formatRupiah(item.price)}/pcs
+                      Terjual {formatQty(item.quantity)} · Sisa retur {formatQty(rem)} · {formatRupiah(unit)}/pcs
                     </p>
                     {over && <p className="mt-0.5 text-xs text-danger-600" role="alert">Maksimal {formatQty(rem)}</p>}
                   </div>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={rem}
-                    value={refundItems[item.id] || ''}
-                    placeholder="0"
-                    onChange={(e) => setRefundItems((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                    className="w-24 text-right"
-                    error={over}
-                  />
+                  <div className="flex items-center gap-2">
+                    {qtyNum > 0 && (
+                      <span className="whitespace-nowrap text-xs font-medium text-emerald-700">
+                        {formatRupiah(refundRounding(qtyNum * unit))}
+                      </span>
+                    )}
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={qty}
+                      placeholder="0"
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === '' || /^\d*\.?\d*$/.test(raw)) {
+                          setRefundItems((prev) => ({ ...prev, [item.id]: raw }));
+                        }
+                      }}
+                      className="w-24 text-right"
+                      error={over}
+                      aria-label={`Jumlah retur ${item.product?.name || 'item'}`}
+                    />
+                  </div>
                 </div>
               );
             })}
           </div>
+          {totalRefund > 0 && (
+            <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
+              <span className="text-slate-500">Total Refund</span>
+              <span className="font-bold text-danger-600">{formatRupiah(refundRounding(totalRefund))}</span>
+            </div>
+          )}
           <Field label="Alasan Retur" required error={refundValidation.errors.reason}>
             <Textarea rows={2} maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="cth: produk rusak / salah barang" error={!!refundValidation.errors.reason} />
           </Field>
@@ -311,7 +339,7 @@ export default function SaleDetail() {
         onConfirm={doRefund}
         loading={submitting}
         title="Konfirmasi retur?"
-        message={`Total refund ${formatRupiah(totalRefund)} akan diproses. Stok kembali ke gudang.`}
+        message={`Total refund ${formatRupiah(refundRounding(totalRefund))} akan diproses. Stok kembali ke gudang. Transaksi ini akan ditandai sebagai retur.`}
         confirmText="Ya, proses retur"
       />
 

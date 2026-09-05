@@ -33,7 +33,10 @@ export const createSaleSchema = z.object({
 
 export const refundItemSchema = z.object({
   sale_item_id: z.string().uuid('Item tidak valid'),
-  quantity: z.coerce.number().positive('Qty retur harus lebih dari 0'),
+  quantity: z.coerce
+    .number()
+    .positive('Qty retur harus lebih dari 0')
+    .refine((v) => Number.isFinite(v), 'Qty retur harus angka valid'),
 });
 
 export const refundSaleSchema = z.object({
