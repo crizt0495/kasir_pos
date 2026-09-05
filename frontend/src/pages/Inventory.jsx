@@ -179,7 +179,20 @@ export default function Inventory() {
             </p>
           </div>
           <Field label="Jumlah penyesuaian" required error={form.quantity === '' ? null : adjustValidation.errors.quantity}>
-            <Input type="number" step="any" value={form.quantity} onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))} placeholder="cth: 10 atau -5" error={!!(form.quantity !== '' && adjustValidation.errors.quantity)} />
+            <Input
+              type="text"
+              inputMode="numeric"
+              value={form.quantity}
+              onChange={(e) => {
+                const raw = e.target.value;
+                // Terima kosong, "-", angka, dan desimal — validasi penuh dilakukan oleh schema
+                if (raw === '' || raw === '-' || /^-?\d*\.?\d*$/.test(raw)) {
+                  setForm((f) => ({ ...f, quantity: raw }));
+                }
+              }}
+              placeholder="cth: 10 atau -5"
+              error={!!(form.quantity !== '' && adjustValidation.errors.quantity)}
+            />
           </Field>
           <Field label="Alasan" required error={adjustValidation.errors.reason} hint="Minimal 3 karakter">
             <Textarea rows={2} maxLength={500} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="cth: barang rusak / stok fisik berbeda" error={!!adjustValidation.errors.reason} />
