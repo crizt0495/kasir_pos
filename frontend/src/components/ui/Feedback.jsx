@@ -117,7 +117,21 @@ export function ErrorState({ message = 'Terjadi kesalahan, silakan coba lagi', o
   );
 }
 
-export function StatCard({ label, value, icon: Icon, color = 'bg-primary-50 text-primary-600', sub, trend, trendUp = true, className = '' }) {
+export function StatCard({ label, value, icon: Icon, color = 'bg-primary-50 text-primary-600', sub, trend, trendUp = true, className = '', neo = false }) {
+  if (neo) {
+    return (
+      <div className={`group rounded-lg border-2 border-black p-5 neo-shadow neopush ${className}`}>
+        <p className="text-xs font-extrabold uppercase tracking-wide text-black/80 truncate">{label}</p>
+        <p className="mt-1.5 text-xl sm:text-2xl font-extrabold text-black break-words tracking-tight font-mono">{value}</p>
+        {sub && <p className="mt-1 text-xs font-medium text-black/70 break-words">{sub}</p>}
+        {Icon && (
+          <div className="mt-3 inline-flex items-center rounded-md border-2 border-black bg-white p-2 shadow-[2px_2px_0_0_#000] transition-transform duration-200 group-hover:-rotate-6">
+            <Icon className="h-5 w-5 text-black" aria-hidden="true" />
+          </div>
+        )}
+      </div>
+    );
+  }
   return (
     <div className={`group card-hover rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm ${className}`}>
       <div className="flex items-start justify-between gap-4">

@@ -396,6 +396,20 @@ input[type="search"]::-webkit-search-cancel-button:hover {
   .text-balance {
     text-wrap: balance;
   }
+  .neo-shadow {
+    box-shadow: 5px 5px 0 0 #000;
+  }
+  .neopush {
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .neopush:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 7px 7px 0 0 #000;
+  }
+  .neopush:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 0 #000;
+  }
   .animate-in {
     animation: animateIn var(--transition-normal) ease-out;
   }

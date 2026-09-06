@@ -79,34 +79,38 @@ export default function Dashboard() {
             <StatCard label="Kas Saat Ini" value={formatRupiah(s.open_cash)} icon={Wallet} color="bg-gradient-to-br from-teal-400 to-teal-600 text-white shadow-md shadow-teal-500/25" />
           </div>
 
-          {/* Ringkasan Hutang / Piutang (additive — memakai data dari summary) */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Ringkasan Hutang / Piutang — varian neo-brutalism (contoh) */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
+              neo
               label="Total Piutang"
               value={formatRupiah(s.total_pending_debt)}
               icon={HandCoins}
-              color="bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md shadow-amber-500/25"
+              className="bg-yellow-300"
               sub={`${formatNumber(s.pending_debt_count)} transaksi belum lunas`}
             />
             <StatCard
+              neo
               label="Piutang Bertambah Hari Ini"
               value={formatRupiah(s.today_new_debt)}
               icon={BadgeDollarSign}
-              color="bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-md shadow-orange-500/25"
+              className="bg-orange-400"
             />
             <StatCard
+              neo
               label="Pembayaran Piutang Hari Ini"
               value={formatRupiah(s.today_paid_debt)}
               icon={History}
-              color="bg-gradient-to-br from-success-400 to-success-600 text-white shadow-md shadow-success-500/25"
+              className="bg-lime-300"
             />
             <StatCard
+              neo
               label="Uang Masuk Hari Ini"
               value={formatRupiah(
                 Number(s.today_sales || 0) - Number(s.today_new_debt || 0) + Number(s.today_paid_debt || 0),
               )}
               icon={Banknote}
-              color="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md shadow-emerald-500/25"
+              className="bg-emerald-300"
               sub="Penjualan bersih + pembayaran piutang"
             />
           </div>
