@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, ReceiptText, Banknote } from 'lucide-react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, Users, ReceiptText, Banknote, Wallet } from 'lucide-react';
 import { customersApi, salesApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
-import { DataTable, Pagination, Card } from '../components/ui/DataTable.jsx';
+import { DataTable, Card } from '../components/ui/DataTable.jsx';
 import { StatCard, StatusBadge, Skeleton, ErrorState, EmptyState } from '../components/ui/Feedback.jsx';
 import { formatRupiah, formatDateTime, paymentMethodLabel } from '../utils/format.js';
 
@@ -16,6 +16,13 @@ export default function CustomerDetail() {
   const transactions = useApi(() => salesApi.list({ customer_id: id, page, pageSize: 15 }).then((r) => r.data), [id, page]);
 
   const c = customer.data;
+  const stats = c?.debt_stats || {};
+  const hadDebt = Number(c?.total_debt || 0) > 0 || Number(stats?.total_debt || 0) > 0;
+  const pendingDebt = Number(stats?.pending_debt ?? c?.pending_debt ?? 0);
+  const totalDebt = Number(stats?.total_debt ?? c?.total_debt ?? 0);
+  const overdue = Number(stats?.overdue_debt || 0);
+  const overdueCount = Number(stats?.overdue_count || 0);
+  const dueSoon = Number(stats?.due_soon_records || 0);
 
   return (
     <div className="space-y-4">
@@ -37,11 +44,45 @@ export default function CustomerDetail() {
         <ErrorState onRetry={customer.reload} />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <StatCard label="Total Transaksi" value={c.total_transactions} icon={ReceiptText} color="bg-primary-50 text-primary-600" />
-            <StatCard label="Total Belanja" value={formatRupiah(c.total_spend)} icon={Banknote} color="bg-emerald-50 text-emerald-600" />
-            <StatCard label="Status" value={c.address ? 'Alamat tersimpan' : 'Tanpa alamat'} icon={Users} color="bg-slate-100 text-slate-600" />
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatCard label="Total Transaksi" value={c.total_transactions} icon={ReceiptText} color="bg-gradient-to-br from-primary-400 to-primary-600 text-white shadow-md shadow-primary-500/25" />
+            <StatCard label="Total Belanja" value={formatRupiah(c.total_spend)} icon={Banknote} color="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md shadow-emerald-500/25" />
+            <StatCard
+              label="Total Hutang"
+              value={formatRupiah(totalDebt)}
+              icon={Wallet}
+              color={totalDebt > 0 ? 'bg-gradient-to-br from-danger-400 to-danger-600 text-white shadow-md shadow-danger-500/25' : 'bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-md shadow-slate-500/25'}
+            />
+            <StatCard
+              label="Piutang (Sisa)"
+              value={formatRupiah(pendingDebt)}
+              icon={Users}
+              color={pendingDebt > 0 ? 'bg-gradient-to-br from-rose-500 to-rose-700 text-white shadow-md shadow-rose-500/25' : 'bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-md shadow-slate-500/25'}
+            />
           </div>
+
+          {hadDebt && (
+            <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-rose-900">Ringkasan Hutang</h3>
+                <Link to="/debts" className="text-xs font-medium text-rose-600 hover:underline">Kelola Hutang →</Link>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-4">
+                <SummaryBox label="Total Hutang" value={formatRupiah(totalDebt)} />
+                <SummaryBox label="Piutang Aktif" value={formatRupiah(pendingDebt)} intent={pendingDebt > 0 ? 'danger' : 'success'} />
+                <SummaryBox
+                  label="Jatuh Tempo"
+                  value={overdue > 0 || overdueCount > 0 ? `${overdueCount} catatan · ${formatRupiah(overdue)}` : '-'}
+                  intent={overdueCount > 0 || overdue > 0 ? 'danger' : 'default'}
+                />
+                <SummaryBox
+                  label="Segera Jatuh Tempo"
+                  value={dueSoon > 0 ? `${dueSoon} catatan` : '-'}
+                  intent={dueSoon > 0 ? 'warning' : 'default'}
+                />
+              </div>
+            </div>
+          )}
 
           <Card title="Informasi" bodyClassName="p-5">
             <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
@@ -81,6 +122,21 @@ export default function CustomerDetail() {
           </Card>
         </>
       )}
+    </div>
+  );
+}
+
+function SummaryBox({ label, value, intent = 'default' }) {
+  const tone = {
+    danger: 'text-rose-600 bg-rose-100/70',
+    success: 'text-emerald-600 bg-emerald-100/70',
+    warning: 'text-amber-600 bg-amber-100/70',
+    default: 'text-slate-700 bg-white',
+  }[intent];
+  return (
+    <div className={`rounded-xl px-4 py-3 ${tone}`}>
+      <p className="text-xs uppercase tracking-wide opacity-70">{label}</p>
+      <p className="mt-0.5 font-mono text-sm font-bold">{value}</p>
     </div>
   );
 }

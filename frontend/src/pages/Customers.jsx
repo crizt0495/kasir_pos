@@ -14,6 +14,7 @@ import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Field, Input, Textarea } from '../components/ui/Form.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
+import { Badge } from '../components/ui/Feedback.jsx';
 import { formatRupiah, formatNumber } from '../utils/format.js';
 
 const emptyForm = { name: '', phone: '', email: '', address: '', birth_date: '', notes: '' };
@@ -88,11 +89,17 @@ export default function Customers() {
 
   const d = list.data;
 
+  const debtMode = (r) => {
+    const pending = Number(r.pending_debt || 0);
+    const total = Number(r.total_debt || 0);
+    return { pending, total, hasDebt: pending > 0 };
+  };
+
   return (
     <div className="space-y-4">
       <PageHeader
         title="Pelanggan"
-        description="Kelola data pelanggan"
+        description="Kelola data pelanggan beserta hutang/piutang"
         actions={can('customers.create') && <Button icon={Plus} onClick={openCreate}>Tambah Pelanggan</Button>}
       />
 
@@ -104,6 +111,26 @@ export default function Customers() {
           { key: 'email', header: 'Email', render: (r) => r.email || '-' },
           { key: 'total_transactions', header: 'Transaksi', render: (r) => formatNumber(r.total_transactions) },
           { key: 'total_spend', header: 'Total Belanja', render: (r) => <span className="font-semibold">{formatRupiah(r.total_spend)}</span> },
+          {
+            key: 'total_debt', header: 'Total Hutang',
+            render: (r) => {
+              const { total } = debtMode(r);
+              return total > 0
+                ? <span className="font-semibold font-mono text-slate-800">{formatRupiah(total)}</span>
+                : <span className="text-slate-300 font-mono">-</span>;
+            },
+          },
+          {
+            key: 'pending_debt', header: 'Piutang',
+            render: (r) => {
+              const { pending, hasDebt } = debtMode(r);
+              return hasDebt ? (
+                <Badge variant="danger" dot>{formatRupiah(pending)}</Badge>
+              ) : (
+                <Badge variant="success">Lunas</Badge>
+              );
+            },
+          },
           { key: 'actions', header: 'Aksi', render: (r) => (
             <div className="flex gap-1">
               <button onClick={() => navigate(`/customers/${r.id}`)} className="rounded-md p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-600">
@@ -132,31 +159,45 @@ export default function Customers() {
         pageSize={pageSize}
         onPageChange={setPage}
         onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
-        renderCard={(r) => (
-          <div className="space-y-2.5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-medium text-slate-800">{r.name}</p>
-                {r.phone && <p className="text-xs text-slate-400">{r.phone}</p>}
-                {r.email && <p className="text-xs text-slate-400">{r.email}</p>}
+        renderCard={(r) => {
+          const { pending, hasDebt, total } = debtMode(r);
+          return (
+            <div className="space-y-2.5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-medium text-slate-800">{r.name}</p>
+                  {r.phone && <p className="text-xs text-slate-400">{r.phone}</p>}
+                  {r.email && <p className="text-xs text-slate-400">{r.email}</p>}
+                </div>
+                {hasDebt ? (
+                  <Badge variant="danger" dot>Piutang {formatRupiah(pending)}</Badge>
+                ) : (
+                  <Badge variant="success">Lunas</Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-4 text-xs text-slate-500">
+                <span>Transaksi: <b>{formatNumber(r.total_transactions)}</b></span>
+                <span>Total: <b className="text-slate-800">{formatRupiah(r.total_spend)}</b></span>
+              </div>
+              {total > 0 && (
+                <div className="flex items-center gap-4 text-xs text-slate-500">
+                  <span>Total Hutang: <b className="font-mono text-slate-800">{formatRupiah(total)}</b></span>
+                  <span>Sisa: <b className="font-mono text-rose-600">{formatRupiah(pending)}</b></span>
+                </div>
+              )}
+              <div className="flex justify-end gap-1">
+                <button onClick={(e) => { e.stopPropagation(); navigate(`/customers/${r.id}`); }} className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
+                  Detail
+                </button>
+                {can('customers.update') && (
+                  <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                    Edit
+                  </button>
+                )}
               </div>
             </div>
-            <div className="flex items-center gap-4 text-xs text-slate-500">
-              <span>Transaksi: <b>{formatNumber(r.total_transactions)}</b></span>
-              <span>Total: <b className="text-slate-800">{formatRupiah(r.total_spend)}</b></span>
-            </div>
-            <div className="flex justify-end gap-1">
-              <button onClick={(e) => { e.stopPropagation(); navigate(`/customers/${r.id}`); }} className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
-                Detail
-              </button>
-              {can('customers.update') && (
-                <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
-                  Edit
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+          );
+        }}
         toolbar={<SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Cari nama, HP, email..." className="w-full sm:w-72" />}
       />
 
