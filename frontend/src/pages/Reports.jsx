@@ -116,7 +116,7 @@ export default function Reports() {
       </div>
 
       {showDatePicker && (
-        <div className="rounded-xl border border-slate-200 bg-white p-3">
+        <div className="rounded-lg border-2 border-black bg-white p-3">
           <DateRangePicker
             from={from}
             to={to}
@@ -245,7 +245,7 @@ export default function Reports() {
 
 function SummaryCard({ label, value, highlight = false }) {
   return (
-    <div className={`rounded-xl border p-4 shadow-sm ${highlight ? 'border-primary-200 bg-primary-50' : 'border-slate-200 bg-white'}`}>
+    <div className={`rounded-lg p-4 shadow-sm ${highlight ? 'border-2 border-black bg-primary-50' : 'border-2 border-black bg-white'}`}>
       <p className="text-xs text-slate-500">{label}</p>
       <p className={`mt-1 text-lg font-bold font-mono ${highlight ? 'text-primary-700' : 'text-slate-900'}`}>{value}</p>
     </div>
@@ -256,7 +256,7 @@ function SalesTable({ d }) {
   return (
     <div className="divide-y divide-slate-100">
       {(!d.buckets || d.buckets.length === 0) && <EmptyState title="Belum ada data" />}
-      <div className="hidden border-b border-slate-100 bg-slate-50/80 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:flex sm:justify-between">
+      <div className="hidden border-b-2 border-black bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:flex sm:justify-between">
         <span className="w-32">Tanggal</span>
         <div className="flex gap-6">
           <span className="w-16 text-right">Transaksi</span>
@@ -300,7 +300,7 @@ function ProfitTable({ d }) {
   return (
     <div className="divide-y divide-slate-100">
       {(!d.buckets || d.buckets.length === 0) && <EmptyState title="Belum ada data" />}
-      <div className="hidden border-b border-slate-100 bg-slate-50/80 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:flex sm:justify-between">
+      <div className="hidden border-b-2 border-black bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:flex sm:justify-between">
         <span className="w-32">Tanggal</span>
         <div className="flex gap-6">
           <span className="w-16 text-right">Transaksi</span>
@@ -342,7 +342,7 @@ function ProductsTable({ d }) {
           </div>
         </div>
       ))}
-      <p className="border-t border-slate-100 px-4 py-2 text-xs font-semibold uppercase text-slate-400">Paling Sedikit Terjual</p>
+      <p className="border-t-2 border-black px-4 py-2 text-xs font-semibold uppercase text-slate-400">Paling Sedikit Terjual</p>
       {d.least?.map((p, i) => (
         <div key={`l${i}`} className="flex items-center justify-between px-4 py-2.5 text-sm">
           <div className="flex items-center gap-2">
@@ -378,7 +378,7 @@ function InventoryTable({ d }) {
 
       {d.low_stock_list?.length > 0 && (
         <>
-          <p className="border-t border-slate-100 px-4 py-2 text-xs font-semibold uppercase text-slate-400">Stok Menipis ({d.low_stock_list.length} produk)</p>
+          <p className="border-t-2 border-black px-4 py-2 text-xs font-semibold uppercase text-slate-400">Stok Menipis ({d.low_stock_list.length} produk)</p>
           {d.low_stock_list.map((p) => (
             <div key={p.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
               <div className="flex items-center gap-2">
@@ -393,7 +393,7 @@ function InventoryTable({ d }) {
 
       {d.out_of_stock_list?.length > 0 && (
         <>
-          <p className="border-t border-slate-100 px-4 py-2 text-xs font-semibold uppercase text-slate-400">Stok Habis ({d.out_of_stock_list.length} produk)</p>
+          <p className="border-t-2 border-black px-4 py-2 text-xs font-semibold uppercase text-slate-400">Stok Habis ({d.out_of_stock_list.length} produk)</p>
           {d.out_of_stock_list.map((p) => (
             <div key={p.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
               <div className="flex items-center gap-2">

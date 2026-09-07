@@ -5,7 +5,7 @@ import { Button } from '../components/ui/Button.jsx';
 export default function Forbidden() {
   return (
     <div className="flex flex-col items-center justify-center gap-5 py-24 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-amber-50 text-amber-500">
+      <div className="flex h-20 w-20 items-center justify-center rounded-xl border-2 border-black bg-amber-50 text-amber-500">
         <ShieldAlert className="h-10 w-10" strokeWidth={1.5} />
       </div>
       <div>

@@ -133,11 +133,11 @@ export default function Opnames() {
             <div className="flex items-center justify-between text-xs text-slate-500">
               <span>{formatQty(r.item_count)} produk</span>
               <div className="flex gap-1">
-                <button onClick={(e) => { e.stopPropagation(); navigate(`/inventory/opname/${r.id}`); }} className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
+                <button onClick={(e) => { e.stopPropagation(); navigate(`/inventory/opname/${r.id}`); }} className="rounded-md bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
                   Detail
                 </button>
                 {r.status === 'draft' && can('stock_opname.update') && (
-                  <button onClick={(e) => { e.stopPropagation(); setToComplete(r); }} className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-100 transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); setToComplete(r); }} className="rounded-md bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-100 transition-colors">
                     Selesai
                   </button>
                 )}
@@ -146,7 +146,7 @@ export default function Opnames() {
           </div>
         )}
         toolbar={
-          <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="rounded-md border-2 border-black px-3 py-2 text-sm bg-white">
             <option value="">Semua Status</option>
             <option value="draft">Draft</option>
             <option value="completed">Selesai</option>

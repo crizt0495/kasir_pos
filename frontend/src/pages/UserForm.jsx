@@ -124,7 +124,7 @@ export default function UserForm() {
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/users')} className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:bg-slate-50">
+        <button onClick={() => navigate('/users')} className="rounded-md border-2 border-black bg-white p-2 text-slate-500 hover:bg-slate-50">
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
@@ -172,8 +172,8 @@ export default function UserForm() {
               {(roles.data?.items || []).map((role) => (
                 <label
                   key={role.id}
-                  className={`flex cursor-pointer items-center justify-between rounded-lg border px-3 py-2.5 ${
-                    selectedRoles.includes(role.id) ? 'border-primary-500 bg-primary-50' : 'border-slate-200 hover:bg-slate-50'
+                  className={`flex cursor-pointer items-center justify-between rounded-md border px-3 py-2.5 ${
+                    selectedRoles.includes(role.id) ? 'border-2 border-black bg-primary-50' : 'border-2 border-black hover:bg-slate-50'
                   }`}
                 >
                   <div>
@@ -194,7 +194,7 @@ export default function UserForm() {
 
           <Checkbox label="Akun aktif" {...register('is_active')} />
 
-          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+          <div className="flex justify-end gap-2 border-t-2 border-black pt-4">
             <Button variant="secondary" type="button" onClick={() => navigate('/users')}>Batal</Button>
             <Button
               type="submit"

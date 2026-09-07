@@ -85,28 +85,28 @@ export function Modal({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
       <div
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-fade-in"
+        className="absolute inset-0 bg-black/70 animate-fade-in"
         onClick={closeOnOverlayClick ? onClose : undefined}
         aria-hidden="true"
       />
       <FocusTrap>
         <div
-          className={`relative flex max-h-[90vh] w-full flex-col animate-scale-in rounded-2xl bg-white shadow-2xl shadow-slate-900/25 ring-1 ring-slate-200/50 ${sizeClasses[size]}`}
+          className={`relative flex max-h-[90vh] w-full flex-col animate-scale-in rounded-xl border-2 border-black bg-white shadow-[8px_8px_0_0_#0A0A0A] ${sizeClasses[size]}`}
           role="dialog"
           aria-modal="true"
           aria-labelledby={title ? 'modal-title' : undefined}
         >
           {(title || showCloseButton) && (
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+            <div className="flex items-center justify-between border-b-2 border-black px-5 py-4 bg-slate-50">
               {title && (
-                <h3 id="modal-title" className="text-base font-semibold text-slate-900">
+                <h3 id="modal-title" className="text-base font-extrabold uppercase tracking-wide text-slate-900">
                   {title}
                 </h3>
               )}
               {showCloseButton && (
                 <button
                   onClick={onClose}
-                  className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                  className="rounded-md border-2 border-black bg-white p-1.5 text-slate-700 shadow-[2px_2px_0_0_#0A0A0A] hover:bg-slate-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all duration-100"
                   aria-label="Tutup modal"
                 >
                   <X className="h-5 w-5" />
@@ -116,7 +116,7 @@ export function Modal({
           )}
           <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
           {footer && (
-            <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-3">
+            <div className="flex items-center justify-end gap-2 border-t-2 border-black px-5 py-3 bg-slate-50">
               {footer}
             </div>
           )}
@@ -161,25 +161,25 @@ export function Drawer({
   return createPortal(
     <div className="fixed inset-0 z-50 animate-fade-in">
       <div
-        className="absolute inset-0 bg-slate-900/50 backdrop-blur-md"
+        className="absolute inset-0 bg-black/70"
         onClick={closeOnOverlayClick ? onClose : undefined}
         aria-hidden="true"
       />
       <div
-        className={`absolute inset-y-0 flex ${side === 'right' ? 'right-0' : 'left-0'} ${width} max-w-full flex-col animate-slide-in bg-white shadow-2xl shadow-slate-900/20 ring-1 ring-slate-200/50`}
+        className={`absolute inset-y-0 flex ${side === 'right' ? 'right-0' : 'left-0'} ${width} max-w-full flex-col animate-slide-in bg-white border-2 border-black shadow-[6px_0_0_0_#0A0A0A]`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'drawer-title' : undefined}
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+        <div className="flex items-center justify-between border-b-2 border-black px-5 py-4 bg-slate-50">
           {title && (
-            <h3 id="drawer-title" className="text-base font-semibold text-slate-900">
+            <h3 id="drawer-title" className="text-base font-extrabold uppercase tracking-wide text-slate-900">
               {title}
             </h3>
           )}
           <button
             onClick={onClose}
-            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="rounded-md border-2 border-black bg-white p-1.5 text-slate-700 shadow-[2px_2px_0_0_#0A0A0A] hover:bg-slate-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all duration-100"
             aria-label="Tutup panel"
           >
             <X className="h-5 w-5" />
@@ -187,7 +187,7 @@ export function Drawer({
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
         {footer && (
-          <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-3">
+          <div className="flex items-center justify-end gap-2 border-t-2 border-black px-5 py-3 bg-slate-50">
             {footer}
           </div>
         )}
@@ -227,14 +227,14 @@ export function ConfirmDialog({
       title={title}
     >
       <div className="flex items-start gap-3">
-        <div className={`flex-shrink-0 rounded-lg p-2 ${danger ? 'bg-danger-100 text-danger-600' : 'bg-primary-100 text-primary-600'}`}>
+        <div className={`flex-shrink-0 rounded-lg border-2 border-black p-2 ${danger ? 'bg-danger-100 text-danger-600' : 'bg-primary-100 text-primary-600'}`}>
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-slate-900">{title}</p>
-          {message && <p className="mt-1.5 text-sm text-slate-500">{message}</p>}
+          <p className="font-bold text-slate-900">{title}</p>
+          {message && <p className="mt-1.5 text-sm text-slate-600">{message}</p>}
         </div>
       </div>
     </Modal>
@@ -292,11 +292,11 @@ export function AlertDialog({
       title={title}
     >
       <div className="flex items-start gap-3">
-        <div className={`flex-shrink-0 rounded-lg p-2 ${variantStyles[variant]}`}>
+        <div className={`flex-shrink-0 rounded-lg border-2 border-black p-2 ${variantStyles[variant]}`}>
           {variantIcons[variant]}
         </div>
         <div className="flex-1 min-w-0">
-          {message && <p className="text-sm text-slate-600">{message}</p>}
+          {message && <p className="text-sm text-slate-700">{message}</p>}
         </div>
       </div>
     </Modal>

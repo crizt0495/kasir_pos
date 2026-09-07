@@ -167,10 +167,10 @@ export default function Users() {
             <div className="flex justify-end gap-1">
               {can('users.update') && (
                 <>
-                  <button onClick={(e) => { e.stopPropagation(); setResetUser(r); }} className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-100 transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); setResetUser(r); }} className="rounded-md bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-100 transition-colors">
                     Reset
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); navigate(`/users/${r.id}/edit`); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); navigate(`/users/${r.id}/edit`); }} className="rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
                     Edit
                   </button>
                 </>

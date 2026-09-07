@@ -181,7 +181,7 @@ export default function Inventory() {
             </div>
             {can('inventory.adjust') && (
               <div className="flex justify-end">
-                <button onClick={(e) => { e.stopPropagation(); openAdjust(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                <button onClick={(e) => { e.stopPropagation(); openAdjust(r); }} className="rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
                   Sesuaikan Stok
                 </button>
               </div>
@@ -218,7 +218,7 @@ export default function Inventory() {
         }
       >
         <div className="space-y-4">
-          <div className="rounded-lg bg-slate-50 p-3 text-sm">
+          <div className="rounded-md bg-slate-50 p-3 text-sm">
             <p className="text-slate-500">Stok saat ini: <b className="text-slate-800">{formatQty(adjusting?.stock)}</b> {adjusting?.unit?.short_name || adjusting?.unit?.name || ''}</p>
             <p className="mt-1 text-xs text-slate-400">
               Pilih arah perubahan lalu isi jumlah dan alasan. Perubahan tercatat di pergerakan stok.
@@ -231,17 +231,17 @@ export default function Inventory() {
                 const Icon = d.icon;
                 const active = form.direction === d.value;
                 const activeCls = d.color === 'emerald'
-                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-500/25'
-                  : 'bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-500/25';
+                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-md'
+                  : 'bg-amber-600 text-white border-amber-600 shadow-md';
                 return (
                   <button
                     key={d.value}
                     type="button"
                     onClick={() => changeDirection(d.value)}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
+                    className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2.5 text-sm font-semibold transition-all ${
                       active
                         ? activeCls
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                        : 'border-black bg-white text-slate-600 hover:border-black hover:bg-slate-50'
                     }`}
                     aria-pressed={active}
                   >

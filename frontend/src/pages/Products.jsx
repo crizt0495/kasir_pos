@@ -190,12 +190,12 @@ export default function Products() {
               <span className="font-semibold text-sm">{formatRupiah(r.sale_price)}</span>
               <div className="flex gap-1">
                 {can('products.update') && (
-                  <button onClick={(e) => { e.stopPropagation(); navigate(`/products/${r.id}/edit`); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                   <button onClick={(e) => { e.stopPropagation(); navigate(`/products/${r.id}/edit`); }} className="rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
                     Edit
                   </button>
                 )}
                 {can('products.delete') && (
-                  <button onClick={(e) => { e.stopPropagation(); setToDelete(r); }} className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors">
+                   <button onClick={(e) => { e.stopPropagation(); setToDelete(r); }} className="rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors">
                     Hapus
                   </button>
                 )}
@@ -213,7 +213,7 @@ export default function Products() {
                   {(categories.data || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
                 {can('categories.create') && (
-                  <button onClick={() => setCatModal(true)} title="Tambah kategori" className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
+                  <button onClick={() => setCatModal(true)} title="Tambah kategori" className="shrink-0 rounded-md border-2 border-black bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
                     <Tags className="h-4 w-4" />
                   </button>
                 )}
@@ -226,7 +226,7 @@ export default function Products() {
                 </Select>
               </div>
               {can('products.create') && (
-                <button onClick={() => setUnitModal(true)} title="Tambah satuan" className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
+                <button onClick={() => setUnitModal(true)} title="Tambah satuan" className="shrink-0 rounded-md border-2 border-black bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
                   <Layers className="h-4 w-4" />
                 </button>
               )}

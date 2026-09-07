@@ -87,21 +87,21 @@ export default function Purchases() {
           { key: 'payment_status', header: 'Pembayaran', render: (r) => <StatusBadge status={r.payment_status} /> },
           { key: 'actions', header: 'Aksi', render: (r) => (
             <div className="flex items-center gap-1">
-              <button onClick={() => navigate(`/purchases/${r.id}`)} className="rounded-md p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-600">
+              <button onClick={() => navigate(`/purchases/${r.id}`)} className="rounded-sm p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-600">
                 <Eye className="h-4 w-4" />
               </button>
               {r.status === 'draft' && can('purchases.update') && (
                 <>
-                  <button onClick={() => setToReceive(r)} title="Terima (stok masuk)" className="rounded-md p-1.5 text-emerald-600 hover:bg-emerald-50">
+                  <button onClick={() => setToReceive(r)} title="Terima (stok masuk)" className="rounded-sm p-1.5 text-emerald-600 hover:bg-emerald-50">
                     <PackageCheck className="h-4 w-4" />
                   </button>
-                  <button onClick={() => navigate(`/purchases/${r.id}/edit`)} className="rounded-md p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600">
+                  <button onClick={() => navigate(`/purchases/${r.id}/edit`)} className="rounded-sm p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600">
                     <Eye className="h-4 w-4" />
                   </button>
                 </>
               )}
               {r.status === 'draft' && can('purchases.delete') && (
-                <button onClick={() => setToDelete(r)} className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600">
+                <button onClick={() => setToDelete(r)} className="rounded-sm p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600">
                   <Trash2 className="h-4 w-4" />
                 </button>
               )}
@@ -130,11 +130,11 @@ export default function Purchases() {
             <div className="flex items-center justify-between">
               <span className="font-semibold text-sm">{formatRupiah(r.total)}</span>
               <div className="flex gap-1">
-                <button onClick={(e) => { e.stopPropagation(); navigate(`/purchases/${r.id}`); }} className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
+                <button onClick={(e) => { e.stopPropagation(); navigate(`/purchases/${r.id}`); }} className="rounded-md bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
                   Detail
                 </button>
                 {r.status === 'draft' && can('purchases.update') && (
-                  <button onClick={(e) => { e.stopPropagation(); setToReceive(r); }} className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-100 transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); setToReceive(r); }} className="rounded-md bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-100 transition-colors">
                     Terima
                   </button>
                 )}

@@ -73,7 +73,7 @@ export function MobileNav() {
 
   return (
     <>
-      <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md safe-area-bottom">
+      <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t-2 border-black bg-white safe-area-bottom">
         <nav className="flex items-center justify-around px-1 py-1" aria-label="Navigasi utama mobile">
           {filteredMain.map((item) => {
             const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/');
@@ -81,20 +81,20 @@ export function MobileNav() {
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-center transition-colors ${
+                className={`flex flex-1 flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-center transition-colors ${
                   active ? 'text-primary-600' : 'text-slate-400'
                 }`}
                 aria-current={active ? 'page' : undefined}
               >
-                <div className={`relative flex h-7 w-7 items-center justify-center rounded-lg transition-all ${
-                  active ? 'bg-primary-100' : ''
+                <div className={`relative flex h-7 w-7 items-center justify-center rounded-md transition-all ${
+                  active ? 'bg-primary-100 border-2 border-black' : ''
                 }`}>
                   <item.icon className={`h-5 w-5 ${active ? 'text-primary-600' : ''}`} aria-hidden="true" />
                   {active && (
-                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary-500" aria-hidden="true" />
+                    <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border border-black bg-warning-400" aria-hidden="true" />
                   )}
                 </div>
-                <span className={`text-[0.65rem] leading-tight ${active ? 'font-semibold' : 'font-medium'}`}>
+                <span className={`text-[0.65rem] leading-tight ${active ? 'font-extrabold' : 'font-bold'}`}>
                   {item.label}
                 </span>
               </Link>
@@ -102,21 +102,21 @@ export function MobileNav() {
           })}
           <button
             onClick={() => setMoreOpen(true)}
-            className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-center transition-colors ${
+            className={`flex flex-1 flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-center transition-colors ${
               isMoreActive ? 'text-primary-600' : 'text-slate-400'
             }`}
             aria-label="Menu lainnya"
             aria-expanded={moreOpen}
           >
-            <div className={`relative flex h-7 w-7 items-center justify-center rounded-lg transition-all ${
-              isMoreActive ? 'bg-primary-100' : ''
+            <div className={`relative flex h-7 w-7 items-center justify-center rounded-md transition-all ${
+              isMoreActive ? 'bg-primary-100 border-2 border-black' : ''
             }`}>
               <MoreHorizontal className={`h-5 w-5 ${isMoreActive ? 'text-primary-600' : ''}`} aria-hidden="true" />
               {isMoreActive && (
-                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary-500" aria-hidden="true" />
+                <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border border-black bg-warning-400" aria-hidden="true" />
               )}
             </div>
-            <span className={`text-[0.65rem] leading-tight ${isMoreActive ? 'font-semibold' : 'font-medium'}`}>
+            <span className={`text-[0.65rem] leading-tight ${isMoreActive ? 'font-extrabold' : 'font-bold'}`}>
               Lainnya
             </span>
           </button>
@@ -126,16 +126,16 @@ export function MobileNav() {
       {moreOpen && (
         <div className="lg:hidden fixed inset-0 z-50">
           <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => setMoreOpen(false)}
             aria-hidden="true"
           />
-          <div className="fixed inset-x-0 bottom-0 z-10 max-h-[80vh] rounded-t-2xl bg-white shadow-2xl flex flex-col animate-slide-up" role="dialog" aria-label="Menu tambahan">
-            <div className="flex shrink-0 items-center justify-between border-b border-slate-200/80 px-4 py-3">
-              <h2 className="text-sm font-semibold text-slate-800">Menu Lainnya</h2>
+          <div className="fixed inset-x-0 bottom-0 z-10 max-h-[80vh] rounded-t-xl border-t-2 border-black bg-white shadow-[0_-4px_0_0_#0A0A0A] flex flex-col animate-slide-up" role="dialog" aria-label="Menu tambahan">
+            <div className="flex shrink-0 items-center justify-between border-b-2 border-black px-4 py-3 bg-slate-50">
+              <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-800">Menu Lainnya</h2>
               <button
                 onClick={() => setMoreOpen(false)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 transition-colors"
+                className="rounded-md border-2 border-black bg-white p-1.5 text-slate-400 shadow-[2px_2px_0_0_#0A0A0A] hover:bg-slate-100 transition-colors"
                 aria-label="Tutup menu"
               >
                 <X className="h-5 w-5" />
@@ -147,20 +147,20 @@ export function MobileNav() {
                 if (!items.length) return null;
                 return (
                   <div key={gi}>
-                    <p className="mb-2 text-[0.65rem] font-semibold uppercase tracking-widest text-slate-400">
+                    <p className="mb-2 text-[0.65rem] font-extrabold uppercase tracking-widest text-slate-400">
                       {group.section}
                     </p>
-                    <div className="space-y-0.5">
+                    <div className="space-y-1">
                       {items.map((item) => {
                         const active = itemDepth(item.to) > -1;
                         return (
                           <Link
                             key={item.to}
                             to={item.to}
-                            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                            className={`flex items-center gap-3 rounded-lg border-2 px-3 py-2.5 text-sm font-bold transition-colors ${
                               active
-                                ? 'bg-primary-50 text-primary-700'
-                                : 'text-slate-600 hover:bg-slate-50'
+                                ? 'bg-primary-500 text-white border-black shadow-[3px_3px_0_0_#0A0A0A]'
+                                : 'border-transparent text-slate-600 hover:bg-slate-100 hover:border-black'
                             }`}
                             aria-current={active ? 'page' : undefined}
                           >

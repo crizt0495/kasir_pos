@@ -141,7 +141,7 @@ export default function SaleDetail() {
     <div className="mx-auto max-w-4xl space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/sales')} className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:bg-slate-50">
+          <button onClick={() => navigate('/sales')} className="rounded-lg border-2 border-black bg-white p-2 text-slate-500 hover:bg-slate-50">
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
@@ -233,7 +233,7 @@ export default function SaleDetail() {
                 <div className="flex justify-between"><span className="text-slate-500">Pajak</span><span>{formatRupiah(s.tax)}</span></div>
                 <div className="flex justify-between"><span className="text-slate-500">Biaya Lain</span><span>{formatRupiah(s.additional_cost)}</span></div>
                 <div className="flex justify-between"><span className="text-slate-500">Laba Transaksi</span><span className="font-medium text-emerald-600">{formatRupiah(s.profit)}</span></div>
-                <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-bold">
+                <div className="flex justify-between border-t-2 border-black pt-2 text-base font-bold">
                   <span>Total</span><span className="text-primary-700">{formatRupiah(s.total)}</span>
                 </div>
                 {s.payments?.[0]?.cash_received != null && (
@@ -248,7 +248,7 @@ export default function SaleDetail() {
                   if (s.payments?.[0]?.cash_received != null && cashReceived < total) {
                     return (
                       <>
-                        <div className="flex justify-between border-t border-amber-200 pt-2">
+                        <div className="flex justify-between border-t-2 border-black pt-2">
                           <span className="text-amber-600 font-semibold">Sisa Hutang</span>
                           <span className="font-bold text-amber-700">{formatRupiah(total - cashReceived)}</span>
                         </div>
@@ -303,7 +303,7 @@ export default function SaleDetail() {
       >
         <div className="space-y-4">
           {/* Ringkasan transaksi */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+          <div className="rounded-lg border-2 border-black bg-slate-50 p-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900">{s?.invoice_number}</p>
@@ -319,7 +319,7 @@ export default function SaleDetail() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-amber-200/70 bg-amber-50 p-3 text-sm text-amber-800">
+          <div className="rounded-md border-2 border-black bg-amber-50 p-3 text-sm text-amber-800">
             <p className="font-medium">Cara retur:</p>
             <ol className="mt-1 list-decimal space-y-0.5 pl-5 text-xs">
               <li>Pilih item dan jumlah yang diretur (pakai stepper atau ketik).</li>
@@ -344,9 +344,9 @@ export default function SaleDetail() {
             <p className="text-xs text-danger-600" role="alert">{refundValidation.errors.items}</p>
           )}
 
-          <div className="overflow-hidden rounded-xl border border-slate-200">
+          <div className="overflow-hidden rounded-lg border-2 border-black">
             {/* Header kolom */}
-            <div className="hidden border-b border-slate-200 bg-slate-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:grid sm:grid-cols-[1fr_5rem_5.5rem_6.5rem] sm:gap-3">
+            <div className="hidden border-b-2 border-black bg-slate-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:grid sm:grid-cols-[1fr_5rem_5.5rem_6.5rem] sm:gap-3">
               <span>Produk</span>
               <span className="text-center">Sisa</span>
               <span className="text-center">Jumlah</span>
@@ -386,7 +386,7 @@ export default function SaleDetail() {
                       </p>
                     </div>
                     <div className="text-center">
-                      <span className="inline-flex items-center justify-center rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+                      <span className="inline-flex items-center justify-center rounded-sm bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
                         {formatQty(rem)}
                       </span>
                     </div>
@@ -396,7 +396,7 @@ export default function SaleDetail() {
                         onClick={() => stepQty(item.id, -1, rem)}
                         disabled={qtyNum <= 0}
                         aria-label={`Kurangi jumlah retur ${item.product?.name || 'item'}`}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-black bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <Minus className="h-3.5 w-3.5" />
                       </button>
@@ -420,7 +420,7 @@ export default function SaleDetail() {
                         onClick={() => stepQty(item.id, +1, rem)}
                         disabled={qtyNum >= rem}
                         aria-label={`Tambah jumlah retur ${item.product?.name || 'item'}`}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-black bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <Plus className="h-3.5 w-3.5" />
                       </button>
@@ -446,13 +446,13 @@ export default function SaleDetail() {
           </div>
 
           {refundableItems.length === 0 && (
-            <p className="rounded-lg bg-slate-50 px-4 py-3 text-center text-sm text-slate-400">
+            <p className="rounded-md bg-slate-50 px-4 py-3 text-center text-sm text-slate-400">
               Semua item pada transaksi ini sudah diretur seluruhnya.
             </p>
           )}
 
           {/* Ringkasan total */}
-          <div className="overflow-hidden rounded-xl border border-slate-200">
+          <div className="overflow-hidden rounded-lg border-2 border-black">
             <div className="space-y-1.5 px-4 py-3 text-sm">
               <div className="flex justify-between text-slate-500">
                 <span>Item dipilih</span>
@@ -462,7 +462,7 @@ export default function SaleDetail() {
                 <span>Total qty diretur</span>
                 <span className="font-medium text-slate-700">{formatQty(totalSelectedQty)}</span>
               </div>
-              <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2">
+              <div className="mt-2 flex items-center justify-between border-t-2 border-black pt-2">
                 <span className="text-sm font-semibold text-slate-700">Total Refund</span>
                 <span className={`font-mono text-lg font-bold ${totalRefund > 0 ? 'text-danger-600' : 'text-slate-400'}`}>
                   {formatRupiah(refundRounding(totalRefund))}

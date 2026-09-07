@@ -164,7 +164,7 @@ export default function ProductForm() {
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/products')} className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:bg-slate-50">
+        <button onClick={() => navigate('/products')} className="rounded-md border-2 border-black bg-white p-2 text-slate-500 hover:bg-slate-50">
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
@@ -190,7 +190,7 @@ export default function ProductForm() {
                   onClick={() => setScannerOpen(true)}
                   title="Scan barcode dengan kamera"
                   aria-label="Scan barcode dengan kamera"
-                  className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-all duration-150 hover:bg-primary-50 hover:text-primary-600"
+                  className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 transition-all duration-150 hover:bg-primary-50 hover:text-primary-600"
                 >
                   <Camera className="h-4 w-4" />
                 </button>
@@ -203,7 +203,7 @@ export default function ProductForm() {
                   {(categories.data || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
                 {can('categories.create') && (
-                  <button type="button" onClick={() => setCatModal(true)} title="Tambah kategori" className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
+                  <button type="button" onClick={() => setCatModal(true)} title="Tambah kategori" className="shrink-0 rounded-md border-2 border-black bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
                     <Plus className="h-4 w-4" />
                   </button>
                 )}
@@ -216,7 +216,7 @@ export default function ProductForm() {
                   {(units.data || []).map((u) => <option key={u.id} value={u.id}>{u.name} ({u.short_name})</option>)}
                 </Select>
                 {can('products.create') && (
-                  <button type="button" onClick={() => setUnitModal(true)} title="Tambah satuan" className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
+                  <button type="button" onClick={() => setUnitModal(true)} title="Tambah satuan" className="shrink-0 rounded-md border-2 border-black bg-white p-2 text-slate-400 hover:border-primary-300 hover:text-primary-500 transition-colors">
                     <Plus className="h-4 w-4" />
                   </button>
                 )}
@@ -264,7 +264,7 @@ export default function ProductForm() {
             <Textarea rows={3} {...register('description')} error={errors.description} placeholder="Deskripsi singkat produk..." />
           </Field>
 
-          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+          <div className="flex justify-end gap-2 border-t-2 border-black pt-4">
             <Button variant="secondary" type="button" onClick={() => navigate('/products')}>
               Batal
             </Button>

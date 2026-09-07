@@ -149,12 +149,12 @@ export default function Categories() {
                   <span>{formatDate(r.created_at)}</span>
                   <div className="flex gap-1">
                     {can('categories.update') && (
-                      <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                      <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
                         Edit
                       </button>
                     )}
                     {can('categories.delete') && (
-                      <button onClick={(e) => { e.stopPropagation(); setToDelete(r); }} className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors">
+                      <button onClick={(e) => { e.stopPropagation(); setToDelete(r); }} className="rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors">
                         Hapus
                       </button>
                     )}

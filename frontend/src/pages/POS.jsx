@@ -195,7 +195,7 @@ export default function POS() {
   return (
     <div className="flex h-full flex-col gap-4 xl:h-[calc(100vh-6.5rem)] xl:flex-row">
       {/* ================= PRODUCTS SECTION ================= */}
-      <div className="flex min-w-0 flex-1 flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:p-5">
+      <div className="flex min-w-0 flex-1 flex-col gap-4 rounded-xl border-2 border-black bg-white p-4 shadow-sm xl:p-5">
         <div className="space-y-3">
           {/* Search and Barcode Section */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
@@ -207,7 +207,7 @@ export default function POS() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Cari produk (F2)..."
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
+                  className="w-full rounded-md border-2 border-black bg-white py-2.5 pl-10 pr-4 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
                 />
               </div>
               <div className="relative">
@@ -218,14 +218,14 @@ export default function POS() {
                   onChange={(e) => setBarcode(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleBarcode()}
                   placeholder="Scan barcode (F3)..."
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-11 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 sm:w-56"
+                  className="w-full rounded-md border-2 border-black bg-white py-2.5 pl-10 pr-11 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 sm:w-56"
                 />
                 <button
                   type="button"
                   onClick={() => setScannerOpen(true)}
                   title="Scan barcode (kamera)"
                   aria-label="Scan barcode dengan kamera"
-                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600"
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600"
                 >
                   <Camera className="h-4 w-4" />
                 </button>
@@ -247,7 +247,7 @@ export default function POS() {
             <div className="h-4 w-px shrink-0 bg-slate-200 sm:block" />
             <button
               onClick={() => setCategoryId('')}
-              className={`shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium transition-all duration-200 ${
+              className={`shrink-0 rounded-md px-4 py-1.5 text-sm font-medium transition-all duration-200 ${
                 !categoryId
                   ? 'bg-primary-600 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800'
@@ -259,7 +259,7 @@ export default function POS() {
               <button
                 key={c.id}
                 onClick={() => setCategoryId(categoryId === c.id ? '' : c.id)}
-                className={`shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium transition-all duration-200 ${
+                className={`shrink-0 rounded-md px-4 py-1.5 text-sm font-medium transition-all duration-200 ${
                   categoryId === c.id
                     ? 'bg-primary-600 text-white shadow-sm'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800'
@@ -277,7 +277,7 @@ export default function POS() {
             Array.from({ length: 10 }).map((_, i) => (
               <div
                 key={i}
-                className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                className="flex flex-col overflow-hidden rounded-xl border-2 border-black bg-white"
               >
                 <Skeleton className="aspect-square w-full rounded-t-2xl" />
                 <div className="flex flex-1 flex-col gap-1 p-2">
@@ -336,14 +336,14 @@ export default function POS() {
                     }
                   }}
                   aria-disabled={disabled}
-                  className={`group relative flex cursor-pointer flex-col rounded-2xl border bg-white text-left shadow-sm transition-all duration-200 ${
+                  className={`group relative flex cursor-pointer flex-col rounded-xl border-2 bg-white text-left shadow-sm transition-all duration-200 ${
                     qty > 0
                       ? 'border-primary-400 ring-2 ring-primary-200/60'
-                      : 'border-slate-200 hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg'
+                      : 'border-black hover:-translate-y-0.5 hover:border-black hover:shadow-lg'
                   } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
                 >
                   {/* Product Image */}
-                  <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-t-2xl bg-gradient-to-br from-slate-50 to-slate-100">
+                  <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-t-xl bg-slate-50">
                     <div className="absolute inset-0 p-2">
                       <ProductImage
                         src={p.image_url}
@@ -387,7 +387,7 @@ export default function POS() {
                     </span>
                     <div className="pt-1.5">
                       {qty > 0 ? (
-                        <div onClick={stop} className="grid h-8 grid-cols-[2rem_1fr_2rem] items-stretch overflow-hidden rounded-lg border border-primary-300 bg-white shadow-sm">
+                        <div onClick={stop} className="grid h-8 grid-cols-[2rem_1fr_2rem] items-stretch overflow-hidden rounded-md border-2 border-black bg-white shadow-sm">
                           <button type="button" onClick={handleDec} className="flex items-center justify-center bg-white text-primary-700 transition-colors hover:bg-primary-50 active:bg-primary-100" aria-label={`Kurangi ${p.name}`}>
                             <Minus className="h-3.5 w-3.5" strokeWidth={2.5} />
                           </button>
@@ -397,12 +397,12 @@ export default function POS() {
                           </button>
                         </div>
                       ) : disabled ? (
-                        <div className="flex h-8 w-full items-center justify-center rounded-lg bg-slate-100 text-[10px] font-medium text-slate-400">
+                        <div className="flex h-8 w-full items-center justify-center rounded-md bg-slate-100 text-[10px] font-medium text-slate-400">
                           {inactive ? 'Nonaktif' : 'Habis'}
                         </div>
                       ) : (
                         <button type="button" onClick={handleAdd} aria-label={`Tambah ${p.name} ke keranjang`} title={`Tambah ${p.name}`}
-                          className="flex h-8 w-full items-center justify-center gap-1 rounded-lg bg-gradient-to-b from-primary-500 to-primary-600 text-white text-[11px] font-semibold shadow-sm shadow-primary-600/20 transition-all duration-200 hover:from-primary-600 hover:to-primary-700 hover:shadow-md active:scale-[0.98]">
+                          className="flex h-8 w-full items-center justify-center gap-1 rounded-md bg-primary-500 text-white text-[11px] font-semibold shadow-sm transition-all duration-200 hover:from-primary-600 hover:to-primary-700 hover:shadow-md active:scale-[0.98]">
                           <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
                           <span>Tambah</span>
                         </button>
@@ -417,8 +417,8 @@ export default function POS() {
       </div>
 
       {/* ================= CART SECTION ================= */}
-      <div className="flex w-full flex-col rounded-2xl border border-slate-200 bg-white shadow-sm xl:w-[480px] 2xl:w-[520px]">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+      <div className="flex w-full flex-col rounded-xl border-2 border-black bg-white shadow-sm xl:w-[480px] 2xl:w-[520px]">
+        <div className="flex items-center justify-between border-b-2 border-black px-5 py-4">
           <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
             <ShoppingCart className="h-6 w-6 text-primary-600" />
             Keranjang
@@ -432,7 +432,7 @@ export default function POS() {
             <button
               onClick={() => setShowHeld(true)}
               title="Transaksi ditahan"
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-primary-600 transition-colors"
+              className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-primary-600 transition-colors"
             >
               <PauseCircle className="h-5 w-5" />
               {cart.heldCarts.length > 0 && (
@@ -445,7 +445,7 @@ export default function POS() {
               onClick={() => cart.hold()}
               disabled={!cart.items.length}
               title="Hold transaksi"
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <PlayCircle className="h-5 w-5" />
             </button>
@@ -453,7 +453,7 @@ export default function POS() {
               onClick={() => setConfirmClear(true)}
               disabled={!cart.items.length}
               title="Kosongkan keranjang"
-              className="rounded-lg p-2 text-slate-500 hover:bg-danger-50 hover:text-danger-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="rounded-md p-2 text-slate-500 hover:bg-danger-50 hover:text-danger-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <Trash2 className="h-5 w-5" />
             </button>
@@ -464,10 +464,10 @@ export default function POS() {
         <div className="px-5 py-3.5">
           <button
             onClick={() => setShowCustomer(true)}
-            className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition-all duration-200 hover:border-primary-400 hover:bg-primary-50/30"
+            className="w-full flex items-center justify-between rounded-lg border-2 border-black bg-slate-50 px-4 py-3 transition-all duration-200 hover:border-primary-400 hover:bg-primary-50/30"
           >
               <span className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white shadow-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-white shadow-sm">
                 <Users className="h-5 w-5 text-slate-500" />
               </div>
               <span className="min-w-0">
@@ -487,7 +487,7 @@ export default function POS() {
                   e.stopPropagation();
                   cart.setCustomer(null);
                 }}
-                className="rounded-lg px-3 py-1.5 text-xs font-medium text-danger-600 hover:bg-danger-50 hover:text-danger-700 transition-colors"
+                className="rounded-md px-3 py-1.5 text-xs font-medium text-danger-600 hover:bg-danger-50 hover:text-danger-700 transition-colors"
               >
                 Ganti
               </button>
@@ -499,7 +499,7 @@ export default function POS() {
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {cart.items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-300">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-slate-100 text-slate-300">
                 <Package className="h-8 w-8" />
               </div>
               <h4 className="text-sm font-semibold text-slate-700">Keranjang kosong</h4>
@@ -514,15 +514,15 @@ export default function POS() {
                 return (
                   <li
                     key={item.product.id}
-                    className="group rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition-all duration-200 hover:border-primary-300 hover:shadow-md"
+                    className="group rounded-lg border-2 border-black bg-white p-3 shadow-sm transition-all duration-200 hover:border-primary-300 hover:shadow-md"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-3">
-                        <div className="relative flex-shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                          <div className="relative flex-shrink-0 overflow-hidden rounded-md bg-slate-100">
                           <ProductImage
                             src={item.product.image_url}
                             alt={item.product.name}
-                            className="h-12 w-12 rounded-lg"
+                            className="h-12 w-12 rounded-md"
                             fit="cover"
                           />
                         </div>
@@ -538,19 +538,19 @@ export default function POS() {
                       </div>
                       <button
                         onClick={() => cart.remove(item.product.id)}
-                        className="flex-shrink-0 rounded-lg p-1.5 text-slate-300 hover:bg-danger-50 hover:text-danger-600 transition-colors"
+                        className="flex-shrink-0 rounded-md p-1.5 text-slate-300 hover:bg-danger-50 hover:text-danger-600 transition-colors"
                         aria-label="Hapus item"
                       >
                         <X className="h-4 w-4" />
                       </button>
                     </div>
 
-                    <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                    <div className="mt-3 flex items-center justify-between gap-3 border-t-2 border-black pt-3">
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => cart.decrement(item.product.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 transition-colors hover:bg-slate-50 hover:text-primary-600 active:bg-slate-100"
+                          className="flex h-8 w-8 items-center justify-center rounded-md border-2 border-black transition-colors hover:bg-slate-50 hover:text-primary-600 active:bg-slate-100"
                           aria-label="Kurangi jumlah"
                         >
                           <Minus className="h-4 w-4 text-slate-600" />
@@ -561,13 +561,13 @@ export default function POS() {
                           onChange={(e) => cart.setQuantity(item.product.id, e.target.value)}
                           min="1"
                           max={Number(item.product.stock)}
-                          className="w-16 rounded-lg border border-slate-200 bg-white py-1.5 text-center text-sm font-semibold focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
+                          className="w-16 rounded-md border-2 border-black bg-white py-1.5 text-center text-sm font-semibold focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
                           aria-label="Jumlah"
                         />
                         <button
                           onClick={() => cart.increment(item.product.id)}
                           disabled={item.quantity >= Number(item.product.stock)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 transition-colors hover:bg-slate-50 hover:text-primary-600 active:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="flex h-8 w-8 items-center justify-center rounded-md border-2 border-black transition-colors hover:bg-slate-50 hover:text-primary-600 active:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
                           aria-label="Tambah jumlah"
                         >
                           <Plus className="h-4 w-4 text-slate-600" />
@@ -583,7 +583,7 @@ export default function POS() {
                           placeholder="0"
                           onChange={(e) => cart.setItemDiscount(item.product.id, e.target.value)}
                           min="0"
-                          className="w-20 rounded-lg border border-slate-200 py-1.5 px-2 text-right text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
+                          className="w-20 rounded-md border-2 border-black py-1.5 px-2 text-right text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
                           aria-label="Diskon item"
                         />
                       </div>
@@ -603,7 +603,7 @@ export default function POS() {
         </div>
 
         {/* Cart Footer - Summary & Checkout */}
-        <div className="border-t border-slate-200 px-5 py-5 space-y-3.5 bg-slate-50/50">
+        <div className="border-t-2 border-black px-5 py-5 space-y-3.5 bg-slate-50/50">
           {/* Transaction Discount */}
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-600 font-medium">Diskon transaksi</span>
@@ -614,7 +614,7 @@ export default function POS() {
                 value={cart.discount || ''}
                 placeholder="0"
                 onChange={(e) => cart.setDiscount(e.target.value)}
-                className="w-32 rounded-lg border border-slate-300 bg-white pl-8 pr-3 py-2 text-right text-sm font-semibold focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
+                className="w-32 rounded-md border-2 border-black bg-white pl-8 pr-3 py-2 text-right text-sm font-semibold focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-150"
               />
             </div>
           </div>
@@ -643,7 +643,7 @@ export default function POS() {
           </div>
 
           {/* Subtotal/Total Breakdown */}
-          <div className="space-y-2 border-t border-slate-200 pt-3">
+          <div className="space-y-2 border-t-2 border-black pt-3">
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Subtotal</span>
               <span className="font-semibold text-slate-800 font-mono">
@@ -690,14 +690,14 @@ export default function POS() {
               min="0"
               value={additionalCost || ''}
               onChange={(e) => setAdditionalCost(Math.max(Number(e.target.value) || 0, 0))}
-              className="w-36 rounded-lg border border-slate-300 bg-white py-2 px-3 text-right text-sm font-semibold focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
+              className="w-36 rounded-md border-2 border-black bg-white py-2 px-3 text-right text-sm font-semibold focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-150"
             />
           </div>
 
           {/* Checkout Button */}
           <Button
             size="lg"
-            className="w-full bg-gradient-to-b from-primary-500 to-primary-600 shadow-md shadow-primary-600/25 hover:shadow-lg hover:shadow-primary-600/30 active:scale-[0.98]"
+            className="w-full bg-primary-500 shadow-md hover:shadow-lg active:scale-[0.98]"
             disabled={!cart.items.length}
             onClick={() => setShowCheckout(true)}
           >
@@ -875,7 +875,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
     >
       <div className="space-y-6">
         {/* Order Summary */}
-        <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
+        <div className="space-y-4 rounded-lg border-2 border-black bg-white p-4">
           <h4 className="text-sm font-semibold text-slate-900">Ringkasan Pesanan</h4>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
@@ -901,10 +901,10 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                 min="0"
                 value={additionalCost || ''}
                 onChange={(e) => setAdditionalCost(Math.max(Number(e.target.value) || 0, 0))}
-                className="w-32 rounded-lg border border-slate-200 py-1.5 px-3 text-right text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
+                className="w-32 rounded-md border-2 border-black py-1.5 px-3 text-right text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
               />
             </div>
-            <div className="flex justify-between border-t border-slate-200 pt-3 mt-1">
+            <div className="flex justify-between border-t-2 border-black pt-3 mt-1">
               <span className="font-semibold text-slate-900">Grand Total</span>
               <span className="text-xl font-bold text-primary-700 font-mono">
                 {formatRupiah(totals.total)}
@@ -921,10 +921,10 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
               <button
                 key={m}
                 onClick={() => setMethod(m)}
-                className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border px-3 py-3 text-sm font-medium transition-all duration-200 ${
+                className={`flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 px-3 py-3 text-sm font-medium transition-all duration-200 ${
                   method === m
                     ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-200'
-                    : 'border-slate-200 text-slate-700 hover:border-primary-300 hover:bg-primary-50/50 hover:text-primary-600'
+                    : 'border-black text-slate-700 hover:border-primary-300 hover:bg-primary-50/50 hover:text-primary-600'
                 }`}
               >
                 <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
@@ -942,7 +942,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
 
         {/* Cash Payment Input */}
         {isCash && (
-          <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+          <div className="space-y-3 rounded-lg border-2 border-black bg-white p-4">
             <h4 className="text-sm font-semibold text-slate-900">Pembayaran Tunai</h4>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
@@ -971,7 +971,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                       key={amount}
                       type="button"
                       onClick={() => setPaid(String(amount))}
-                      className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium hover:bg-slate-50 transition-colors"
+                      className="rounded-md border-2 border-black px-2.5 py-1.5 text-xs font-medium hover:bg-slate-50 transition-colors"
                     >
                       {formatRupiah(amount)}
                     </button>
@@ -980,7 +980,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-slate-700">Kembalian</label>
-                <div className={`rounded-lg border p-3 text-center transition-all duration-200 ${
+                <div className={`rounded-md border p-3 text-center transition-all duration-200 ${
                   change >= 0
                     ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
                     : 'border-red-300 bg-red-50 text-red-700'
@@ -999,7 +999,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
 
         {/* Hutang pelanggan - tampil jika ada */}
         {customer?.id && debtStats && Number(debtStats.pending_debt || 0) > 0 && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <div className="rounded-lg border-2 border-black bg-amber-50 p-4">
             <div className="flex items-start gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100">
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
@@ -1016,7 +1016,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
 
         {/* Non-Cash Payment Message */}
         {!isCash && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <div className="rounded-lg border-2 border-black bg-blue-50 p-4">
             <div className="flex items-start gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
                 <Banknote className="h-4 w-4 text-blue-600" />
@@ -1036,7 +1036,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
 
         {/* Info hutang otomatis (bayar kurang) — pelanggan terdaftar, tidak perlu centang */}
         {isCash && customer?.id && !customer?.is_general && debtAmount > 0 && (
-          <div className="rounded-xl border border-amber-300 bg-amber-50/50 p-4">
+          <div className="rounded-lg border-2 border-black bg-amber-50/50 p-4">
             <div className="flex items-start gap-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100">
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
@@ -1062,14 +1062,14 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                       value={debtDueDate}
                       min={new Date().toISOString().split('T')[0]}
                       onChange={(e) => setDebtDueDate(e.target.value)}
-                      className="w-full rounded-lg border border-amber-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                      className="w-full rounded-md border-2 border-black px-3 py-1.5 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                     <input
                       type="text"
                       value={debtNotes}
                       onChange={(e) => setDebtNotes(e.target.value)}
                       placeholder="Catatan (opsional)"
-                      className="w-full rounded-lg border border-amber-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                      className="w-full rounded-md border-2 border-black px-3 py-1.5 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
                       maxLength={500}
                     />
                   </div>
@@ -1081,7 +1081,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
 
         {/* Warning kalau cash kurang tapi tidak bisa hutang */}
         {isCash && debtAmount > 0 && !validDebtCustomer && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+          <div className="rounded-lg border-2 border-black bg-red-50 p-4">
             <div className="flex items-start gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
                 <AlertTriangle className="h-4 w-4 text-red-600" />
@@ -1115,7 +1115,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
 
         {/* Error Display */}
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+          <div className="rounded-md border-2 border-black bg-red-50 p-3">
             <p className="text-sm font-medium text-red-700">{error}</p>
           </div>
         )}
@@ -1148,9 +1148,9 @@ function CustomerModal({ open, onClose, query, setQuery, results, generalCustome
           {/* General Customer Option */}
           <button
             onClick={() => onSelect(generalCustomer || null)}
-            className="w-full flex items-center gap-3 rounded-xl border-2 border-dashed border-slate-300 px-4 py-3 text-left transition-all duration-200 hover:border-primary-400 hover:bg-primary-50/50"
+            className="w-full flex items-center gap-3 rounded-lg border-2 border-dashed border-slate-300 px-4 py-3 text-left transition-all duration-200 hover:border-primary-400 hover:bg-primary-50/50"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100">
               <Users className="h-5 w-5 text-slate-500" />
             </div>
             <div>
@@ -1184,7 +1184,7 @@ function CustomerModal({ open, onClose, query, setQuery, results, generalCustome
               <button
                 key={c.id}
                 onClick={() => onSelect(c)}
-                className="w-full flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-left transition-all duration-200 hover:border-primary-400 hover:bg-primary-50/50 hover:shadow-sm"
+                className="w-full flex items-center justify-between rounded-lg border-2 border-black px-4 py-3 text-left transition-all duration-200 hover:border-primary-400 hover:bg-primary-50/50 hover:shadow-sm"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-600">
@@ -1223,7 +1223,7 @@ function HeldCartsModal({ open, onClose, heldCarts, onResume, onRemove }) {
           {heldCarts.map((h) => (
             <div
               key={h.id}
-              className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 transition-all duration-200 hover:border-slate-300 hover:shadow-sm hover:bg-slate-50"
+              className="flex items-center justify-between rounded-lg border-2 border-black px-4 py-3 transition-all duration-200 hover:border-slate-300 hover:shadow-sm hover:bg-slate-50"
             >
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-slate-800">
@@ -1243,7 +1243,7 @@ function HeldCartsModal({ open, onClose, heldCarts, onResume, onRemove }) {
                 </Button>
                 <button
                   onClick={() => onRemove(h.id)}
-                  className="rounded-lg p-1.5 text-danger-500 hover:bg-danger-50 hover:text-danger-700 transition-colors"
+                  className="rounded-md p-1.5 text-danger-500 hover:bg-danger-50 hover:text-danger-700 transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

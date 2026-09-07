@@ -81,7 +81,7 @@ export default function AuditLogs() {
               <span>IP: {r.ip_address || '-'}</span>
               <button
                 onClick={(e) => { e.stopPropagation(); setSelected(r); }}
-                className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors"
+                className="rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors"
               >
                 Lihat Detail
               </button>

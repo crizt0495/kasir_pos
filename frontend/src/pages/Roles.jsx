@@ -214,10 +214,10 @@ export default function Roles() {
                 <div className="flex justify-end gap-1">
                   {can('roles.update') && (
                     <>
-                      <button onClick={(e) => { e.stopPropagation(); openPerms(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                      <button onClick={(e) => { e.stopPropagation(); openPerms(r); }} className="rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
                         Permission
                       </button>
-                      <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                      <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
                         Edit
                       </button>
                     </>
@@ -274,7 +274,7 @@ export default function Roles() {
             {Object.entries(permissions.data?.grouped || {}).map(([module, perms]) => {
               const moduleSelected = perms.every((p) => selectedPerms.includes(p.code));
               return (
-                <div key={module} className="rounded-lg border border-slate-200 p-3">
+                <div key={module} className="rounded-md border-2 border-black p-3">
                   <div className="mb-2 flex items-center justify-between">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{module}</p>
                     <button

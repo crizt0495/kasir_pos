@@ -78,7 +78,7 @@ export default function Permissions() {
         <Card className="p-8 text-center text-sm text-slate-500">Tidak ada role tersedia.</Card>
       ) : (
         <div className="space-y-4">
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-xl border-2 border-black bg-white shadow-sm">
             <table className="w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">

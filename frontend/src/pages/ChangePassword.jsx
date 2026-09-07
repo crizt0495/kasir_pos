@@ -56,7 +56,7 @@ export default function ChangePassword() {
         }
         bodyClassName="p-5"
       >
-        <div className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
+        <div className="mb-4 rounded-md bg-amber-50 p-3 text-sm text-amber-700">
           Anda wajib mengganti password sebelum melanjutkan. Gunakan minimal 8 karakter dengan huruf dan angka.
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

@@ -84,9 +84,9 @@ export default function GlobalSearch() {
   const total = results ? GROUPS.reduce((sum, g) => sum + (results[g.key]?.length || 0), 0) : 0;
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-start justify-center bg-slate-900/60 p-4 pt-24 backdrop-blur-md animate-fade-in" onClick={() => setOpen(false)}>
-      <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl shadow-slate-950/25 ring-1 ring-slate-200/50 animate-scale-in" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-2 border-b border-slate-200/80 px-4 py-3">
+    <div className="fixed inset-0 z-[90] flex items-start justify-center bg-black/70 p-4 pt-24 backdrop-blur-md animate-fade-in" onClick={() => setOpen(false)}>
+      <div className="w-full max-w-xl overflow-hidden rounded-xl border-2 border-black bg-white shadow-[10px_10px_0_0_#0A0A0A] animate-scale-in" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2 border-b-2 border-black px-4 py-3 bg-slate-50">
           <Search className="h-5 w-5 text-primary-500" />
           <input
             ref={inputRef}
@@ -97,16 +97,16 @@ export default function GlobalSearch() {
             }}
             onKeyDown={onKeyDown}
             placeholder="Cari produk, transaksi, pelanggan, supplier..."
-            className="flex-1 text-sm outline-none placeholder:text-slate-400"
+            className="flex-1 text-sm font-medium outline-none placeholder:text-slate-400"
           />
           <kbd className="kbd">ESC</kbd>
         </div>
 
         <div className="max-h-96 overflow-y-auto py-2">
-          {!query.trim() && <p className="px-4 py-6 text-center text-sm text-slate-400">Ketik untuk mencari...</p>}
+          {!query.trim() && <p className="px-4 py-6 text-center text-sm font-bold text-slate-400">Ketik untuk mencari...</p>}
 
           {query.trim() && results && total === 0 && (
-            <p className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-slate-400">
+            <p className="flex items-center justify-center gap-2 px-4 py-8 text-sm font-bold text-slate-400">
               <Inbox className="h-4 w-4" /> Tidak ditemukan hasil untuk “{query}”
             </p>
           )}
@@ -114,7 +114,7 @@ export default function GlobalSearch() {
           {results &&
             GROUPS.filter((g) => results[g.key]?.length).map((g) => (
               <div key={g.key} className="mb-1">
-                <p className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{g.label}</p>
+                <p className="px-4 pb-1 pt-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">{g.label}</p>
                 {results[g.key].map((row) => {
                   const idx = flat.findIndex((f) => f.group.key === g.key && f.row.id === row.id);
                   return (
@@ -122,32 +122,32 @@ export default function GlobalSearch() {
                       key={row.id}
                       onMouseEnter={() => setActiveIndex(idx)}
                       onClick={() => go(flat[idx])}
-                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
-                        idx === activeIndex ? 'bg-primary-50/80' : ''
+                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium transition-colors ${
+                        idx === activeIndex ? 'bg-primary-50 border-l-4 border-primary-500' : ''
                       }`}
                     >
                       <g.icon className="h-4 w-4 shrink-0 text-slate-400" />
                       <div className="min-w-0 flex-1">
                         {g.key === 'products' && (
                           <>
-                            <p className="truncate font-medium text-slate-800">{row.name}</p>
-                            <p className="text-xs text-slate-400/80">
+                            <p className="truncate font-extrabold text-slate-800">{row.name}</p>
+                            <p className="text-xs font-bold text-slate-400/80">
                               {row.sku} · Stok {row.stock} · {formatRupiah(row.sale_price)}
                             </p>
                           </>
                         )}
                         {g.key === 'sales' && (
                           <>
-                            <p className="font-medium text-slate-800">{row.invoice_number}</p>
-                            <p className="text-xs text-slate-400/80">
+                            <p className="font-extrabold text-slate-800">{row.invoice_number}</p>
+                            <p className="text-xs font-bold text-slate-400/80">
                               {formatRupiah(row.total)} · {formatDateTime(row.created_at)}
                             </p>
                           </>
                         )}
                         {(g.key === 'customers' || g.key === 'suppliers') && (
                           <>
-                            <p className="font-medium text-slate-800">{row.name}</p>
-                            <p className="text-xs text-slate-400/80">{row.phone || '-'}</p>
+                            <p className="font-extrabold text-slate-800">{row.name}</p>
+                            <p className="text-xs font-bold text-slate-400/80">{row.phone || '-'}</p>
                           </>
                         )}
                       </div>

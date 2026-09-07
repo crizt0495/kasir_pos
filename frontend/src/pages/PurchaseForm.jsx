@@ -158,7 +158,7 @@ export default function PurchaseForm() {
   return (
     <div className="mx-auto max-w-4xl space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/purchases')} className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:bg-slate-50">
+        <button onClick={() => navigate('/purchases')} className="rounded-lg border-2 border-black bg-white p-2 text-slate-500 hover:bg-slate-50">
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
@@ -196,7 +196,7 @@ export default function PurchaseForm() {
             <p className="col-span-full text-sm text-slate-400">Produk tidak ditemukan</p>
           ) : (
             products.data.items.map((p) => (
-              <button key={p.id} onClick={() => addProduct(p)} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:border-primary-400">
+              <button key={p.id} onClick={() => addProduct(p)} className="flex items-center justify-between rounded-md border-2 border-black px-3 py-2 text-left text-sm hover:border-primary-400">
                 <div>
                   <p className="font-medium text-slate-800">{p.name}</p>
                   <p className="text-xs text-slate-400">{p.sku} · HPP {formatRupiah(p.purchase_price)}</p>
@@ -237,7 +237,7 @@ export default function PurchaseForm() {
                     <p className="w-28 pt-5 text-right text-sm font-semibold text-slate-800">
                       {formatRupiah((Number(item.quantity) || 0) * Number(item.cost_price))}
                     </p>
-                    <button onClick={() => setItems((prev) => prev.filter((i) => i.product_id !== item.product_id))} className="mb-1 rounded-md p-1.5 text-red-400 hover:bg-red-50">
+                    <button onClick={() => setItems((prev) => prev.filter((i) => i.product_id !== item.product_id))} className="mb-1 rounded-sm p-1.5 text-red-400 hover:bg-red-50">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
@@ -261,7 +261,7 @@ export default function PurchaseForm() {
               {headerErrors.discount && <p className="mt-1.5 text-xs text-danger-600" role="alert">{headerErrors.discount}</p>}
             </div>
           </div>
-          <div className="flex w-full max-w-xs items-center justify-between border-t border-slate-200 pt-2">
+          <div className="flex w-full max-w-xs items-center justify-between border-t-2 border-black pt-2">
             <span className="text-sm font-semibold text-slate-700">Total</span>
             <span className="text-lg font-bold text-primary-700">{formatRupiah(total)}</span>
           </div>

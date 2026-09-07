@@ -44,7 +44,7 @@ export default function Returns() {
           { key: 'created_at', header: 'Tanggal', render: (r) => formatDateTime(r.created_at) },
           { key: 'created_by_user', header: 'Oleh', render: (r) => r.created_by_user?.profiles?.full_name || r.created_by_user?.username || '-' },
           { key: 'actions', header: 'Aksi', render: (r) => (
-            <button onClick={() => navigate(`/sales/${r.sale_id}`)} className="rounded-md p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-600">
+            <button onClick={() => navigate(`/sales/${r.sale_id}`)} className="rounded-sm p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-600">
               <Eye className="h-4 w-4" />
             </button>
           )},
@@ -76,7 +76,7 @@ export default function Returns() {
             </div>
             {r.reason && <p className="text-xs text-slate-400 line-clamp-2">Alasan: {r.reason}</p>}
             <div className="flex justify-end">
-              <button onClick={(e) => { e.stopPropagation(); navigate(`/sales/${r.sale_id}`); }} className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
+              <button onClick={(e) => { e.stopPropagation(); navigate(`/sales/${r.sale_id}`); }} className="rounded-md bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
                 Lihat Penjualan
               </button>
             </div>

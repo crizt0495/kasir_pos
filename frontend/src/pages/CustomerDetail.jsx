@@ -27,7 +27,7 @@ export default function CustomerDetail() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/customers')} className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:bg-slate-50">
+        <button onClick={() => navigate('/customers')} className="rounded-md border-2 border-black bg-white p-2 text-slate-500 shadow-[2px_2px_0_0_#0A0A0A] hover:bg-slate-50 transition-all duration-100">
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
@@ -45,24 +45,24 @@ export default function CustomerDetail() {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard label="Total Transaksi" value={c.total_transactions} icon={ReceiptText} color="bg-gradient-to-br from-primary-400 to-primary-600 text-white shadow-md shadow-primary-500/25" />
-            <StatCard label="Total Belanja" value={formatRupiah(c.total_spend)} icon={Banknote} color="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md shadow-emerald-500/25" />
+            <StatCard label="Total Transaksi" value={c.total_transactions} icon={ReceiptText} color="border-2 border-black bg-primary-400 text-white shadow-[3px_3px_0_0_#0A0A0A]" />
+            <StatCard label="Total Belanja" value={formatRupiah(c.total_spend)} icon={Banknote} color="border-2 border-black bg-emerald-400 text-white shadow-[3px_3px_0_0_#0A0A0A]" />
             <StatCard
               label="Total Hutang"
               value={formatRupiah(totalDebt)}
               icon={Wallet}
-              color={totalDebt > 0 ? 'bg-gradient-to-br from-danger-400 to-danger-600 text-white shadow-md shadow-danger-500/25' : 'bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-md shadow-slate-500/25'}
+              color={totalDebt > 0 ? 'border-2 border-black bg-danger-400 text-white shadow-[3px_3px_0_0_#0A0A0A]' : 'border-2 border-black bg-slate-400 text-white shadow-[3px_3px_0_0_#0A0A0A]'}
             />
             <StatCard
               label="Piutang (Sisa)"
               value={formatRupiah(pendingDebt)}
               icon={Users}
-              color={pendingDebt > 0 ? 'bg-gradient-to-br from-rose-500 to-rose-700 text-white shadow-md shadow-rose-500/25' : 'bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-md shadow-slate-500/25'}
+              color={pendingDebt > 0 ? 'border-2 border-black bg-rose-500 text-white shadow-[3px_3px_0_0_#0A0A0A]' : 'border-2 border-black bg-slate-400 text-white shadow-[3px_3px_0_0_#0A0A0A]'}
             />
           </div>
 
           {hadDebt && (
-            <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+            <div className="rounded-lg border-2 border-black bg-rose-50 p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-rose-900">Ringkasan Hutang</h3>
                 <Link to="/debts" className="text-xs font-medium text-rose-600 hover:underline">Kelola Hutang →</Link>
@@ -134,7 +134,7 @@ function SummaryBox({ label, value, intent = 'default' }) {
     default: 'text-slate-700 bg-white',
   }[intent];
   return (
-    <div className={`rounded-xl px-4 py-3 ${tone}`}>
+    <div className={`rounded-lg px-4 py-3 ${tone}`}>
       <p className="text-xs uppercase tracking-wide opacity-70">{label}</p>
       <p className="mt-0.5 font-mono text-sm font-bold">{value}</p>
     </div>

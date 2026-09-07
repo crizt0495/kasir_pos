@@ -135,7 +135,7 @@ export default function Settings() {
       />
 
       {!isValid && (
-        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700" role="alert">
+        <div className="flex items-start gap-2 rounded-lg border-2 border-black bg-amber-50 p-3 text-sm text-amber-700" role="alert">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             Beberapa pengaturan belum valid sehingga tombol simpan nonaktif:{' '}
@@ -279,7 +279,7 @@ export default function Settings() {
               Jika diaktifkan, Owner akan menerima pemberitahuan setiap ada transaksi penjualan baru.
             </p>
 
-            <div className="border-t border-slate-100 pt-4">
+            <div className="border-t-2 border-black pt-4">
               <p className="mb-3 text-sm font-medium text-slate-700">Channel pengiriman</p>
               <div className="space-y-3">
                 <Checkbox
@@ -288,7 +288,7 @@ export default function Settings() {
                   onChange={(e) => update('notification', { channels: { ...(form.notification.channels || {}), web_push: e.target.checked } })}
                   disabled={!form.notification.enabled}
                 />
-                <div className="flex flex-wrap items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                <div className="flex flex-wrap items-center gap-3 rounded-lg border-2 border-black bg-white px-3 py-2.5">
                   <span className="text-xs text-slate-500">
                     Status Web Push di perangkat ini:{' '}
                     <b className="text-slate-700">
@@ -325,7 +325,7 @@ export default function Settings() {
               </div>
             </div>
 
-            <div className="rounded-xl bg-slate-50 p-4 text-xs text-slate-500">
+            <div className="rounded-lg border-2 border-black bg-white p-4 text-xs text-slate-500">
               <p className="font-medium text-slate-600">Cara kerja:</p>
               <ul className="mt-1.5 list-disc space-y-1 pl-4">
                 <li>Owner harus buka aplikasi di browser HP, klik <b>Aktifkan Web Push</b>, lalu izinkan notifikasi di browser.</li>
@@ -333,7 +333,7 @@ export default function Settings() {
               </ul>
             </div>
 
-            <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+            <div className="flex items-center justify-between gap-3 border-t-2 border-black pt-4">
               <div>
                 <p className="text-sm font-medium text-slate-700">Uji notifikasi penjualan</p>
                 <p className="text-xs text-slate-400">Kirim notifikasi uji melalui channel yang aktif untuk memastikan konfigurasi berfungsi.</p>

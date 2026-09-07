@@ -213,13 +213,13 @@ export default function BarcodeScanner({ open, onClose, onScan }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+      <div className="w-full max-w-md overflow-hidden rounded-xl border-2 border-black bg-white shadow-[8px_8px_0_0_#0A0A0A]">
+        <div className="flex items-center justify-between border-b-2 border-black px-4 py-3 bg-slate-50">
           <div className="flex items-center gap-2">
             {mode === 'camera' ? <Camera className="h-5 w-5 text-primary-600" /> : <Keyboard className="h-5 w-5 text-primary-600" />}
-            <h2 className="text-base font-semibold text-slate-900">Scan Barcode</h2>
+            <h2 className="text-base font-extrabold uppercase tracking-wide text-slate-900">Scan Barcode</h2>
           </div>
-          <button onClick={handleClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+          <button onClick={handleClose} className="rounded-md border-2 border-black bg-white p-1.5 text-slate-400 shadow-[2px_2px_0_0_#0A0A0A] hover:bg-slate-100 hover:text-slate-600">
             <XIcon className="h-4 w-4" />
           </button>
         </div>
@@ -248,7 +248,7 @@ export default function BarcodeScanner({ open, onClose, onScan }) {
                 )}
               </div>
             </div>
-            <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 space-y-2">
+            <div className="border-t-2 border-black bg-slate-50 px-4 py-3 space-y-2">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-slate-500">{statusMsg}</p>
                 <div className="flex items-center gap-2">
@@ -270,7 +270,7 @@ export default function BarcodeScanner({ open, onClose, onScan }) {
         ) : (
           <form onSubmit={submitManual} className="p-4 space-y-3">
             {status === 'error' && (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-700">
+              <div className="flex items-start gap-2 rounded-md border-2 border-black bg-amber-50 p-2.5 text-xs text-amber-700">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{statusMsg}</span>
               </div>

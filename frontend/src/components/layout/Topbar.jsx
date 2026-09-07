@@ -35,7 +35,6 @@ export function Topbar({ onMenuClick }) {
   const displayName = user?.profile?.full_name || user?.username || '';
   const roleName = user?.roles?.[0]?.name || '-';
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -51,7 +50,6 @@ export function Topbar({ onMenuClick }) {
     return () => window.removeEventListener('keydown', handler);
   }, [setGlobalSearchOpen]);
 
-  // Session validation on focus
   useEffect(() => {
     const onFocus = () => {
       if (useAuthStore.getState().user) {
@@ -67,15 +65,15 @@ export function Topbar({ onMenuClick }) {
   }, [clear]);
 
   return (
-    <header className="sticky top-0 z-30 h-14 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
+    <header className="sticky top-0 z-30 h-14 border-b-2 border-black bg-white">
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-3">
           <nav className="flex items-center gap-1 text-sm" aria-label="Breadcrumb">
-            <Link to="/dashboard" className="text-slate-400 hover:text-slate-600 transition-colors">
+            <Link to="/dashboard" className="font-bold text-slate-500 hover:text-slate-900 transition-colors">
               Beranda
             </Link>
-            <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0" aria-hidden="true" />
-            <span className="font-medium text-slate-800 truncate max-w-[200px]">{title}</span>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" aria-hidden="true" />
+            <span className="font-extrabold text-slate-800 uppercase tracking-wide truncate max-w-[200px]">{title}</span>
           </nav>
         </div>
 
@@ -83,13 +81,13 @@ export function Topbar({ onMenuClick }) {
           <div className="hidden sm:block">
             <button
               onClick={() => setGlobalSearchOpen(true)}
-              className="group flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-1.5 text-sm text-slate-500 hover:border-primary-300 hover:text-slate-700 hover:bg-white hover:shadow-sm transition-all duration-150"
+              className="group flex items-center gap-2 rounded-lg border-2 border-black bg-white px-3 py-1.5 text-sm font-medium text-slate-500 shadow-[2px_2px_0_0_#0A0A0A] hover:border-primary-500 hover:text-slate-700 hover:bg-slate-50 transition-all duration-100"
               aria-label="Pencarian global (Ctrl+K)"
             >
               <span className="flex items-center gap-1.5">
                 <Search className="h-4 w-4 text-slate-400 group-hover:text-primary-500 transition-colors" aria-hidden="true" />
                 <span>Cari produk, pelanggan, transaksi...</span>
-                <kbd className="kbd ml-1">Ctrl K</kbd>
+                <kbd className="kbd">Ctrl K</kbd>
               </span>
             </button>
           </div>
@@ -99,17 +97,17 @@ export function Topbar({ onMenuClick }) {
           <div className="relative">
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-100 transition-colors"
+              className="flex items-center gap-2 rounded-lg border-2 border-transparent px-2 py-1.5 hover:border-black hover:bg-slate-100 transition-all duration-100"
               aria-expanded={menuOpen}
               aria-haspopup="true"
               aria-label="Menu pengguna"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-xs font-bold text-white ring-2 ring-primary-200/60">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-black bg-primary-500 text-xs font-extrabold text-white shadow-[2px_2px_0_0_#0A0A0A]">
                 {initials(displayName)}
               </div>
               <div className="hidden text-left md:block">
-                <p className="text-sm font-medium leading-tight text-slate-800 truncate max-w-[140px]">{displayName}</p>
-                <p className="text-xs leading-tight text-slate-400 truncate max-w-[140px]">{roleName}</p>
+                <p className="text-sm font-bold leading-tight text-slate-800 truncate max-w-[140px]">{displayName}</p>
+                <p className="text-xs font-bold leading-tight text-slate-400 truncate max-w-[140px]">{roleName}</p>
               </div>
               <ChevronDown className="h-4 w-4 text-slate-400" />
             </button>
@@ -117,13 +115,13 @@ export function Topbar({ onMenuClick }) {
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} aria-hidden="true" />
-                <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-slate-200/80 bg-white py-1.5 shadow-xl shadow-slate-900/10 animate-scale-in">
-                  <div className="border-b border-slate-100 px-4 py-3">
-                    <p className="text-sm font-medium text-slate-800 truncate">{displayName}</p>
-                    <p className="text-xs text-slate-400 truncate">@{user?.username} · {roleName}</p>
+                <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border-2 border-black bg-white py-1.5 shadow-[6px_6px_0_0_#0A0A0A] animate-scale-in">
+                  <div className="border-b-2 border-black px-4 py-3">
+                    <p className="text-sm font-extrabold text-slate-800 truncate">{displayName}</p>
+                    <p className="text-xs font-bold text-slate-400 truncate">@{user?.username} · {roleName}</p>
                   </div>
                   <button
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors"
                     onClick={() => {
                       setMenuOpen(false);
                       navigate('/change-password');
@@ -132,7 +130,7 @@ export function Topbar({ onMenuClick }) {
                     <KeyRound className="h-4 w-4" /> Ganti Password
                   </button>
                   <button
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-danger-600 hover:bg-danger-50 transition-colors"
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-bold text-danger-600 hover:bg-danger-50 transition-colors"
                     onClick={handleLogout}
                   >
                     <LogOut className="h-4 w-4" /> Logout

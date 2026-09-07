@@ -288,7 +288,7 @@ export default function ProfitSharing() {
                     className="w-full"
                   />
                 )}
-                <div className="border-t border-slate-200">
+                <div className="border-t-2 border-black">
                   <Pagination page={distributionsPage} totalPages={distributions.data?.totalPages || 1} total={distributions.data?.total || 0} pageSize={distributions.data?.pageSize || 20} onPageChange={setDistributionsPage} />
                 </div>
               </>
@@ -317,7 +317,7 @@ export default function ProfitSharing() {
             <div className="rounded-lg bg-slate-50 p-3 text-sm">
               <div className="flex justify-between"><span className="text-slate-500">Hak 2,5%</span><span className="font-semibold text-violet-700">{formatRupiah(distributing.share_amount)}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Sudah dibagikan</span><span>{formatRupiah(distributing.distributed)}</span></div>
-              <div className="flex justify-between border-t border-slate-200 pt-1"><span className="text-slate-500">Sisa</span><span className="font-semibold text-amber-600">{formatRupiah(distributing.remaining)}</span></div>
+              <div className="flex justify-between border-t-2 border-black pt-1"><span className="text-slate-500">Sisa</span><span className="font-semibold text-amber-600">{formatRupiah(distributing.remaining)}</span></div>
             </div>
             <Field label="Jumlah Dibagikan (Rp)" required error={distributeErrors.amount}>
               <Input type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" error={!!distributeErrors.amount} />

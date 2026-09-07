@@ -54,14 +54,14 @@ export default function Login() {
     <div className="relative flex min-h-full items-center justify-center overflow-y-auto bg-slate-100 px-4 py-10">
       <div className="relative w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-600 text-white">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-primary-600 text-white">
             <Store className="h-7 w-7" />
           </div>
           <h1 className="text-xl font-bold text-slate-900">POS Kasir</h1>
           <p className="text-sm text-slate-500">Masuk untuk mengelola toko Anda</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-xl border-2 border-black bg-white p-6 shadow-sm">
           <Field label="Username" error={errors.username?.message}>
             <Input placeholder="Masukkan username" autoComplete="username" {...register('username')} error={errors.username} />
           </Field>

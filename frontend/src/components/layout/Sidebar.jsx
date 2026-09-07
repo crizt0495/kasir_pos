@@ -85,7 +85,6 @@ export function Sidebar({ open, onClose }) {
 
   const has = (perm) => (Array.isArray(perm) ? perm.some((p) => permissions.has(p)) : permissions.has(perm));
 
-  // Persist state collapse
   useEffect(() => {
     try {
       localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0');
@@ -94,7 +93,6 @@ export function Sidebar({ open, onClose }) {
     }
   }, [collapsed]);
 
-  // Auto-expand di layar kecil (sidebar jadi overlay mobile)
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) setCollapsed(false);
@@ -104,7 +102,6 @@ export function Sidebar({ open, onClose }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Overlay mobile selalu tampil penuh dengan label, apa pun state collapse
   useEffect(() => {
     if (open) setCollapsed(false);
   }, [open]);
@@ -112,8 +109,6 @@ export function Sidebar({ open, onClose }) {
   const sidebarWidth = collapsed ? 'w-16' : 'w-64';
   const showLabels = !collapsed;
 
-  // Tentukan item aktif: item paling spesifik yang cocok.
-  // Cegah dua item aktif sekaligus di route nested (mis. /inventory + /inventory/opname).
   const itemDepth = (to) => {
     const p = location.pathname;
     if (p === to) return Infinity;
@@ -123,10 +118,10 @@ export function Sidebar({ open, onClose }) {
   return (
     <>
       {open && (
-        <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden" onClick={onClose} aria-hidden="true" />
+        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={onClose} aria-hidden="true" />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-full flex-col border-r border-slate-200/80 bg-white text-slate-600 transition-all duration-200 ease-out lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-full flex-col border-r-2 border-black bg-white text-slate-600 transition-all duration-200 ease-out lg:relative lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         } ${sidebarWidth}`}
         aria-label="Navigasi utama"
@@ -134,22 +129,22 @@ export function Sidebar({ open, onClose }) {
         {collapsed && (
           <button
             onClick={() => setCollapsed(false)}
-            className="absolute -right-3 top-16 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-md transition-colors hover:bg-slate-100 hover:text-slate-800 lg:flex"
+            className="absolute -right-3 top-16 z-10 hidden h-6 w-6 items-center justify-center rounded-full border-2 border-black bg-primary-400 text-white shadow-[2px_2px_0_0_#0A0A0A] transition-colors hover:bg-primary-500 lg:flex"
             aria-label="Perluas sidebar"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
         )}
 
-        <div className={`flex shrink-0 items-center border-b border-slate-100 py-4 ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
+        <div className={`flex shrink-0 items-center border-b-2 border-black py-4 ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
           <div className={`flex min-w-0 items-center gap-3 ${collapsed ? 'justify-center' : 'flex-1'}`}>
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-md ring-1 ring-primary-400/20">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 border-black bg-primary-500 text-white shadow-[3px_3px_0_0_#0A0A0A]">
               <Store className="h-5 w-5" aria-hidden="true" />
             </div>
             {showLabels && (
               <div className="overflow-hidden">
-                <p className="truncate text-sm font-bold text-slate-900 tracking-tight font-display">POS Kasir</p>
-                <p className="truncate text-[0.65rem] text-slate-400">Point of Sale</p>
+                <p className="truncate text-sm font-extrabold text-slate-900 tracking-tight font-display uppercase">POS Kasir</p>
+                <p className="truncate text-[0.65rem] font-bold text-slate-400">Point of Sale</p>
               </div>
             )}
           </div>
@@ -157,14 +152,14 @@ export function Sidebar({ open, onClose }) {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setCollapsed(true)}
-                className="hidden rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-800 lg:inline-flex"
+                className="hidden rounded-md border-2 border-transparent p-1.5 text-slate-400 transition-colors hover:border-black hover:bg-slate-100 hover:text-slate-900 lg:inline-flex"
                 aria-label="Lipat sidebar"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
               <button
                 onClick={onClose}
-                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-800 lg:hidden"
+                className="rounded-md border-2 border-transparent p-1.5 text-slate-400 transition-colors hover:border-black hover:bg-slate-100 hover:text-slate-900 lg:hidden"
                 aria-label="Tutup menu"
               >
                 <X className="h-5 w-5" />
@@ -173,7 +168,7 @@ export function Sidebar({ open, onClose }) {
           )}
         </div>
 
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3" aria-label="Menu navigasi">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2.5 py-3" aria-label="Menu navigasi">
           {MENU.map((group, gi) => {
             const items = group.items.filter((i) => has(i.perm));
             if (!items.length) return null;
@@ -181,11 +176,11 @@ export function Sidebar({ open, onClose }) {
             return (
               <div key={gi} className="mb-3">
                 {group.section && showLabels && (
-                  <p className="mb-1.5 px-3 text-[0.6rem] font-semibold uppercase tracking-widest text-slate-400">
+                  <p className="mb-1.5 px-3 text-[0.6rem] font-extrabold uppercase tracking-widest text-slate-400">
                     {group.section}
                   </p>
                 )}
-                <ul className="space-y-0.5" role="list">
+                <ul className="space-y-1" role="list">
                   {items.map((item) => {
                     const active = best > -1 && itemDepth(item.to) === best;
                     return (
@@ -193,18 +188,18 @@ export function Sidebar({ open, onClose }) {
                         <Link
                           to={item.to}
                           onClick={onClose}
-                          className={`relative flex items-center gap-3 rounded-xl py-2.5 text-sm font-medium transition-all duration-150 ${
+                          className={`relative flex items-center gap-3 rounded-lg py-2.5 text-sm font-bold transition-all duration-100 ${
                             collapsed ? 'justify-center px-0' : 'px-3'
                           } ${
                             active
-                              ? 'bg-primary-600 text-white shadow-sm'
-                              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                              ? 'bg-primary-500 text-white border-2 border-black shadow-[3px_3px_0_0_#372C14]'
+                              : 'border-2 border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900'
                           }`}
                           aria-current={active ? 'page' : undefined}
                           title={showLabels ? undefined : item.label}
                         >
                           {active && !collapsed && (
-                            <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-white/90 shadow-sm" aria-hidden="true" />
+                            <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 bg-black" aria-hidden="true" />
                           )}
                           <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                           {showLabels && <span className="truncate">{item.label}</span>}
@@ -218,12 +213,12 @@ export function Sidebar({ open, onClose }) {
           })}
         </nav>
 
-        <div className="shrink-0 border-t border-slate-100 p-4">
+        <div className="shrink-0 border-t-2 border-black p-4">
           {showLabels ? (
-            <p className="text-center text-[0.65rem] text-slate-400">POS App v1.0</p>
+            <p className="text-center text-[0.65rem] font-bold text-slate-400">POS App v1.0</p>
           ) : (
-            <div className="mx-auto flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100" title="POS App v1.0">
-              <Store className="h-3.5 w-3.5 text-slate-400" />
+            <div className="mx-auto flex h-6 w-6 items-center justify-center rounded-md border border-black bg-slate-100" title="POS App v1.0">
+              <Store className="h-3.5 w-3.5 text-slate-500" />
             </div>
           )}
         </div>

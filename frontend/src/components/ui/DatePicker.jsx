@@ -33,7 +33,7 @@ export const DatePicker = forwardRef(function DatePicker({
           type="date"
           id={id}
           className={cn(
-            'w-full rounded-xl border bg-white py-2 pl-9 pr-10 text-sm',
+            'w-full rounded-lg border-2 border-black bg-white py-2 pl-9 pr-10 text-sm font-medium shadow-[2px_2px_0_0_#0A0A0A]',
             'focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20',
             'transition-all duration-150',
             error ? 'border-danger-300' : 'border-slate-200',

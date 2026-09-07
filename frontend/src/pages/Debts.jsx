@@ -244,27 +244,27 @@ export default function Debts() {
           label="Total Hutang"
           value={formatRupiah(s.totalDebt)}
           icon={Receipt}
-          color="bg-gradient-to-br from-primary-400 to-primary-600 text-white shadow-md shadow-primary-500/25"
+          color="border-2 border-black bg-primary-400 text-white shadow-[3px_3px_0_0_#0A0A0A]"
           sub={`${s.total || 0} catatan`}
         />
         <StatCard
           label="Sisa Belum Bayar"
           value={formatRupiah(s.pendingDebt)}
           icon={AlertTriangle}
-          color="bg-gradient-to-br from-rose-400 to-rose-600 text-white shadow-md shadow-rose-500/25"
+          color="border-2 border-black bg-rose-400 text-white shadow-[3px_3px_0_0_#0A0A0A]"
           sub={`${s.pendingCount || 0} catatan aktif`}
         />
         <StatCard
           label="Sudah Dibayar"
           value={formatRupiah(s.totalPaid)}
           icon={CheckCircle2}
-          color="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md shadow-emerald-500/25"
+          color="border-2 border-black bg-emerald-400 text-white shadow-[3px_3px_0_0_#0A0A0A]"
         />
         <StatCard
           label="Jatuh Tempo"
           value={s.overdueCount || 0}
           icon={CreditCard}
-          color="bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md shadow-amber-500/25"
+          color="border-2 border-black bg-amber-400 text-white shadow-[3px_3px_0_0_#0A0A0A]"
           sub="perlu ditagih"
         />
       </div>
@@ -416,7 +416,7 @@ export default function Debts() {
               {customerLoading && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">memuat...</span>}
             </div>
             {customerResults.length > 0 && (
-              <ul className="mt-1 max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+              <ul className="mt-1 max-h-48 overflow-y-auto rounded-lg border-2 border-black bg-white py-1 shadow-lg">
                 {customerResults.map((c) => (
                   <li key={c.id}>
                     <button
@@ -483,7 +483,7 @@ export default function Debts() {
       >
         {payDebt && (
           <div className="space-y-4">
-            <div className="rounded-xl bg-slate-50 p-4 space-y-2 text-sm">
+            <div className="rounded-lg bg-slate-50 p-4 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-500">Pelanggan</span>
                 <span className="font-medium text-slate-800">{payDebt.customer?.name || '-'}</span>
@@ -496,7 +496,7 @@ export default function Debts() {
                 <span className="text-slate-500">Sudah Dibayar</span>
                 <span className="font-medium text-emerald-600 font-mono">{formatRupiah(payDebt.paid_amount)}</span>
               </div>
-              <div className="flex justify-between border-t border-slate-200 pt-2">
+              <div className="flex justify-between border-t-2 border-black pt-2">
                 <span className="text-slate-500">Sisa</span>
                 <span className="font-bold text-rose-600 font-mono">
                   {formatRupiah(Math.max(0, Number(payDebt.amount) - Number(payDebt.paid_amount)))}
@@ -556,7 +556,7 @@ export default function Debts() {
       >
         {historyDebt && (
           <div className="space-y-4">
-            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-1.5 text-sm">
+            <div className="rounded-lg border-2 border-black bg-white p-4 space-y-1.5 text-sm">
               <DetailRow label="Pelanggan" value={historyDebt.customer?.name} />
               <DetailRow label="Total Hutang" value={formatRupiah(historyDebt.amount)} />
               <DetailRow label="Sudah Dibayar" value={<span className="font-mono text-emerald-600">{formatRupiah(historyDebt.paid_amount)}</span>} />
@@ -581,7 +581,7 @@ export default function Debts() {
               ) : !history.data?.payments?.length ? (
                 <EmptyState title="Belum ada pembayaran" description="Hutang ini belum pernah dibayar" icon={Receipt} />
               ) : (
-                <div className="overflow-hidden rounded-xl border border-slate-200">
+                <div className="overflow-hidden rounded-lg border-2 border-black">
                   <table className="w-full text-sm">
                     <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
                       <tr>
@@ -626,7 +626,7 @@ export default function Debts() {
       >
         {cancelDebt && (
           <div className="space-y-4">
-            <div className="flex items-start gap-3 rounded-xl bg-rose-50 p-4 text-sm text-rose-700">
+            <div className="flex items-start gap-3 rounded-lg bg-rose-50 p-4 text-sm text-rose-700">
               <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
               <p>
                 Hutang <span className="font-semibold">{formatRupiah(cancelDebt.amount)}</span> atas nama{' '}

@@ -26,7 +26,7 @@ function SummarySkeleton() {
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs shadow-xl shadow-slate-900/10">
+    <div className="rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-xs shadow-xl">
       {label && <p className="mb-1.5 font-semibold text-slate-800">{label}</p>}
       {payload.map((p, i) => (
         <p key={i} className="font-medium text-slate-600">
@@ -67,16 +67,16 @@ export default function Dashboard() {
               label="Total Penjualan Hari Ini"
               value={formatRupiah(s.today_sales)}
               icon={Banknote}
-              color="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md shadow-emerald-500/25"
+              color="border-2 border-black bg-emerald-400 text-white shadow-[3px_3px_0_0_#0A0A0A]"
               sub={s.today_refund > 0 ? `Setelah retur ${formatRupiah(s.today_refund)}` : 'Setelah dikurangi retur'}
             />
-            <StatCard label="Jumlah Transaksi Hari Ini" value={formatNumber(s.today_transactions)} icon={ReceiptText} color="bg-gradient-to-br from-primary-400 to-primary-600 text-white shadow-md shadow-primary-500/25" />
-            <StatCard label="Profit Hari Ini" value={formatRupiah(s.today_profit)} icon={TrendingUp} color="bg-gradient-to-br from-sky-400 to-sky-600 text-white shadow-md shadow-sky-500/25" />
-            <StatCard label="Total Produk" value={formatNumber(s.total_products)} icon={Package} color="bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-md shadow-slate-500/25" />
-            <StatCard label="Stok Menipis" value={formatNumber(s.low_stock)} icon={AlertTriangle} color="bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md shadow-amber-500/25" sub={s.out_of_stock > 0 ? `${formatNumber(s.out_of_stock)} produk habis` : null} />
-            <StatCard label="Total Pelanggan" value={formatNumber(s.total_customers)} icon={Users} color="bg-gradient-to-br from-violet-400 to-violet-600 text-white shadow-md shadow-violet-500/25" />
-            <StatCard label="Total Pembelian Hari Ini" value={formatRupiah(s.purchases_today)} icon={ShoppingBag} color="bg-gradient-to-br from-rose-400 to-rose-600 text-white shadow-md shadow-rose-500/25" />
-            <StatCard label="Kas Saat Ini" value={formatRupiah(s.open_cash)} icon={Wallet} color="bg-gradient-to-br from-teal-400 to-teal-600 text-white shadow-md shadow-teal-500/25" />
+            <StatCard label="Jumlah Transaksi Hari Ini" value={formatNumber(s.today_transactions)} icon={ReceiptText} color="border-2 border-black bg-primary-400 text-white shadow-[3px_3px_0_0_#0A0A0A]" />
+            <StatCard label="Profit Hari Ini" value={formatRupiah(s.today_profit)} icon={TrendingUp} color="border-2 border-black bg-sky-400 text-white shadow-[3px_3px_0_0_#0A0A0A]" />
+            <StatCard label="Total Produk" value={formatNumber(s.total_products)} icon={Package} color="border-2 border-black bg-slate-400 text-white shadow-[3px_3px_0_0_#0A0A0A]" />
+            <StatCard label="Stok Menipis" value={formatNumber(s.low_stock)} icon={AlertTriangle} color="border-2 border-black bg-amber-400 text-white shadow-[3px_3px_0_0_#0A0A0A]" sub={s.out_of_stock > 0 ? `${formatNumber(s.out_of_stock)} produk habis` : null} />
+            <StatCard label="Total Pelanggan" value={formatNumber(s.total_customers)} icon={Users} color="border-2 border-black bg-violet-400 text-white shadow-[3px_3px_0_0_#0A0A0A]" />
+            <StatCard label="Total Pembelian Hari Ini" value={formatRupiah(s.purchases_today)} icon={ShoppingBag} color="border-2 border-black bg-rose-400 text-white shadow-[3px_3px_0_0_#0A0A0A]" />
+            <StatCard label="Kas Saat Ini" value={formatRupiah(s.open_cash)} icon={Wallet} color="border-2 border-black bg-teal-400 text-white shadow-[3px_3px_0_0_#0A0A0A]" />
           </div>
 
           {/* Ringkasan Hutang / Piutang — varian neo-brutalism (contoh) */}
@@ -209,7 +209,7 @@ export default function Dashboard() {
               {Object.keys(charts.data.payment_methods).length ? (
                 <div className="space-y-2">
                   {Object.entries(charts.data.payment_methods).map(([method, total]) => (
-                    <div key={method} className="flex items-center justify-between rounded-xl border border-slate-100/80 px-3 py-2.5 transition-colors hover:bg-slate-50/60 hover:border-slate-200/80">
+                    <div key={method} className="flex items-center justify-between rounded-lg border-2 border-black px-3 py-2.5 transition-colors hover:bg-slate-50/60 hover:border-black">
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${paymentMethodColor(method)}`}>
                         {paymentMethodLabel(method)}
                       </span>

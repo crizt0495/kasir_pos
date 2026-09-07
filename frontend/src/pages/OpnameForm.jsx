@@ -179,7 +179,7 @@ export default function OpnameForm() {
     return (
       <div className="mx-auto max-w-6xl space-y-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/inventory/opname')} className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:bg-slate-50">
+          <button onClick={() => navigate('/inventory/opname')} className="rounded-lg border-2 border-black bg-white p-2 text-slate-500 hover:bg-slate-50">
             <ArrowLeft className="h-4 w-4" />
           </button>
           <h1 className="text-xl font-bold text-slate-900">Memuat...</h1>
@@ -199,7 +199,7 @@ export default function OpnameForm() {
   return (
     <div className="mx-auto max-w-6xl space-y-3">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/inventory/opname')} className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:bg-slate-50">
+        <button onClick={() => navigate('/inventory/opname')} className="rounded-lg border-2 border-black bg-white p-2 text-slate-500 hover:bg-slate-50">
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="flex-1">
@@ -213,11 +213,11 @@ export default function OpnameForm() {
       </div>
 
       {!isReadOnly && (
-        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
+        <div className="flex items-center gap-2 rounded-lg border-2 border-black bg-white p-2">
           <div className="flex-1">
             <SearchInput value={search} onChange={setSearch} placeholder="Cari produk..." />
           </div>
-          <button onClick={() => setScannerOpen(true)} title="Scan Barcode" className="shrink-0 rounded-lg border border-slate-200 p-2 text-slate-600 hover:border-primary-400 hover:bg-primary-50 transition-colors">
+          <button onClick={() => setScannerOpen(true)} title="Scan Barcode" className="shrink-0 rounded-lg border-2 border-black p-2 text-slate-600 hover:border-primary-400 hover:bg-primary-50 transition-colors">
             <Barcode className="h-5 w-5" />
           </button>
         </div>
@@ -232,12 +232,12 @@ export default function OpnameForm() {
           return (
             <div
               key={p.id}
-              className={`rounded-xl border-2 bg-white p-3 transition-all ${
+              className={`rounded-lg border-2 bg-white p-3 transition-all ${
                 isFilled
-                  ? diff === 0 ? 'border-success-300 shadow-sm shadow-success-100'
-                    : diff !== null ? 'border-warning-300 shadow-sm shadow-warning-100'
-                    : 'border-slate-200'
-                  : 'border-slate-200'
+                  ? diff === 0 ? 'border-black shadow-[3px_3px_0_0_#0A0A0A]'
+                    : diff !== null ? 'border-black shadow-[3px_3px_0_0_#0A0A0A]'
+                    : 'border-black'
+                  : 'border-black'
               }`}
             >
               <div className="flex items-start justify-between">
@@ -255,7 +255,7 @@ export default function OpnameForm() {
               </div>
 
               {p.barcode && (
-                <div className="mt-2 flex items-center gap-1.5 rounded bg-slate-50 px-2 py-1">
+                <div className="mt-2 flex items-center gap-1.5 rounded-md bg-slate-50 px-2 py-1">
                   <Barcode className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                   <span className="font-mono text-[11px] tracking-widest text-slate-500">{p.barcode}</span>
                 </div>
@@ -304,7 +304,7 @@ export default function OpnameForm() {
       )}
 
       {!isReadOnly && mismatchItems.length > 0 && (
-        <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm">
+        <div className="flex items-center justify-between rounded-lg border-2 border-black bg-amber-50 px-4 py-2 text-sm">
           <span className="text-amber-700">{mismatchItems.length} produk selisih stok</span>
           <button onClick={() => setReviewOpen(true)} className="font-medium text-amber-800 hover:underline">Lihat Detail</button>
         </div>
@@ -367,21 +367,21 @@ function ReviewModal({ open, onClose, items, itemStocks, stats, opnameDate }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-xl rounded-xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-slate-200 p-4">
+      <div className="w-full max-w-xl rounded-lg bg-white shadow-[5px_5px_0_0_#0A0A0A]">
+        <div className="flex items-center justify-between border-b-2 border-black p-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Review Stock Opname</h2>
             <p className="text-xs text-slate-500">{formatDateTime(opnameDate)}</p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+          <button onClick={onClose} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
             <XIcon className="h-4 w-4" />
           </button>
         </div>
         <div className="max-h-[65vh] overflow-y-auto p-4">
           <div className="mb-3 grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="rounded-lg bg-primary-50 p-2"><p className="text-primary-600">Total</p><p className="text-base font-bold text-primary-900">{stats.total}</p></div>
-            <div className="rounded-lg bg-success-50 p-2"><p className="text-success-600">Sesuai</p><p className="text-base font-bold text-success-900">{stats.sesuai}</p></div>
-            <div className="rounded-lg bg-warning-50 p-2"><p className="text-warning-600">Selisih</p><p className="text-base font-bold text-warning-900">{stats.selisih}</p></div>
+            <div className="rounded-md bg-primary-50 p-2"><p className="text-primary-600">Total</p><p className="text-base font-bold text-primary-900">{stats.total}</p></div>
+            <div className="rounded-md bg-success-50 p-2"><p className="text-success-600">Sesuai</p><p className="text-base font-bold text-success-900">{stats.sesuai}</p></div>
+            <div className="rounded-md bg-warning-50 p-2"><p className="text-warning-600">Selisih</p><p className="text-base font-bold text-warning-900">{stats.selisih}</p></div>
           </div>
 
           {mismatchItems.length > 0 ? (
@@ -390,7 +390,7 @@ function ReviewModal({ open, onClose, items, itemStocks, stats, opnameDate }) {
                 const physical = Number(itemStocks[p.id]);
                 const diff = physical - Number(p.stock);
                 return (
-                  <div key={p.id} className="flex items-center justify-between rounded-lg border border-slate-100 bg-white p-2">
+                  <div key={p.id} className="flex items-center justify-between rounded-md border-2 border-black bg-white p-2">
                     <div className="min-w-0 flex-1 pr-2">
                       <p className="truncate text-sm font-medium text-slate-800">{p.name}</p>
                       <p className="text-xs text-slate-400">{p.sku}</p>
@@ -411,7 +411,7 @@ function ReviewModal({ open, onClose, items, itemStocks, stats, opnameDate }) {
             <p className="py-6 text-center text-sm text-slate-400">Semua stok sesuai</p>
           )}
         </div>
-        <div className="border-t border-slate-200 p-4 flex justify-end">
+        <div className="border-t-2 border-black p-4 flex justify-end">
           <Button variant="outline" onClick={onClose}>Tutup</Button>
         </div>
       </div>

@@ -66,7 +66,7 @@ export default function PurchaseDetail() {
     <div className="mx-auto max-w-4xl space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/purchases')} className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:bg-slate-50">
+          <button onClick={() => navigate('/purchases')} className="rounded-lg border-2 border-black bg-white p-2 text-slate-500 hover:bg-slate-50">
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
@@ -161,7 +161,7 @@ export default function PurchaseDetail() {
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between"><span className="text-slate-500">Subtotal</span><span>{formatRupiah(p.subtotal)}</span></div>
                 <div className="flex justify-between"><span className="text-slate-500">Diskon</span><span>-{formatRupiah(p.discount)}</span></div>
-                <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-bold">
+                <div className="flex justify-between border-t-2 border-black pt-2 text-base font-bold">
                   <span>Total</span><span className="text-primary-700">{formatRupiah(p.total)}</span>
                 </div>
               </div>

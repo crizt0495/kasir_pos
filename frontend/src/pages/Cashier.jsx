@@ -225,7 +225,7 @@ export default function Cashier() {
                 </div>
               ))}
             </div>
-            <div className="border-t border-slate-200">
+            <div className="border-t-2 border-black">
               <Pagination
                 page={txPage}
                 totalPages={Math.ceil(transactions.data.items.length / txPageSize)}
@@ -253,11 +253,11 @@ export default function Cashier() {
           }
         >
         <div className="space-y-4">
-          <div className="space-y-1.5 rounded-lg bg-slate-50 p-4 text-sm">
+          <div className="space-y-1.5 rounded-md bg-slate-50 p-4 text-sm">
             <div className="flex justify-between"><span className="text-slate-500">Saldo Awal</span><span>{formatRupiah(s.opening_balance)}</span></div>
             <div className="flex justify-between"><span className="text-slate-500">Cash Masuk</span><span className="text-emerald-600">+{formatRupiah(cashIn)}</span></div>
             <div className="flex justify-between"><span className="text-slate-500">Cash Keluar</span><span className="text-red-600">-{formatRupiah(cashOut)}</span></div>
-            <div className="flex justify-between border-t border-slate-200 pt-2 font-bold">
+            <div className="flex justify-between border-t-2 border-black pt-2 font-bold">
               <span>Kas yang Diharapkan</span>
               <span>{formatRupiah(expected)}</span>
             </div>
@@ -266,7 +266,7 @@ export default function Cashier() {
             <Input type="number" min="0" value={actualCash} onChange={(e) => setActualCash(e.target.value)} autoFocus error={!!closeErrors.actual_cash} />
           </Field>
           {actualNum !== null && actualNum !== expected && (
-            <div className={`rounded-lg p-3 text-sm ${Math.abs(cashDiff) > 0 ? 'bg-amber-50 text-amber-700' : ''}`}>
+            <div className={`rounded-md p-3 text-sm ${Math.abs(cashDiff) > 0 ? 'bg-amber-50 text-amber-700' : ''}`}>
               Selisih: <b>{formatRupiah(cashDiff)}</b>. Jika ada selisih, catatan wajib diisi.
             </div>
           )}
@@ -308,7 +308,7 @@ export default function Cashier() {
                 key={t}
                 type="button"
                 onClick={() => setTxForm({ ...txForm, type: t })}
-                className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
+                className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium ${
                   txForm.type === t
                     ? t === 'IN' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-red-500 bg-red-50 text-red-700'
                     : 'border-slate-300 text-slate-600'

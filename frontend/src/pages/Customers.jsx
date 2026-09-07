@@ -186,11 +186,11 @@ export default function Customers() {
                 </div>
               )}
               <div className="flex justify-end gap-1">
-                <button onClick={(e) => { e.stopPropagation(); navigate(`/customers/${r.id}`); }} className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); navigate(`/customers/${r.id}`); }} className="rounded-md bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
                   Detail
                 </button>
                 {can('customers.update') && (
-                  <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
                     Edit
                   </button>
                 )}

@@ -164,12 +164,12 @@ export default function Expenses() {
               <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${paymentMethodColor(r.payment_method)}`}>{paymentMethodLabel(r.payment_method)}</span>
               <div className="flex gap-1">
                 {can('expenses.update') && (
-                  <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); openEdit(r); }} className="rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
                     Edit
                   </button>
                 )}
                 {can('expenses.delete') && (
-                  <button onClick={(e) => { e.stopPropagation(); setToDelete(r); }} className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); setToDelete(r); }} className="rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors">
                     Hapus
                   </button>
                 )}

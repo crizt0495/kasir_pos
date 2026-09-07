@@ -5,7 +5,7 @@ import { Button } from '../components/ui/Button.jsx';
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center gap-5 py-24 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary-50 text-primary-500">
+      <div className="flex h-20 w-20 items-center justify-center rounded-xl border-2 border-black bg-primary-50 text-primary-500">
         <Compass className="h-10 w-10" strokeWidth={1.5} />
       </div>
       <div>

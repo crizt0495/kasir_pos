@@ -89,11 +89,11 @@ export default function Sales() {
           { key: 'actions', header: 'Aksi', align: 'right', hideable: false, render: (r) => (
             <div className="flex gap-1">
               {can('sales.view') && (
-                <button onClick={() => navigate(`/sales/${r.id}`)} className="rounded-md p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-600">
+                <button onClick={() => navigate(`/sales/${r.id}`)} className="rounded-sm p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-600">
                   <Eye className="h-4 w-4" />
                 </button>
               )}
-              <button onClick={() => printReceipt(r)} title="Cetak ulang struk" className="rounded-md p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600">
+              <button onClick={() => printReceipt(r)} title="Cetak ulang struk" className="rounded-sm p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600">
                 <Printer className="h-4 w-4" />
               </button>
             </div>
@@ -131,11 +131,11 @@ export default function Sales() {
               <span className="font-semibold text-sm">{formatRupiah(r.total)}</span>
               <div className="flex gap-1">
                 {can('sales.view') && (
-                  <button onClick={(e) => { e.stopPropagation(); navigate(`/sales/${r.id}`); }} className="rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); navigate(`/sales/${r.id}`); }} className="rounded-md bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
                     Detail
                   </button>
                 )}
-                <button onClick={(e) => { e.stopPropagation(); printReceipt(r); }} className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
+                <button onClick={(e) => { e.stopPropagation(); printReceipt(r); }} className="rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">
                   Struk
                 </button>
               </div>
