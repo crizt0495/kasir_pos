@@ -33,7 +33,7 @@ export default function PurchaseForm() {
   const [items, setItems] = useState([]); // { product_id, product, quantity, cost_price }
   const [productSearch, setProductSearch] = useState('');
   const debouncedSearch = useDebounce(productSearch, 300);
-  useSyncPurchasePrice(items, { delay: 600 });
+  const flushPurchasePriceSync = useSyncPurchasePrice(items, { delay: 600 });
   const [saving, setSaving] = useState(false);
 
   const suppliers = useApi(() => suppliersApi.list({ status: 'active', pageSize: 100 }).then((r) => r.data), []);
@@ -140,6 +140,7 @@ export default function PurchaseForm() {
         await purchasesApi.create(payload);
         toast.success('Pembelian berhasil dibuat');
       }
+      await flushPurchasePriceSync();
       navigate('/purchases');
     } catch (error) {
       toast.error(getErrorMessage(error, 'Gagal menyimpan pembelian'));
