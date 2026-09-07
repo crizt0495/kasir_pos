@@ -72,7 +72,7 @@ export const createPurchase = asyncHandler(async (req, res) => {
   if (error) throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
 
   const purchase = await fetchPurchaseDetail(result.purchase_id);
-  return created(res, { ...result, purchase }, 'Pembelian berhasil dibuat');
+  return created(res, { ...result, purchase }, 'Pembelian berhasil dibuat, harga beli produk diperbarui');
 });
 
 export const updatePurchase = asyncHandler(async (req, res) => {
@@ -114,7 +114,7 @@ export const updatePurchase = asyncHandler(async (req, res) => {
     newData: { purchase_number: existing.purchase_number, total: result.total },
     req,
   });
-  return ok(res, await fetchPurchaseDetail(id), 'Pembelian berhasil diperbarui');
+  return ok(res, await fetchPurchaseDetail(id), 'Pembelian berhasil diperbarui, harga beli produk disinkronkan');
 });
 
 export const deletePurchase = asyncHandler(async (req, res) => {

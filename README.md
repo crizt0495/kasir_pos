@@ -111,6 +111,12 @@ pos-app/
    - `supabase/migrations/0013_allow_partial_payment.sql`
    - `supabase/migrations/0014_debt_payments_and_cancel.sql`
    - `supabase/migrations/0015_fix_cancel_debt_double_subtract.sql`
+   - `supabase/migrations/0016_drop_old_fn_pay_debt.sql`
+   - `supabase/migrations/0016_remove_dead_permissions.sql`
+   - `supabase/migrations/0017_fix_customer_debt_stats_exclude_cancelled.sql`
+   - `supabase/migrations/0018_atomic_purchase_update.sql`
+   - `supabase/migrations/0018_receive_purchase_sync_product_price.sql`
+   - `supabase/migrations/0019_sync_purchase_price_on_create_update.sql`
 4. Jalankan `supabase/seed.sql` terakhir.
 
 > **Penting:** migrasi `0013`, `0014`, dan `0015` wajib dijalankan berurutan di SQL Editor jika tidak memakai Supabase CLI — migrasi `0015` memperbaiki bug penghitungan `pending_debt`/`total_debt` saat hutang dibatalkan (double-subtract) dan melakukan rekonsiliasi data yang sudah terlanjur salah. Jika sudah pernah migrasi lama, cukup jalankan yang belum pernah dieksekusi secara berurutan.

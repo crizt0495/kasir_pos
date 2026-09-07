@@ -65,6 +65,16 @@ begin
     end if;
     insert into public.purchase_items (purchase_id, product_id, quantity, cost_price, subtotal)
     values (p_purchase_id, v_product_id, v_qty, v_cost, v_qty * v_cost);
+
+    -- Sinkronkan harga beli produk (abaikan jika 0/negatif)
+    if v_cost > 0 then
+      update public.products
+         set purchase_price = v_cost,
+             updated_at = now(),
+             updated_by = p_created_by
+       where id = v_product_id;
+    end if;
+
     v_subtotal := v_subtotal + (v_qty * v_cost);
   end loop;
 
