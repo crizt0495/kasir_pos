@@ -314,7 +314,13 @@ begin
     select stock into v_stock from public.products where id = v_pi.product_id for update;
 
     update public.products
-       set stock = stock + v_pi.quantity, updated_at = now(), updated_by = p_created_by
+       set stock = stock + v_pi.quantity,
+           purchase_price = case
+             when v_pi.cost_price > 0 then v_pi.cost_price
+             else purchase_price
+           end,
+           updated_at = now(),
+           updated_by = p_created_by
      where id = v_pi.product_id;
 
     insert into public.inventory_movements

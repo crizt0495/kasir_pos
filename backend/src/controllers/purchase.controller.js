@@ -143,7 +143,7 @@ export const receivePurchase = asyncHandler(async (req, res) => {
     p_created_by: req.user.id,
   });
   if (error) throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
-  return ok(res, data, 'Pembelian diterima, stok bertambah');
+  return ok(res, data, 'Pembelian diterima, stok & harga beli produk diperbarui');
 });
 
 export const updatePaymentStatus = asyncHandler(async (req, res) => {
