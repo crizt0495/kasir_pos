@@ -34,6 +34,10 @@ export const categorySchema = z.object({
   status: z.enum(['active', 'inactive']).default('active'),
 });
 
+export const purchasePriceSchema = z.object({
+  purchase_price: money,
+});
+
 export const unitSchema = z.object({
   name: z.string({ required_error: 'Nama satuan wajib diisi' }).trim().min(1).max(100),
   short_name: z.string({ required_error: 'Singkatan wajib diisi' }).trim().min(1).max(20),

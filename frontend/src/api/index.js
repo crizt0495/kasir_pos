@@ -21,6 +21,7 @@ export const productsApi = {
   byBarcode: (barcode) => api.get(`/products/barcode/${encodeURIComponent(barcode)}`).then((r) => r.data),
   create: (payload) => api.post('/products', payload).then((r) => r.data),
   update: (id, payload) => api.put(`/products/${id}`, payload).then((r) => r.data),
+  updatePurchasePrice: (id, payload) => api.put(`/products/${id}/purchase-price`, payload).then((r) => r.data),
   remove: (id) => api.delete(`/products/${id}`).then((r) => r.data),
 };
 

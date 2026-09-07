@@ -115,6 +115,37 @@ export const updateProduct = asyncHandler(async (req, res) => {
   return ok(res, product, 'Produk berhasil diperbarui');
 });
 
+export const updatePurchasePrice = asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  const { purchase_price } = req.body;
+
+  const { data: existing } = await supabase
+    .from('products')
+    .select('id, name, purchase_price')
+    .eq('id', id)
+    .maybeSingle();
+  if (!existing) throw notFound('Produk tidak ditemukan');
+
+  const { data: product, error } = await supabase
+    .from('products')
+    .update({ purchase_price, updated_by: req.user.id })
+    .eq('id', id)
+    .select('id, name, purchase_price')
+    .single();
+  if (error) throw error;
+
+  await writeAudit({
+    user: req.user,
+    action: 'PRODUCT_PURCHASE_PRICE_UPDATED',
+    module: 'products',
+    recordId: id,
+    oldData: { purchase_price: existing.purchase_price },
+    newData: { purchase_price: product.purchase_price },
+    req,
+  });
+  return ok(res, product, 'Harga beli produk diperbarui');
+});
+
 export const deleteProduct = asyncHandler(async (req, res) => {
   const id = req.params.id;
 

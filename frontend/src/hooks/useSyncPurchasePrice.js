@@ -18,7 +18,7 @@ export function useSyncPurchasePrice(items, { delay = 600 } = {}) {
 
       const timer = setTimeout(async () => {
         try {
-          await productsApi.update(item.product_id, { purchase_price: cost });
+          await productsApi.updatePurchasePrice(item.product_id, { purchase_price: cost });
           lastSynced.current.set(item.product_id, cost);
         } catch (e) {
           toast.error(getErrorMessage(e, 'Gagal memperbarui harga beli produk'));
