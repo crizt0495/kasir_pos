@@ -12,6 +12,7 @@ import { Field, Input, Select } from '../components/ui/Form.jsx';
 import { SearchInput } from '../components/ui/DataTable.jsx';
 import { Card } from '../components/ui/DataTable.jsx';
 import { Skeleton } from '../components/ui/Feedback.jsx';
+import CurrencyInput from '../components/ui/CurrencyInput.jsx';
 import { formatRupiah } from '../utils/format.js';
 
 const parseNum = (v) => {
@@ -235,7 +236,7 @@ export default function PurchaseForm() {
                       <Input type="number" min="0" step="any" value={item.quantity} onChange={(e) => updateItem(item.product_id, { quantity: e.target.value === '' ? '' : Number(e.target.value) })} className="w-20" error={!!issues.quantity} />
                     </Field>
                     <Field label="Harga Beli" error={issues.cost_price}>
-                      <Input type="number" min="0" step="any" value={item.cost_price} onChange={(e) => updateItem(item.product_id, { cost_price: e.target.value === '' ? '' : Number(e.target.value) })} className="w-28" error={!!issues.cost_price} />
+                      <CurrencyInput value={item.cost_price} onChange={(num) => updateItem(item.product_id, { cost_price: num })} className="w-28" error={!!issues.cost_price} />
                     </Field>
                     <p className="w-28 pt-5 text-right text-sm font-semibold text-slate-800">
                       {formatRupiah((Number(item.quantity) || 0) * Number(item.cost_price))}
@@ -260,7 +261,7 @@ export default function PurchaseForm() {
           <div className="flex w-full max-w-xs items-center justify-between">
             <span className="text-sm text-slate-500">Diskon</span>
             <div className="flex flex-col items-end">
-              <Input type="number" min="0" value={discount} onChange={(e) => setDiscount(e.target.value === '' ? 0 : Number(e.target.value))} className={`w-32 text-right ${headerErrors.discount ? 'border-danger-400' : ''}`} />
+              <CurrencyInput value={discount} onChange={(num) => setDiscount(num)} className={`w-32 text-right ${headerErrors.discount ? 'border-danger-400' : ''}`} />
               {headerErrors.discount && <p className="mt-1.5 text-xs text-danger-600" role="alert">{headerErrors.discount}</p>}
             </div>
           </div>

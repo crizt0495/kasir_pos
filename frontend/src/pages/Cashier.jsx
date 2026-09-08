@@ -11,6 +11,7 @@ import { DataTable, SearchInput, Pagination, Card } from '../components/ui/DataT
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { StatusBadge, Skeleton, EmptyState, Badge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
+import CurrencyInput from '../components/ui/CurrencyInput.jsx';
 import { formatRupiah, formatDateTime, formatNumber } from '../utils/format.js';
 
 const parseAmount = (v) => {
@@ -128,7 +129,7 @@ export default function Cashier() {
                 <p className="text-sm text-slate-500">Masukkan saldo awal kas Anda</p>
               </div>
               <Field label="Saldo Awal (Rp)" error={!openingValid ? 'Saldo awal tidak boleh negatif' : ''}>
-                <Input type="number" min="0" value={openingBalance} onChange={(e) => setOpeningBalance(e.target.value)} placeholder="0" autoFocus error={!openingValid} />
+                <CurrencyInput value={openingBalance} onChange={(num) => setOpeningBalance(num)} placeholder="0" autoFocus error={!openingValid} />
               </Field>
               <Button className="w-full" size="lg" onClick={open} loading={opening} disabled={!openingValid}>
                 Buka Kas
@@ -263,7 +264,7 @@ export default function Cashier() {
             </div>
           </div>
           <Field label="Kas Aktual (hasil hitung fisik)" required error={closeErrors.actual_cash}>
-            <Input type="number" min="0" value={actualCash} onChange={(e) => setActualCash(e.target.value)} autoFocus error={!!closeErrors.actual_cash} />
+            <CurrencyInput value={actualCash === '' ? 0 : Number(actualCash)} onChange={(num) => setActualCash(num === 0 ? '' : String(num))} autoFocus error={!!closeErrors.actual_cash} />
           </Field>
           {actualNum !== null && actualNum !== expected && (
             <div className={`rounded-md p-3 text-sm ${Math.abs(cashDiff) > 0 ? 'bg-amber-50 text-amber-700' : ''}`}>
@@ -319,7 +320,7 @@ export default function Cashier() {
             ))}
           </div>
           <Field label="Nominal (Rp)" required error={txAmount !== null && txAmount <= 0 ? 'Nominal harus lebih dari 0' : txAmount === null && txForm.amount !== '' ? 'Nominal tidak valid' : ''}>
-            <Input type="number" min="0" value={txForm.amount} onChange={(e) => setTxForm({ ...txForm, amount: e.target.value })} placeholder="0" />
+            <CurrencyInput value={txForm.amount === '' ? 0 : Number(txForm.amount)} onChange={(num) => setTxForm({ ...txForm, amount: num === 0 ? '' : String(num) })} placeholder="0" />
           </Field>
           <Field label="Catatan">
             <Input value={txForm.notes} onChange={(e) => setTxForm({ ...txForm, notes: e.target.value })} placeholder="cth: ambil uang untuk belanja (opsional)" maxLength={500} />

@@ -577,13 +577,11 @@ export default function POS() {
                       {/* Item Discount */}
                       <div className="flex items-center gap-1.5">
                         <Percent className="h-4 w-4 text-slate-300" />
-                        <input
-                          type="number"
-                          value={item.discount || ''}
+                        <CurrencyInput
+                          value={item.discount || 0}
+                          onChange={(num) => cart.setItemDiscount(item.product.id, num)}
                           placeholder="0"
-                          onChange={(e) => cart.setItemDiscount(item.product.id, e.target.value)}
-                          min="0"
-                          className="w-20 rounded-md border-2 border-black py-1.5 px-2 text-right text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
+                          className="w-24 text-right"
                           aria-label="Diskon item"
                         />
                       </div>
@@ -609,12 +607,11 @@ export default function POS() {
             <span className="text-slate-600 font-medium">Diskon transaksi</span>
             <div className="relative">
               <Percent className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="number"
-                value={cart.discount || ''}
+              <CurrencyInput
+                value={cart.discount || 0}
+                onChange={(num) => cart.setDiscount(num)}
+                className="w-32 pl-8 pr-3 py-2 text-right text-sm font-semibold"
                 placeholder="0"
-                onChange={(e) => cart.setDiscount(e.target.value)}
-                className="w-32 rounded-md border-2 border-black bg-white pl-8 pr-3 py-2 text-right text-sm font-semibold focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-150"
               />
             </div>
           </div>
@@ -685,12 +682,10 @@ export default function POS() {
           {/* Additional Cost Input */}
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-600 font-medium">Biaya tambahan</span>
-            <input
-              type="number"
-              min="0"
-              value={additionalCost || ''}
-              onChange={(e) => setAdditionalCost(Math.max(Number(e.target.value) || 0, 0))}
-              className="w-36 rounded-md border-2 border-black bg-white py-2 px-3 text-right text-sm font-semibold focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-150"
+            <CurrencyInput
+              value={additionalCost || 0}
+              onChange={(num) => setAdditionalCost(Math.max(Number(num) || 0, 0))}
+              className="w-36 text-right"
             />
           </div>
 
@@ -896,12 +891,10 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
             )}
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-500">Biaya tambahan</span>
-              <input
-                type="number"
-                min="0"
-                value={additionalCost || ''}
-                onChange={(e) => setAdditionalCost(Math.max(Number(e.target.value) || 0, 0))}
-                className="w-32 rounded-md border-2 border-black py-1.5 px-3 text-right text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-150"
+              <CurrencyInput
+                value={additionalCost || 0}
+                onChange={(num) => setAdditionalCost(Math.max(Number(num) || 0, 0))}
+                className="w-32 text-right"
               />
             </div>
             <div className="flex justify-between border-t-2 border-black pt-3 mt-1">

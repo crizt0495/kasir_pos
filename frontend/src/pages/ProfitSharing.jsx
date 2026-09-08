@@ -7,9 +7,10 @@ import { getErrorMessage } from '../api/client.js';
 import { Card, Pagination, DataTable } from '../components/ui/DataTable.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
-import { Field, Input, Textarea, Select } from '../components/ui/Form.jsx';
+import { Field, Textarea, Select } from '../components/ui/Form.jsx';
 import { StatCard, SkeletonRows, EmptyState, ErrorState, Badge, Spinner } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
+import CurrencyInput from '../components/ui/CurrencyInput.jsx';
 import { formatRupiah, formatDateTime } from '../utils/format.js';
 
 export default function ProfitSharing() {
@@ -320,7 +321,7 @@ export default function ProfitSharing() {
               <div className="flex justify-between border-t-2 border-black pt-1"><span className="text-slate-500">Sisa</span><span className="font-semibold text-amber-600">{formatRupiah(distributing.remaining)}</span></div>
             </div>
             <Field label="Jumlah Dibagikan (Rp)" required error={distributeErrors.amount}>
-              <Input type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" error={!!distributeErrors.amount} />
+              <CurrencyInput value={amount === '' ? 0 : Number(amount)} onChange={(num) => setAmount(num === 0 ? '' : String(num))} placeholder="0" error={!!distributeErrors.amount} />
             </Field>
             <Field label="Catatan">
               <Textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="cth: dibagikan tunai saat kunjungan pelanggan (opsional)" />

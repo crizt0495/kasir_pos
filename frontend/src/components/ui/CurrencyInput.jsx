@@ -20,7 +20,7 @@ function posInFormatted(formatted, digitIndex) {
 }
 
 const CurrencyInput = forwardRef(function CurrencyInput(
-  { error, className = '', onChange, onBlur, value = 0, placeholder = '0', disabled, name, id },
+  { error, className = '', onChange, onBlur, value = 0, placeholder = '0', disabled, name, id, 'aria-label': ariaLabel },
   ref,
 ) {
   const innerRef = useRef(null);
@@ -90,6 +90,7 @@ const CurrencyInput = forwardRef(function CurrencyInput(
       id={id}
       disabled={disabled}
       placeholder={placeholder}
+      aria-label={ariaLabel}
       className={`${baseInputClass} ${error ? 'border-danger-400' : ''} ${className}`}
       value={draft}
       onFocus={handleFocus}
