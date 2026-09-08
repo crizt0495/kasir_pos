@@ -4,6 +4,7 @@ import { ArrowLeft, PackageCheck, Pencil, Trash2 } from 'lucide-react';
 import { purchasesApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
+import { syncPurchasePrices } from '../hooks/useSyncPurchasePrice.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { Button } from '../components/ui/Button.jsx';
@@ -29,6 +30,16 @@ export default function PurchaseDetail() {
     setActing(true);
     try {
       await purchasesApi.receive(id);
+      // Sinkronkan harga beli produk dari item pembelian sebagai cadangan,
+      // agar halaman Produk menampilkan harga beli terbaru bahkan bila
+      // fungsi DB fn_receive_purchase belum di-upgrade (migration 0031/0032).
+      if (p?.items?.length) {
+        try {
+          await syncPurchasePrices(p.items);
+        } catch {
+          /* kegagalan sync tambahan tidak menggagalkan penerimaan */
+        }
+      }
       toast.success('Pembelian diterima — stok bertambah');
       setToReceive(false);
       detail.reload();

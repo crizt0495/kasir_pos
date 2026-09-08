@@ -63,10 +63,10 @@ export function buildSaleNotification(sale) {
   };
 }
 
-/** Kirim push ke satu subscription; return error message jika gagal, null jika sukses */
+/** Kirim push ke satu subscription; return { error, prunable } — prunable=true artinya subscription sudah tidak valid dan bisa dihapus */
 async function sendWebPush(subscription, payload) {
   if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
-    return 'VAPID keys belum dikonfigurasi';
+    return { error: 'VAPID keys belum dikonfigurasi', prunable: false };
   }
   // Import dinamis agar VAPID kosong tidak perlu library di-load
   const webpush = (await import('web-push')).default;
@@ -77,15 +77,20 @@ async function sendWebPush(subscription, payload) {
     endpoint: subscription.endpoint,
     keys: { p256dh: keys.p256dh || '', auth: keys.auth || '' },
   };
-  if (!sub.keys.p256dh || !sub.keys.auth) return 'Subscription keys tidak lengkap';
+  if (!sub.keys.p256dh || !sub.keys.auth) return { error: 'Subscription keys tidak lengkap', prunable: true };
 
   try {
     await webpush.sendNotification(sub, JSON.stringify(payload));
-    return null;
+    return { error: null, prunable: false };
   } catch (err) {
-    // 404/410 → subscription sudah tidak valid
-    if (err?.statusCode === 404 || err?.statusCode === 410) return 'Subscription tidak valid lagi';
-    return err?.message || 'Gagal mengirim push';
+    // 404/410 → subscription sudah tidak valid (Gone); 403 → VAPID tidak cocok → token tidak bisa dipakai lagi
+    if (err?.statusCode === 404 || err?.statusCode === 410) {
+      return { error: 'Subscription tidak valid lagi', prunable: true };
+    }
+    if (err?.statusCode === 403) {
+      return { error: 'VAPID key tidak cocok — subscription perlu dibuat ulang', prunable: true };
+    }
+    return { error: err?.message || 'Gagal mengirim push', prunable: false };
   }
 }
 
@@ -149,7 +154,15 @@ async function sendToOwnersWebPush(recipients, title, body, payload) {
       .eq('user_id', userId);
 
     for (const sub of subs || []) {
-      const err = await sendWebPush(sub, { title, body, ...payload });
+      const { error: err, prunable } = await sendWebPush(sub, { title, body, ...payload });
+      if (prunable) {
+        // Subscription sudah tidak valid (410/403) — hapus dari DB agar tidak menumpuk
+        try {
+          await supabase.from('notification_subscriptions').delete().eq('id', sub.id);
+        } catch {
+          /* hapus gagal tidak mengganggu */
+        }
+      }
       if (err) {
         pushFailed += 1;
         await logNotification({ user_id: userId, type: 'SALE', title, body, payload: { ...payload, endpoint: sub.endpoint }, status: 'failed', error: String(err).slice(0, 500) });
