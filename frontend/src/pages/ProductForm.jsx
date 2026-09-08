@@ -74,6 +74,9 @@ export default function ProductForm() {
           ...res.data,
           category_id: res.data.category_id || '',
           unit_id: res.data.unit_id || '',
+          barcode: res.data.barcode || '',
+          description: res.data.description || '',
+          image_url: res.data.image_url || '',
         });
         trigger();
       })

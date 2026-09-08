@@ -23,8 +23,8 @@ export const productSchema = z
     description: z.string().trim().max(1000).nullable().optional(),
     image_url: z.string().trim().url('URL gambar tidak valid').nullable().optional().or(z.literal('')),
   })
-  .refine((d) => Number(d.sale_price) > Number(d.purchase_price), {
-    message: 'Harga jual harus lebih tinggi dari harga beli',
+  .refine((d) => Number(d.sale_price) >= Number(d.purchase_price), {
+    message: 'Harga jual tidak boleh lebih rendah dari harga beli',
     path: ['sale_price'],
   });
 

@@ -34,20 +34,20 @@ export const changePasswordSchema = z
 export const productSchema = z
   .object({
     sku: z.string().trim().min(1, 'SKU wajib diisi').max(50),
-    barcode: z.string().trim().max(64).optional().or(z.literal('')),
+    barcode: z.string().trim().max(64).nullable().optional().or(z.literal('')),
     name: z.string().trim().min(1, 'Nama produk wajib diisi').max(255),
-    category_id: z.string().uuid().optional().or(z.literal('')),
-    unit_id: z.string().uuid().optional().or(z.literal('')),
+    category_id: z.string().uuid().nullable().optional().or(z.literal('')),
+    unit_id: z.string().uuid().nullable().optional().or(z.literal('')),
     purchase_price: priceRequired('Harga beli'),
     sale_price: priceRequired('Harga jual'),
     stock: z.coerce.number().min(0, 'Stok tidak boleh negatif'),
     min_stock: z.coerce.number().min(0, 'Stok min tidak boleh negatif'),
     status: z.enum(['active', 'inactive']),
-    description: z.string().trim().max(1000).optional(),
-    image_url: z.string().trim().url('URL gambar tidak valid').optional().or(z.literal('')),
+    description: z.string().trim().max(1000).nullable().optional(),
+    image_url: z.string().trim().url('URL gambar tidak valid').nullable().optional().or(z.literal('')),
   })
-  .refine((d) => Number(d.sale_price) > Number(d.purchase_price), {
-    message: 'Harga jual harus lebih tinggi dari harga beli',
+  .refine((d) => Number(d.sale_price) >= Number(d.purchase_price), {
+    message: 'Harga jual tidak boleh lebih rendah dari harga beli',
     path: ['sale_price'],
   });
 
