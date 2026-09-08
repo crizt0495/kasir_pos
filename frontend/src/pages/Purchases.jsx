@@ -42,7 +42,7 @@ export default function Purchases() {
     setActing(true);
     try {
       await purchasesApi.receive(toReceive.id);
-      toast.success('Pembelian diterima — stok bertambah');
+      toast.success('Pembelian diterima — stok & harga beli produk diperbarui');
       setToReceive(null);
       list.reload();
     } catch (error) {

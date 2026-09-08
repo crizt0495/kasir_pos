@@ -4,7 +4,6 @@ import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import { purchasesApi, suppliersApi, productsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
-import { useSyncPurchasePrice } from '../hooks/useSyncPurchasePrice.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { Button } from '../components/ui/Button.jsx';
@@ -34,7 +33,6 @@ export default function PurchaseForm() {
   const [items, setItems] = useState([]); // { product_id, product, quantity, cost_price }
   const [productSearch, setProductSearch] = useState('');
   const debouncedSearch = useDebounce(productSearch, 300);
-  const flushPurchasePriceSync = useSyncPurchasePrice(items, { delay: 600 });
   const [saving, setSaving] = useState(false);
 
   const suppliers = useApi(() => suppliersApi.list({ status: 'active', pageSize: 100 }).then((r) => r.data), []);
@@ -141,7 +139,6 @@ export default function PurchaseForm() {
         await purchasesApi.create(payload);
         toast.success('Pembelian berhasil dibuat');
       }
-      await flushPurchasePriceSync();
       navigate('/purchases');
     } catch (error) {
       toast.error(getErrorMessage(error, 'Gagal menyimpan pembelian'));

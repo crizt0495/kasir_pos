@@ -32,7 +32,7 @@ export default function PurchaseDetail() {
       await purchasesApi.receive(id);
       // Sinkronkan harga beli produk dari item pembelian sebagai cadangan,
       // agar halaman Produk menampilkan harga beli terbaru bahkan bila
-      // fungsi DB fn_receive_purchase belum di-upgrade (migration 0031/0032).
+      // fungsi DB fn_receive_purchase belum di-upgrade.
       if (p?.items?.length) {
         try {
           await syncPurchasePrices(p.items);
@@ -40,7 +40,7 @@ export default function PurchaseDetail() {
           /* kegagalan sync tambahan tidak menggagalkan penerimaan */
         }
       }
-      toast.success('Pembelian diterima — stok bertambah');
+      toast.success('Pembelian diterima — stok & harga beli produk diperbarui');
       setToReceive(false);
       detail.reload();
     } catch (error) {
