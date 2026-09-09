@@ -79,10 +79,8 @@ describe('ALUR PENUH — POST /api/sales → notifikasi penjualan ke Owner', () 
     assert.equal(res.status, 201, JSON.stringify(res.body));
     // invoice dari stub RPC fn_create_sale
     assert.equal(res.body.data.invoice_number, 'INV-20260815-000001');
-
-    await new Promise((r) => setTimeout(r, 150));
-
-    assert.equal(sent.length, 1, 'harus ada 1 push web terkirim ke owner');
+    // Push WAJIB sudah terkirim SEBELUM response 201 dikembalikan (di-await)
+    assert.equal(sent.length, 1, 'push harus sudah terkirim saat response 201');
     assert.equal(sent[0].sub.endpoint, 'https://push.example.com/e2e-endpoint');
     assert.ok(sent[0].payload.title.includes('Penjualan Baru'));
     assert.equal(sent[0].payload.invoice_number, 'INV-20260909-000001');

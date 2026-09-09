@@ -140,8 +140,11 @@ export const createSale = asyncHandler(async (req, res) => {
 
   const sale = await fetchSaleDetail(result.sale_id);
 
-  // Notifikasi ke HP Owner — fire-and-forget, kegagalan TIDAK menggagalkan transaksi
-  notifyNewSale(sale).catch(() => {});
+  // Notifikasi ke HP Owner (Web Push PWA). Di-await agar di serverless
+  // (Vercel) lambda tidak membekukan pengiriman sebelum push terkirim.
+  // notifyNewSale dijamin TIDAK pernah melempar error — kegagalan notif
+  // tidak akan menggagalkan/rollback transaksi.
+  await notifyNewSale(sale).catch(() => {});
 
   return created(res, { ...result, sale }, 'Transaksi berhasil');
 });
