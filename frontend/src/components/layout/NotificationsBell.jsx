@@ -16,27 +16,38 @@ function urlBase64ToUint8Array(base64String) {
   return output;
 }
 
-/** Daftarkan subscription Web Push ke backend (Owner). Dipakai Settings & Bell. */
+/** Daftarkan subscription Web Push ke backend (Owner). Dipakai Settings & Bell.
+ *  Mengembalikan true bila berhasil, false bila batal/ditolak/gagal (tidak melempar). */
 export async function subscribePush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !VAPID_PUBLIC_KEY) return;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !VAPID_PUBLIC_KEY) return false;
   try {
-    if ('Notification' in window && Notification.permission === 'denied') return;
+    if ('Notification' in window && Notification.permission === 'denied') return false;
     const reg = (await navigator.serviceWorker.getRegistration()) || (await navigator.serviceWorker.register('/sw.js'));
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
-      if ('Notification' in window && Notification.permission === 'denied') return;
+      if ('Notification' in window && Notification.permission === 'denied') return false;
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
     }
     const json = sub.toJSON();
-    await notificationsApi.subscribe({
-      endpoint: sub.endpoint,
-      keys: json.keys || {},
-    });
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        await notificationsApi.subscribe({ endpoint: sub.endpoint, keys: json.keys || {} });
+        return true;
+      } catch (err) {
+        if (attempt === 0) {
+          await new Promise((r) => setTimeout(r, 400));
+          continue;
+        }
+        console.warn('Gagal menyimpan subscription Web Push:', err);
+      }
+    }
+    return false;
   } catch {
     /* izin ditolak / VAPID belum dikonfigurasi — abaikan, tidak mengganggu aplikasi */
+    return false;
   }
 }
 

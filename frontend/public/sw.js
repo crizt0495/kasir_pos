@@ -106,15 +106,22 @@ self.addEventListener('push', (event) => {
   } catch {
     /* abaikan payload tidak valid */
   }
-  const title = payload.title || 'Notifikasi';
-  const options = {
-    body: payload.body || '',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
-    tag: payload.tag || 'pos-notif',
+  const title = String(payload.title || 'Notifikasi').slice(0, 400);
+  const body = String(payload.body || '').slice(0, 3000);
+  const baseOptions = {
+    tag: String(payload.tag || 'pos-notif').slice(0, 100),
+    renotify: true,
     data: { url: payload.url || '/' },
   };
-  event.waitUntil(self.registration.showNotification(title, options));
+  // showNotification bisa gagal (payload terlalu besar / icon bermasalah) —
+  // fallback bertingkat agar notifikasi TETAP muncul di HP owner.
+  const show = (opts) => self.registration.showNotification(title, opts);
+  event.waitUntil(
+    show({ ...baseOptions, body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png' })
+      .catch(() => show({ ...baseOptions, body: body.slice(0, 1000), icon: '/icons/icon-192.png' }))
+      .catch(() => show(baseOptions))
+      .catch(() => show({}))
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {

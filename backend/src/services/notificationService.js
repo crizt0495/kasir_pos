@@ -2,6 +2,13 @@ import { supabase } from '../config/supabase.js';
 import { env } from '../config/env.js';
 import { resolveProvider } from './smsProviders.js';
 import { getSetting } from './settingsService.js';
+import webpush from 'web-push';
+
+// Web Push — parameter keandalan tinggi (delivery ~100%)
+const PUSH_RETRIES = 3;              // total attempt = retries + 1
+const PUSH_RETRY_DELAYS = [300, 900]; // backoff ms antar retry
+const MAX_PUSH_BODY_BYTES = 3000;     // batas payload push service (~4096 aman)
+const PUSH_TTL_SECONDS = 3600;        // 1 jam — tidak menggantung lama
 
 const DEFAULT_NOTIF_SETTINGS = {
   enabled: false,
@@ -63,13 +70,35 @@ export function buildSaleNotification(sale) {
   };
 }
 
-/** Kirim push ke satu subscription; return { error, prunable } — prunable=true artinya subscription sudah tidak valid dan bisa dihapus */
+/** Batasi ukuran payload agar tidak ditolak push service (Firefox ~4096 byte). */
+function trimPushPayload(payload) {
+  const raw = JSON.stringify(payload);
+  if (raw.length <= MAX_PUSH_BODY_BYTES) return raw;
+  const body = String(payload.body || '');
+  return JSON.stringify({
+    ...payload,
+    body: body.slice(0, MAX_PUSH_BODY_BYTES - 256),
+  });
+}
+
+/** Error status yang sifatnya sementara (perlu retry) */
+function isTransientPushError(err) {
+  const sc = err?.statusCode;
+  if (sc === 429) return true;
+  if (sc >= 500 && sc < 600) return true;
+  return sc == null; // error jaringan/timeout (tanpa status HTTP)
+}
+
+/**
+ * Kirim push ke satu subscription dengan retry (delivery maksimal).
+ * return { error, prunable, skipped }:
+ *   - prunable=true → subscription sudah tidak valid (404/410/403), hapus dari DB
+ *   - skipped=true  → VAPID belum dikonfigurasi (tidak perlu dianggap gagal permanen)
+ */
 async function sendWebPush(subscription, payload) {
   if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
-    return { error: 'VAPID keys belum dikonfigurasi', prunable: false };
+    return { error: 'VAPID keys belum dikonfigurasi', prunable: false, skipped: true };
   }
-  // Import dinamis agar VAPID kosong tidak perlu library di-load
-  const webpush = (await import('web-push')).default;
   webpush.setVapidDetails(env.VAPID_SUBJECT, env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY);
 
   const keys = subscription.keys || {};
@@ -79,19 +108,29 @@ async function sendWebPush(subscription, payload) {
   };
   if (!sub.keys.p256dh || !sub.keys.auth) return { error: 'Subscription keys tidak lengkap', prunable: true };
 
-  try {
-    await webpush.sendNotification(sub, JSON.stringify(payload));
-    return { error: null, prunable: false };
-  } catch (err) {
-    // 404/410 → subscription sudah tidak valid (Gone); 403 → VAPID tidak cocok → token tidak bisa dipakai lagi
-    if (err?.statusCode === 404 || err?.statusCode === 410) {
-      return { error: 'Subscription tidak valid lagi', prunable: true };
+  const message = trimPushPayload(payload);
+
+  let lastErr = null;
+  for (let attempt = 0; attempt <= PUSH_RETRIES; attempt += 1) {
+    try {
+      await webpush.sendNotification(sub, message, { TTL: PUSH_TTL_SECONDS, urgency: 'high' });
+      return { error: null, prunable: false };
+    } catch (err) {
+      // 404/410 → subscription sudah tidak valid (Gone); 403 → VAPID tidak cocok
+      if (err?.statusCode === 404 || err?.statusCode === 410) {
+        return { error: 'Subscription tidak valid lagi', prunable: true };
+      }
+      if (err?.statusCode === 403) {
+        return { error: 'VAPID key tidak cocok — perlu subscribe ulang', prunable: true };
+      }
+      lastErr = err;
+      if (attempt < PUSH_RETRIES && isTransientPushError(err)) {
+        await new Promise((r) => setTimeout(r, PUSH_RETRY_DELAYS[attempt] || 500));
+        continue;
+      }
     }
-    if (err?.statusCode === 403) {
-      return { error: 'VAPID key tidak cocok — subscription perlu dibuat ulang', prunable: true };
-    }
-    return { error: err?.message || 'Gagal mengirim push', prunable: false };
   }
+  return { error: lastErr?.message || 'Gagal mengirim push', prunable: false };
 }
 
 /** Kirim pesan via Telegram Bot; chatId boleh ditekan dari settings */

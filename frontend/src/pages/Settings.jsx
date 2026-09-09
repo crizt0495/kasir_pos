@@ -304,9 +304,15 @@ export default function Settings() {
                     onClick={async () => {
                       setSubscribing(true);
                       try {
-                        await subscribePush();
+                        const ok = await subscribePush();
                         await checkPushStatus();
-                        toast.success('Web Push aktif di perangkat ini');
+                        if (ok) {
+                          toast.success('Web Push aktif di perangkat ini');
+                        } else if (pushStatus === 'denied') {
+                          toast.error('Izin notifikasi ditolak browser — aktifkan lewat ikon 🔒 di address bar');
+                        } else {
+                          toast.error('Gagal mengaktifkan Web Push — cek VAPID key & koneksi');
+                        }
                       } catch (err) {
                         if (err?.name === 'NotAllowedError') {
                           setPushStatus('denied');
