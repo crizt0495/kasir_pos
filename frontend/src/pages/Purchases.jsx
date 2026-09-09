@@ -22,6 +22,7 @@ export default function Purchases() {
   const debounced = useDebounce(search, 400);
   const [supplierId, setSupplierId] = useState('');
   const [status, setStatus] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [toReceive, setToReceive] = useState(null);
@@ -34,8 +35,8 @@ export default function Purchases() {
     []
   );
   const list = useApi(
-    () => purchasesApi.list({ search: debounced || undefined, supplier_id: supplierId || undefined, status: status || undefined, page, pageSize }).then((r) => r.data),
-    [debounced, supplierId, status, page, pageSize]
+    () => purchasesApi.list({ search: debounced || undefined, supplier_id: supplierId || undefined, status: status || undefined, payment_status: paymentStatus || undefined, page, pageSize }).then((r) => r.data),
+    [debounced, supplierId, status, paymentStatus, page, pageSize]
   );
 
   const receive = async () => {
@@ -155,6 +156,12 @@ export default function Purchases() {
                 <option value="draft">Draft</option>
                 <option value="received">Diterima</option>
                 <option value="cancelled">Dibatalkan</option>
+              </Select>
+              <Select value={paymentStatus} onChange={(e) => { setPaymentStatus(e.target.value); setPage(1); }} className="w-full sm:w-40">
+                <option value="">Semua Pembayaran</option>
+                <option value="paid">Lunas</option>
+                <option value="partial">Sebagian</option>
+                <option value="unpaid">Belum Bayar</option>
               </Select>
             </div>
           </>
