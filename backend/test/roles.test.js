@@ -65,6 +65,8 @@ describe('Role — edit permission & anti-lockout', () => {
   });
 
   it('updateRole — mencabut permission kritis dari role yang TIDAK dipegang (kasir) → 200', async () => {
+    // Edit role owner sebelumnya meng-invalidasi session admin (token_version++)
+    admin = await loginAgent('admin', ADMIN_PASSWORD);
     const res = await admin.put(`/api/roles/${kasirRoleId}`).send({
       permission_codes: ['products.view'],
     });
@@ -82,6 +84,7 @@ describe('Role — edit permission & anti-lockout', () => {
   });
 
   it('setRolePermissions pada role kustom → 200', async () => {
+    // Non-kritis: session admin tetap valid (role kustom tidak dipegang)
     const res = await admin.put(`/api/roles/${customRoleId}/permissions`).send({
       permission_codes: ['products.view', 'customers.view'],
     });

@@ -133,17 +133,31 @@ async function logNotification(entry) {
   }
 }
 
-/** Cari semua user yang punya permission notifications.view (Owner). */
+/**
+ * Cari semua user yang punya permission notifications.view (Owner).
+ * Dipakai 2 query sederhana (role_permissions → user_roles) agar lebih
+ * stabil daripada nested filter PostgREST 3 level yang mudah gagal di
+ * beberapa versi PostgREST (hasil kosong diam-diam).
+ */
 export async function findOwnerUsers() {
-  const { data: userRows } = await supabase
-    .from('user_roles')
-    .select('user_id, role:roles!inner(role_permissions!inner(permission:permissions!inner(code)))')
-    .eq('role.role_permissions.permission.code', 'notifications.view');
+  const { data: permRows } = await supabase
+    .from('role_permissions')
+    .select('role_id, permission:permissions!inner(code)')
+    .eq('permission.code', 'notifications.view');
+  const roleIds = [...new Set((permRows || []).map((r) => r.role_id).filter(Boolean))];
+  if (!roleIds.length) return [];
 
-  return [...new Set((userRows || []).map((ur) => ur.user_id).filter(Boolean))];
+  const { data: urRows } = await supabase.from('user_roles').select('user_id').in('role_id', roleIds);
+  return [...new Set((urRows || []).map((ur) => ur.user_id).filter(Boolean))];
 }
 
-/** Kirim Web Push ke semua subscription milik para owner. */
+/**
+ * Kirim Web Push ke semua subscription milik para owner.
+ *
+ * Bila owner belum punya subscription Web Push tetap dicatat ke
+ * notification_logs (push_sent=false) agar tampil di bell & owner
+ * menyadari konfigurasi push belum lengkap.
+ */
 async function sendToOwnersWebPush(recipients, title, body, payload) {
   let pushSent = 0;
   let pushFailed = 0;
@@ -153,10 +167,21 @@ async function sendToOwnersWebPush(recipients, title, body, payload) {
       .select('*')
       .eq('user_id', userId);
 
-    for (const sub of subs || []) {
-      const { error: err, prunable } = await sendWebPush(sub, { title, body, ...payload });
+    if (!subs || subs.length === 0) {
+      await logNotification({
+        user_id: userId,
+        type: 'SALE',
+        title,
+        body,
+        payload: { ...payload, push_sent: false },
+        status: 'sent',
+      });
+      continue;
+    }
+
+    for (const sub of subs) {
+      const { error: err, prunable } = await sendWebPush(sub, { title, body, url: '/pos', ...payload });
       if (prunable) {
-        // Subscription sudah tidak valid (410/403) — hapus dari DB agar tidak menumpuk
         try {
           await supabase.from('notification_subscriptions').delete().eq('id', sub.id);
         } catch {
@@ -165,10 +190,10 @@ async function sendToOwnersWebPush(recipients, title, body, payload) {
       }
       if (err) {
         pushFailed += 1;
-        await logNotification({ user_id: userId, type: 'SALE', title, body, payload: { ...payload, endpoint: sub.endpoint }, status: 'failed', error: String(err).slice(0, 500) });
+        await logNotification({ user_id: userId, type: 'SALE', title, body, payload: { ...payload, endpoint: sub.endpoint, url: '/pos' }, status: 'failed', error: String(err).slice(0, 500) });
       } else {
         pushSent += 1;
-        await logNotification({ user_id: userId, type: 'SALE', title, body, payload, status: 'sent' });
+        await logNotification({ user_id: userId, type: 'SALE', title, body, payload: { ...payload, url: '/pos' }, status: 'sent' });
       }
     }
   }
@@ -189,7 +214,7 @@ export async function sendTestNotification(recipients) {
       recipients,
       '🔔 Notifikasi Uji',
       'Ini notifikasi uji dari POS. Jika Anda menerima ini, Web Push sudah berfungsi.',
-      { type: 'test', at: Date.now() }
+      { type: 'test', at: Date.now(), url: '/settings' }
     );
     results.web_push = { sent: pushSent, failed: pushFailed };
   } else if (notifSettings.channels.web_push) {

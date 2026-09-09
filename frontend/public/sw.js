@@ -2,15 +2,23 @@
    - Cache app shell untuk offline & akses cepat
    - API tidak di-cache (selalu jaringan)
    - Push notification + click → buka aplikasi
-   - Versi: v9 — bump untuk paksa invalidate cache chunk lama */
-const CACHE = 'pos-shell-v9';
+   - Versi: v10 — bump untuk paksa invalidate cache chunk lama
+   - Di server dev (localhost:5173) SW tetap terdaftar untuk Web Push,
+     tapi TIDAK meng-cache apa pun agar HMR Vite tidak terganggu. */
+const CACHE = 'pos-shell-v10';
 const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
+
+const isDevServer =
+  typeof location !== 'undefined' &&
+  (location.hostname === 'localhost' || location.hostname === '127.0.0.1') &&
+  location.port === '5173';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE)
-      .then((cache) => cache.addAll(ASSETS))
+    (isDevServer
+      ? Promise.resolve()
+      : caches.open(CACHE).then((cache) => cache.addAll(ASSETS))
+    )
       .then(() => self.skipWaiting())
       .catch(() => self.skipWaiting())
   );
@@ -28,6 +36,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
+
+  // Dev server (localhost:5173): jangan singgah apa pun — biarkan Vite
+  // menangani HMR & modul. SW dipakai hanya untuk push notification.
+  if (isDevServer) return;
 
   let url;
   try {

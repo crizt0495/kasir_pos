@@ -20,11 +20,11 @@ function urlBase64ToUint8Array(base64String) {
 export async function subscribePush() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !VAPID_PUBLIC_KEY) return;
   try {
-    if (Notification.permission === 'denied') return;
-    const reg = await navigator.serviceWorker.ready;
+    if ('Notification' in window && Notification.permission === 'denied') return;
+    const reg = (await navigator.serviceWorker.getRegistration()) || (await navigator.serviceWorker.register('/sw.js'));
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
-      if (Notification.permission === 'denied') return;
+      if ('Notification' in window && Notification.permission === 'denied') return;
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),

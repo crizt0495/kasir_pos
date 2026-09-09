@@ -152,7 +152,9 @@ const store = {
       permission: { code },
     }))
   ),
-  user_roles: userRows.flatMap((u) => u.user_roles.map((ur) => ({ user_id: u.id, role: ur.role }))),
+  user_roles: userRows.flatMap((u) =>
+    u.user_roles.map((ur) => ({ user_id: u.id, role_id: ur.role.id, role: ur.role }))
+  ),
   v_users: vUserRows,
   products: productRows,
   customers: customerRows,
@@ -347,10 +349,10 @@ export function createFakeSupabase() {
           let pushed = created;
           if (state.table === 'user_roles') {
             // Ubah { user_id, role_id } menjadi bentuk dengan role terembed
-            pushed = created.map((ur) => ({
-              user_id: ur.user_id,
-              role: store.roles.find((r) => r.id === ur.role_id) || store.roles.find((r) => r.code === ur.role_id) || { id: ur.role_id, code: ur.role_id },
-            }));
+            pushed = created.map((ur) => {
+              const role = store.roles.find((r) => r.id === ur.role_id) || store.roles.find((r) => r.code === ur.role_id) || { id: ur.role_id, code: ur.role_id };
+              return { user_id: ur.user_id, role_id: role.id, role };
+            });
           }
           if (state.table === 'role_permissions') {
             // Ubah { role_id, permission_id } menjadi bentuk dengan permission terembed

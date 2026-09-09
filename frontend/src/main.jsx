@@ -18,8 +18,10 @@ window.addEventListener('unhandledrejection', (event) => {
   }
 });
 
-// PWA: daftarkan service worker (hanya di production / saat tersedia)
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// PWA: daftarkan service worker (production & development — sw.js menjauhi
+// cache HMR di localhost, lihat public/sw.js). Wajib agar Web Push bisa
+// diuji di `npm run dev` (localhost adalah secure context).
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js', { updateViaCache: 'none' })
