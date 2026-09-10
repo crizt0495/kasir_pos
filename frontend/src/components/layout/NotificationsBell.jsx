@@ -24,6 +24,8 @@ function arrayBufferToBase64Url(buffer) {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+const VAPID_KEY_LS = 'pos_vapid_key';
+
 /** Daftarkan subscription Web Push ke backend (Owner). Dipakai Settings & Bell.
  *  Mengembalikan true bila berhasil, false bila batal/ditolak/gagal (tidak melempar). */
 export async function subscribePush() {
@@ -32,15 +34,20 @@ export async function subscribePush() {
     if ('Notification' in window && Notification.permission === 'denied') return false;
     const reg = (await navigator.serviceWorker.getRegistration()) || (await navigator.serviceWorker.register('/sw.js'));
     let sub = await reg.pushManager.getSubscription();
-    // Jika subscription lama terikat applicationServerKey yang berbeda dari VAPID
-    // public key aktif (mis. VAPID pernah diganti), unsubscribe dulu lalu subscribe baru —
-    // tanpa ini push selalu gagal 403 "VAPID key tidak cocok".
-    if (sub && sub.applicationServerKey) {
-      const subKey = arrayBufferToBase64Url(sub.applicationServerKey);
-      if (subKey !== VAPID_PUBLIC_KEY) {
-        await sub.unsubscribe();
-        sub = null;
-      }
+    // Subscription di browser HP terikat applicationServerKey (VAPID public key) saat dibuat.
+    // Jika VAPID pernah diganti, sub lama DITOLAK push service dengan 403 ("VAPID key tidak cocok").
+    // applicationServerKey tidak selalu tersedia di daftar properti, jadi juga lacak via localStorage —
+    // kombinasi keduanya memastikan sub yang tidak cocok di-unsubscribe lalu dibuat ulang.
+    const lastKey = typeof localStorage !== 'undefined' ? localStorage.getItem(VAPID_KEY_LS) : null;
+    const subAppKey = sub?.applicationServerKey ? arrayBufferToBase64Url(sub.applicationServerKey) : null;
+    const staleSub = sub && (
+      (subAppKey && subAppKey !== VAPID_PUBLIC_KEY) ||
+      (!subAppKey && lastKey && lastKey !== VAPID_PUBLIC_KEY) ||
+      (!subAppKey && !lastKey)
+    );
+    if (staleSub) {
+      try { await sub.unsubscribe(); } catch { /* sub mungkin sudah mati — lanjut subscribe baru */ }
+      sub = null;
     }
     if (!sub) {
       if ('Notification' in window && Notification.permission === 'denied') return false;
@@ -49,6 +56,7 @@ export async function subscribePush() {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
     }
+    try { localStorage.setItem(VAPID_KEY_LS, VAPID_PUBLIC_KEY); } catch { /* ignore */ }
     const json = sub.toJSON();
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
