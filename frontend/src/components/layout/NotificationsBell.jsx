@@ -16,6 +16,14 @@ function urlBase64ToUint8Array(base64String) {
   return output;
 }
 
+/** Konversi ArrayBuffer applicationServerKey → base64url (format env VAPID). */
+function arrayBufferToBase64Url(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  bytes.forEach((b) => { binary += String.fromCharCode(b); });
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 /** Daftarkan subscription Web Push ke backend (Owner). Dipakai Settings & Bell.
  *  Mengembalikan true bila berhasil, false bila batal/ditolak/gagal (tidak melempar). */
 export async function subscribePush() {
@@ -24,6 +32,16 @@ export async function subscribePush() {
     if ('Notification' in window && Notification.permission === 'denied') return false;
     const reg = (await navigator.serviceWorker.getRegistration()) || (await navigator.serviceWorker.register('/sw.js'));
     let sub = await reg.pushManager.getSubscription();
+    // Jika subscription lama terikat applicationServerKey yang berbeda dari VAPID
+    // public key aktif (mis. VAPID pernah diganti), unsubscribe dulu lalu subscribe baru —
+    // tanpa ini push selalu gagal 403 "VAPID key tidak cocok".
+    if (sub && sub.applicationServerKey) {
+      const subKey = arrayBufferToBase64Url(sub.applicationServerKey);
+      if (subKey !== VAPID_PUBLIC_KEY) {
+        await sub.unsubscribe();
+        sub = null;
+      }
+    }
     if (!sub) {
       if ('Notification' in window && Notification.permission === 'denied') return false;
       sub = await reg.pushManager.subscribe({
