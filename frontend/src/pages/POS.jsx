@@ -19,6 +19,7 @@ import { Skeleton, EmptyState, ErrorState, Badge } from '../components/ui/Feedba
 import BarcodeScanner from '../components/ui/BarcodeScanner.jsx';
 import ReceiptModal from '../components/pos/ReceiptModal.jsx';
 import ProductImage from '../components/ProductImage.jsx';
+import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
 
 const PAYMENT_METHODS = ['CASH', 'QRIS', 'DEBIT', 'CREDIT', 'TRANSFER', 'E_WALLET'];
 
@@ -45,6 +46,7 @@ export default function POS() {
   const [debtStats, setDebtStats] = useState(null);
   const searchRef = useRef(null);
   const barcodeRef = useRef(null);
+  const bluetooth = useBluetoothPrinter();
 
   const products = useApi(
     () => productsApi.list({ search: debouncedSearch, category_id: categoryId || undefined, pageSize: 100, sort: 'name' }).then((r) => r.data),
@@ -182,7 +184,11 @@ export default function POS() {
       loadDebtStats();
       customerResults.reload();
       if (settings?.pos?.auto_print_receipt === true) {
-        setTimeout(() => window.print(), 400);
+        if (settings?.pos?.print_method === 'bluetooth' && bluetooth.supported && bluetooth.isConnected) {
+          bluetooth.printStruk(res.data.sale, settings?.store, settings?.pos).catch(() => {});
+        } else {
+          setTimeout(() => window.print(), 400);
+        }
       }
     } catch (error) {
       toast.error(getErrorMessage(error, 'Transaksi gagal'));

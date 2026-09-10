@@ -151,6 +151,7 @@ export const settingsSchema = z.object({
       default_payment_method: z.enum(['CASH', 'QRIS', 'DEBIT', 'CREDIT', 'TRANSFER', 'E_WALLET']),
       receipt_width: z.enum(['58mm', '80mm']),
       auto_print_receipt: z.boolean().nullable().optional(),
+      print_method: z.enum(['browser', 'bluetooth']).nullable().optional(),
     })
     .passthrough(),
   tax: z
