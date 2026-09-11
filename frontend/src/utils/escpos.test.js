@@ -45,7 +45,7 @@ describe('buildReceiptLayout', () => {
   it('berisi kop toko, nomor, total, dan ucapan terima kasih', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
     const texts = layout.lines.map((l) => l.text);
-    expect(texts.some((t) => t.includes('Toko Andi'))).toBe(true);
+    expect(texts.some((t) => t.includes('TOKO ANDI'))).toBe(true);
     expect(texts.some((t) => t.includes('INV-20260910-000001'))).toBe(true);
     expect(texts.some((t) => t.includes('TOTAL'))).toBe(true);
     expect(texts.some((t) => t.includes('Terima kasih'))).toBe(true);
@@ -65,6 +65,27 @@ describe('buildReceiptLayout', () => {
       }
     }
   });
+  it('diskon item dirender rapi (inline jika muat, baris sendiri jika tidak)', () => {
+    const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
+    const texts = layout.lines.map((l) => l.text);
+    const discIdx = texts.findIndex((t) => t.includes('disc'));
+    expect(discIdx).toBeGreaterThan(-1);
+    const discLine = texts[discIdx];
+    // Baris diskon diindentasi & tidak melebihi lebar
+    expect(discLine.trim().startsWith('(')).toBe(true);
+    expect(discLine.length).toBeLessThanOrEqual(32);
+    // Baris di atasnya memuat "1 x Rp 15.000" + subtotal (2 kolom)
+    const prev = texts[discIdx - 1];
+    expect(prev).toContain('1 x Rp 15.000');
+    expect(prev).toContain('Rp 14.000');
+  });
+  it('garis solid (=) muncul sebelum TOTAL', () => {
+    const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
+    const texts = layout.lines.map((l) => l.text);
+    const totalIdx = texts.findIndex((t) => t.includes('TOTAL'));
+    const solidLine = texts[totalIdx - 1];
+    expect(solidLine).toBe('='.repeat(32));
+  });
 });
 
 describe('encodeLinesToBytes / buildEscPosReceipt', () => {
@@ -77,7 +98,7 @@ describe('encodeLinesToBytes / buildEscPosReceipt', () => {
   it('mengandung teks struk ter-encode ASCII', () => {
     const bytes = buildEscPosReceipt({ sale: baseSale, store: baseStore, pos: pos58 });
     const text = new TextDecoder().decode(bytes);
-    expect(text).toContain('Toko Andi');
+    expect(text).toContain('TOKO ANDI');
     expect(text).toContain('INV-20260910-000001');
     expect(text).toContain('Terima kasih');
   });

@@ -184,10 +184,10 @@ export default function POS() {
       loadDebtStats();
       customerResults.reload();
       if (settings?.pos?.auto_print_receipt === true) {
-        if (settings?.pos?.print_method === 'bluetooth' && bluetooth.supported && bluetooth.isConnected) {
-          bluetooth.printStruk(res.data.sale, settings?.store, settings?.pos).catch(() => {});
-        } else {
-          setTimeout(() => window.print(), 400);
+        if (settings?.pos?.print_method === 'bluetooth' && bluetooth.supported) {
+          bluetooth
+            .printStruk(res.data.sale, settings?.store, settings?.pos)
+            .catch(() => toast.error('Gagal cetak ke printer Bluetooth'));
         }
       }
     } catch (error) {

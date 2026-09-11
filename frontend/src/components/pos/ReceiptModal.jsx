@@ -13,7 +13,6 @@ export default function ReceiptModal({ open, onClose, sale, settings }) {
 
   const handleBluetoothPrint = async () => {
     try {
-      if (!bluetooth.isConnected) await bluetooth.connect();
       await bluetooth.printStruk(sale, settings?.store, settings?.pos);
       toast.success('Struk berhasil dikirim ke printer Bluetooth');
     } catch (err) {

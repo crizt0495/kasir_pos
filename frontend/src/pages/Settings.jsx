@@ -387,16 +387,26 @@ export default function Settings() {
             <div className="flex items-center gap-3 rounded-xl border-2 border-black bg-slate-50 p-4">
               {bluetooth.isConnected ? (
                 <BluetoothConnected className="h-8 w-8 text-success-600" aria-hidden="true" />
+              ) : bluetooth.connecting ? (
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-300 border-t-primary-600" aria-hidden="true" />
               ) : (
                 <Bluetooth className={`h-8 w-8 ${bluetooth.supported ? 'text-slate-400' : 'text-danger-500'}`} aria-hidden="true" />
               )}
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-800">
-                  {bluetooth.isConnected ? `Terhubung: ${bluetooth.connectedName}` : bluetooth.supported ? 'Printer belum terhubung' : 'Web Bluetooth tidak didukung'}
+                  {bluetooth.isConnected
+                    ? `Terhubung: ${bluetooth.connectedName}`
+                    : bluetooth.connecting
+                      ? 'Menghubungkan...'
+                      : bluetooth.supported
+                        ? bluetooth.hasStoredDevice
+                          ? 'Printer tersimpan — akan otomatis terhubung saat cetak'
+                          : 'Printer belum terhubung'
+                        : 'Web Bluetooth tidak didukung'}
                 </p>
                 <p className="text-xs text-slate-500">
                   {bluetooth.supported
-                    ? 'Hubungkan printer thermal ESC/POS 58mm/80mm. Chrome/Edge via HTTPS.'
+                    ? 'Setelah pairing pertama, printer akan otomatis terhubung saat Anda mencetak struk.'
                     : 'Butuh Chrome/Edge (desktop/Android) dengan koneksi HTTPS. Firefox/Safari tidak mendukung Web Bluetooth.'}
                 </p>
               </div>
@@ -409,7 +419,7 @@ export default function Settings() {
                   <Button
                     icon={Bluetooth}
                     size="sm"
-                    loading={bluetooth.busy}
+                    loading={bluetooth.busy || bluetooth.connecting}
                     disabled={!bluetooth.supported}
                     onClick={async () => {
                       try {
@@ -420,7 +430,7 @@ export default function Settings() {
                       }
                     }}
                   >
-                    Hubungkan Printer
+                    {bluetooth.hasStoredDevice ? 'Sambungkan Ulang' : 'Hubungkan Printer'}
                   </Button>
                 )}
               </div>
@@ -430,8 +440,8 @@ export default function Settings() {
               <p className="font-medium text-slate-600">Cara penggunaan:</p>
               <ul className="mt-1.5 list-disc space-y-1 pl-4">
                 <li>Pastikan printer thermal menyala & dalam mode Bluetooth (pairing).</li>
-                <li>Klik <b>Hubungkan Printer</b>, lalu pilih printer dari dialog browser.</li>
-                <li>Setelah terhubung, tombol <b>Cetak via Bluetooth</b> tersedia di struk transaksi & riwayat penjualan.</li>
+                <li>Klik <b>Hubungkan Printer</b> sekali saja, lalu pilih printer dari dialog browser.</li>
+                <li>Setelah itu, printer akan <b>otomatis terhubung</b> setiap kali Anda mencetak struk.</li>
                 <li>Untuk cetak otomatis: set metode cetak ke <b>Printer Bluetooth</b> di tab "POS & Struk" dan aktifkan "Cetak struk otomatis".</li>
               </ul>
             </div>

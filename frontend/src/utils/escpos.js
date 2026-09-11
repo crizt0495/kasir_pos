@@ -92,22 +92,27 @@ function wrap(text, width) {
   return lines;
 }
 
+/** Garis solid (sama seperti border-t di Receipt.jsx). */
+function solidLine(width) {
+  return '='.repeat(width);
+}
+
 /**
  * Susun struktur struk sebagai [ { text, style, align } ].
- * align: 'left' | 'center'; style: 'normal' | 'bold' | 'bold-double'
+ * Layout disamakan persis dengan Receipt.jsx (modal preview).
  */
 export function buildReceiptLayout({ sale, store, pos }) {
   const width = pos?.receipt_width === '80mm' ? 48 : 32;
 
   const lines = [];
-  const storeName = store?.name || 'Toko Anda';
+  const storeName = (store?.name || 'Toko Anda').toUpperCase();
 
   // Kop
   lines.push({ text: storeName, style: 'bold-double', align: 'center' });
   if (store?.address) lines.push({ text: store.address, align: 'center' });
   if (store?.phone) lines.push({ text: `Telp: ${store.phone}`, align: 'center' });
   if (store?.npwp) lines.push({ text: `NPWP: ${store.npwp}`, align: 'center' });
-  lines.push({ text: dashed(width), style: 'normal' });
+  lines.push({ text: dashed(width) });
 
   // Info transaksi
   lines.push({ text: `No : ${sale?.invoice_number || '-'}` });
@@ -116,28 +121,50 @@ export function buildReceiptLayout({ sale, store, pos }) {
   if (sale?.customer) lines.push({ text: `Pelanggan : ${sale.customer.name}` });
   lines.push({ text: dashed(width) });
 
-  // Item
-  lines.push({ text: row(width, 'Nama', 'Qty  Subtotal'), style: 'bold' });
+  // Item header — disamakan Receipt.jsx: flex-1 + w-16 + w-24
+  const qtyCol = pos?.receipt_width === '80mm' ? 12 : 8;
+  const subCol = pos?.receipt_width === '80mm' ? 16 : 12;
+  const nameCol = width - qtyCol - subCol;
+  const hdr = 'Item' + ' '.repeat(Math.max(0, nameCol - 4)) + 'Qty'.padStart(qtyCol) + 'Subtotal'.padStart(subCol);
+  lines.push({ text: hdr.slice(0, width), style: 'bold' });
+
+  // Item detail — qty x harga (disc)   subtotal, sejajar dengan Receipt.jsx
   for (const it of sale?.items || []) {
     const name = it.product?.name || 'Produk';
+    for (const t of wrap(name, width)) {
+      lines.push({ text: t });
+    }
     const qty = formatQtyAPI(it.quantity);
     const price = formatRupiah(it.price);
-    for (const text of wrap(name, width)) {
-      lines.push({ text });
-    }
-    const line = `${qty} x ${price}`;
-    lines.push({ text: row(width, line, formatRupiah(it.subtotal)) });
+    const qtyPrice = `${qty} x ${price}`;
+    const sub = formatRupiah(it.subtotal);
+    const subLen = sanitize(sub).length;
+
     if (Number(it.discount) > 0) {
-      lines.push({ text: row(width, '  disc', `-${formatRupiah(it.discount)}`) });
+      const disc = ` (disc -${formatRupiah(it.discount)})`;
+      const leftFull = `  ${qtyPrice}${disc}`;
+      // Apakah muat satu baris: [qty x harga (disc)] + subtotal?
+      if (leftFull.length + subLen < width) {
+        lines.push({ text: row(width, leftFull, sub) });
+      } else {
+        // Tidak muat: qty x harga + subtotal, diskon di baris berikutnya
+        lines.push({ text: row(width, `  ${qtyPrice}`, sub) });
+        lines.push({ text: `   ${disc}`.slice(0, width) });
+      }
+    } else {
+      lines.push({ text: row(width, `  ${qtyPrice}`, sub) });
     }
   }
   lines.push({ text: dashed(width) });
 
-  // Total
+  // Total section
   lines.push({ text: row(width, 'Subtotal', formatRupiah(sale?.subtotal)) });
   if (Number(sale?.discount) > 0) lines.push({ text: row(width, 'Diskon', `-${formatRupiah(sale?.discount)}`) });
   if (Number(sale?.tax) > 0) lines.push({ text: row(width, 'Pajak', formatRupiah(sale?.tax)) });
   if (Number(sale?.additional_cost) > 0) lines.push({ text: row(width, 'Biaya Lain', formatRupiah(sale?.additional_cost)) });
+
+  // Garis solid sebelum TOTAL (sama seperti border-t di Receipt.jsx)
+  lines.push({ text: solidLine(width) });
   lines.push({ text: row(width, 'TOTAL', formatRupiah(sale?.total)), style: 'bold' });
   lines.push({ text: row(width, paymentMethodLabel(sale?.payment_method), formatRupiah(sale?.payments?.[0]?.cash_received ?? sale?.total)) });
   if (Number(sale?.payments?.[0]?.change_amount) > 0) {

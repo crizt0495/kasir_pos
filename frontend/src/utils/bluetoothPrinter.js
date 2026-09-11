@@ -78,6 +78,7 @@ export async function connectPrinter(device, { timeout } = {}) {
       await device.gatt.disconnect().catch(() => {});
       throw new Error(`Perangkat "${device.name || 'Bluetooth'}" tidak memiliki karakteristik cetak`);
     }
+    storeBluetoothDevice(device);
     return { char: found.char, deviceName: device.name || 'Printer Bluetooth' };
   } catch (err) {
     try { await device.gatt.disconnect(); } catch { /* bo */ }
@@ -105,6 +106,25 @@ export async function writePrinterBytes(char, bytes) {
 }
 
 /**
+ * Auto-reconnect ke printer yang sebelumnya dipasangkan.
+ * Menggunakan navigator.bluetooth.requestDevice() dengan filter nama.
+ * Browser akan ingat pairing sebelumnya dan bisa connect tanpa dialog baru.
+ * @returns {{ char: BluetoothRemoteGATTCharacteristic, deviceName: string }}
+ */
+export async function autoConnect() {
+  const stored = getStoredBluetoothDevice();
+  if (!stored) throw new Error('Tidak ada perangkat yang tersimpan');
+  // Coba koneksi ulang sesi yang masih aktif (tanpa dialog).
+  if (sessionWriter) return sessionWriter;
+  const device = await navigator.bluetooth.requestDevice({
+    acceptAllDevices: false,
+    optionalServices: ['49535343-fe7d-4ae5-8fa9-9fafd205e455', '000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2'],
+    filters: [{ name: stored.name }],
+  });
+  return connectPrinter(device);
+}
+
+/**
  * Simpan "writer" (device + char handle) di memori sesi untuk dipakai
  * auto-print tanpa perlu requestDevice ulang.
  */
@@ -120,4 +140,36 @@ export function setSessionWriter(w) {
 
 export function clearSessionWriter() {
   sessionWriter = null;
+}
+
+/**
+ * Simpan info perangkat Bluetooth di localStorage agar bisa auto-connect
+ * saat halaman dimuat kembali (browser menyimpan BluetoothDevice di memori).
+ */
+export function storeBluetoothDevice(device) {
+  try {
+    localStorage.setItem('bt_printer_device', JSON.stringify({
+      id: device.id,
+      name: device.name || 'Printer Bluetooth',
+    }));
+  } catch {
+    // localStorage tidak tersedia — tetap gunakan koneksi sesi aktif
+  }
+}
+
+export function getStoredBluetoothDevice() {
+  try {
+    const raw = localStorage.getItem('bt_printer_device');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearStoredBluetoothDevice() {
+  try {
+    localStorage.removeItem('bt_printer_device');
+  } catch {
+    // ignore
+  }
 }
