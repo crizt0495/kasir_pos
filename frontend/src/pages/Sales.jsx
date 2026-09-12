@@ -11,11 +11,13 @@ import { Field, Input, Select } from '../components/ui/Form.jsx';
 import { StatusBadge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatRupiah, formatDateTime, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
-import ReceiptModal from '../components/pos/ReceiptModal.jsx';
+import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
+import { getErrorMessage } from '../api/client.js';
 
 export default function Sales() {
   const navigate = useNavigate();
   const { can } = usePermission();
+  const bluetooth = useBluetoothPrinter();
   const [search, setSearch] = useState('');
   const debounced = useDebounce(search, 400);
   const [cashierId, setCashierId] = useState('');
@@ -26,8 +28,6 @@ export default function Sales() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [sort, setSort] = useState({ key: 'created_at', order: 'desc' });
-  const [receiptSale, setReceiptSale] = useState(null);
-  const [settings, setSettings] = useState({});
 
   // Dropdown kasir hanya dimuat bila user punya izin melihat daftar user
   const users = useApi(
@@ -58,11 +58,12 @@ export default function Sales() {
 
   const printReceipt = async (sale) => {
     try {
+      toast.info('Mencetak struk ulang...');
       const [saleRes, settingsRes] = await Promise.all([salesApi.get(sale.id), settingsApi.get()]);
-      setSettings(settingsRes.data);
-      setReceiptSale(saleRes.data);
-    } catch {
-      toast.error('Gagal memuat data struk');
+      await bluetooth.printStruk(saleRes.data, settingsRes.data?.store, settingsRes.data?.pos);
+      toast.success('Struk berhasil dicetak ulang');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Gagal cetak ulang struk'));
     }
   };
 
@@ -167,8 +168,6 @@ export default function Sales() {
           </>
         }
       />
-
-      <ReceiptModal open={!!receiptSale} onClose={() => setReceiptSale(null)} sale={receiptSale} settings={settings} />
     </div>
   );
 }

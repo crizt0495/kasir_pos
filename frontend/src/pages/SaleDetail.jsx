@@ -12,15 +12,14 @@ import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Field, Input, Textarea } from '../components/ui/Form.jsx';
 import { StatusBadge, Skeleton, ErrorState, EmptyState } from '../components/ui/Feedback.jsx';
 import { formatRupiah, formatDateTime, formatQty, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
-import ReceiptModal from '../components/pos/ReceiptModal.jsx';
+import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
 
 export default function SaleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { can } = usePermission();
+  const bluetooth = useBluetoothPrinter();
   const [showRefund, setShowRefund] = useState(false);
-  const [showReceipt, setShowReceipt] = useState(false);
-  const [settings, setSettings] = useState({});
   const [refundItems, setRefundItems] = useState({});
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -127,13 +126,15 @@ export default function SaleDetail() {
     }
   };
 
-  const openReceipt = async () => {
+  const printReceipt = async () => {
+    if (!s) return;
     try {
+      toast.info('Mencetak struk...');
       const settingsRes = await settingsApi.get();
-      setSettings(settingsRes.data);
-      setShowReceipt(true);
-    } catch {
-      toast.error('Gagal memuat pengaturan');
+      await bluetooth.printStruk(s, settingsRes.data?.store, settingsRes.data?.pos);
+      toast.success('Struk berhasil dicetak');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Gagal cetak struk'));
     }
   };
 
@@ -151,7 +152,7 @@ export default function SaleDetail() {
         </div>
         {s && (
           <div className="flex gap-2">
-            <Button variant="secondary" icon={Printer} onClick={openReceipt}>Cetak Struk</Button>
+            <Button variant="secondary" icon={Printer} onClick={printReceipt}>Cetak Struk</Button>
             {can('sales.refund') && s.status !== 'cancelled' && (
               <Button variant="outline" icon={RotateCcw} onClick={openRefund}>Retur</Button>
             )}
@@ -493,8 +494,6 @@ export default function SaleDetail() {
         message={`Total refund ${formatRupiah(refundRounding(totalRefund))} untuk ${selectedCount} item (${formatQty(totalSelectedQty)} qty) akan diproses. Stok kembali ke gudang dan status transaksi ditandai sebagai retur.`}
         confirmText="Ya, proses retur"
       />
-
-      <ReceiptModal open={showReceipt} onClose={() => setShowReceipt(false)} sale={s} settings={settings} />
     </div>
   );
 }
