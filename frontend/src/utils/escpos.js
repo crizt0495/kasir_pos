@@ -23,7 +23,6 @@ const CMD = {
 
 const NORMAL = Uint8Array.of();
 const BOLD = Uint8Array.of(ESC, 0x21, 0x08);
-const BOLD_DOUBLE = Uint8Array.of(ESC, 0x21, 0x18); // bold + double height
 
 /** Karakter non-ASCII yang umum → ekuivalen ASCII (banyak printer thermal hanya CP437). */
 const CHAR_MAP = {
@@ -108,7 +107,7 @@ export function buildReceiptLayout({ sale, store, pos }) {
   };
 
   // ---------- Kop toko ----------
-  push((store?.name || 'Toko Anda').toUpperCase(), { style: 'bold-double', align: 'center' });
+  push((store?.name || 'Toko Anda').toUpperCase(), { style: 'bold', align: 'center' });
   if (store?.address) centered(store.address);
   if (store?.phone) centered(`Telp: ${store.phone}`);
   if (store?.npwp) centered(`NPWP: ${store.npwp}`);
@@ -246,7 +245,6 @@ export function encodeLinesToBytes({ width, lines }) {
     const text = sanitize(item.align === 'center' ? item.text.trim() : item.text).slice(0, width);
     let mode = NORMAL;
     if (item.style === 'bold') mode = BOLD;
-    if (item.style === 'bold-double') mode = BOLD_DOUBLE;
     if (item.align === 'center') parts.push(CMD.align(1));
     else parts.push(CMD.align(0));
     if (item.style !== 'normal') parts.push(mode);

@@ -144,6 +144,18 @@ describe('encodeLinesToBytes / buildEscPosReceipt', () => {
     }
     expect(hasBold).toBe(true);
   });
+  it('cetak = modal: tidak ada double-height (ESC ! 0x18) sehingga nama toko sama ukurannya dengan modal', () => {
+    const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
+    const bytes = encodeLinesToBytes(layout);
+    let hasDoubleHeight = false;
+    for (let i = 0; i < bytes.length - 2; i += 1) {
+      if (bytes[i] === 0x1b && bytes[i + 1] === 0x21 && bytes[i + 2] === 0x18) {
+        hasDoubleHeight = true;
+        break;
+      }
+    }
+    expect(hasDoubleHeight).toBe(false);
+  });
   it('output byte = layout baris-per-baris yang sama dengan preview modal (48mm/80mm)', () => {
     for (const pos of [pos58, pos80]) {
       const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos });

@@ -94,10 +94,6 @@
     .bold {
       font-weight: 700;
     }
-    .bold-double {
-      font-weight: 700;
-      font-size: 13px;
-    }
   </style>
 </head>
 <body>
@@ -187,7 +183,6 @@
         const div = document.createElement('div');
         if (line.align === 'center') div.className += 'center';
         if (line.style === 'bold') div.className += ' bold';
-        if (line.style === 'bold-double') div.className += ' bold-double';
         div.innerHTML = esc(line.text);
         paper.appendChild(div);
       }
