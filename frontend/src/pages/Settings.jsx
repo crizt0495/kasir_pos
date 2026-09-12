@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Save, Store, Settings as SettingsIcon, Receipt, Bluetooth, BluetoothConnected, Printer, Percent, Boxes, UserCog, AlertTriangle, Bell } from 'lucide-react';
+import { Save, Store, Settings as SettingsIcon, Receipt, Percent, Boxes, UserCog, AlertTriangle, Bell } from 'lucide-react';
 import { settingsApi, notificationsApi } from '../api/index.js';
 import { subscribePush } from '../components/layout/NotificationsBell';
 import { useApi } from '../hooks/useApi.js';
-import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
 import { settingsSchema } from '../schemas/index.js';
 import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
@@ -17,7 +16,6 @@ import { PageHeader } from '../components/ui/PageHeader.jsx';
 const TABS = [
   { key: 'store', label: 'Toko' },
   { key: 'pos', label: 'POS & Struk' },
-  { key: 'printer', label: 'Printer' },
   { key: 'tax', label: 'Pajak' },
   { key: 'inventory', label: 'Inventory' },
   { key: 'session', label: 'User & Sesi' },
@@ -31,7 +29,6 @@ export default function Settings() {
   const [testSending, setTestSending] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
   const [pushStatus, setPushStatus] = useState(null); // null | 'subscribed' | 'denied' | 'vapid-missing'
-  const bluetooth = useBluetoothPrinter();
 
   const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 
@@ -354,119 +351,6 @@ export default function Settings() {
                 disabled={!form.notification.enabled}
               >
                 Kirim Notifikasi Uji
-              </Button>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {tab === 'printer' && (
-        <Card title={<span className="flex items-center gap-2"><Printer className="h-4 w-4" /> Printer Bluetooth</span>} bodyClassName="p-5">
-          <div className="space-y-5">
-            <div className="flex items-center gap-3 rounded-xl border-2 border-black bg-slate-50 p-4">
-              {bluetooth.isConnected ? (
-                <BluetoothConnected className="h-8 w-8 text-success-600" aria-hidden="true" />
-              ) : bluetooth.connecting ? (
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-300 border-t-primary-600" aria-hidden="true" />
-              ) : (
-                <Bluetooth className={`h-8 w-8 ${bluetooth.supported ? 'text-slate-400' : 'text-danger-500'}`} aria-hidden="true" />
-              )}
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-slate-800">
-                  {bluetooth.isConnected
-                    ? `Terhubung: ${bluetooth.connectedName}`
-                    : bluetooth.connecting
-                      ? 'Menghubungkan...'
-                      : bluetooth.supported
-                        ? bluetooth.hasStoredDevice
-                          ? 'Printer tersimpan — akan otomatis terhubung saat cetak'
-                          : 'Printer belum terhubung'
-                        : 'Web Bluetooth tidak didukung'}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {bluetooth.supported
-                    ? 'Setelah pairing pertama, printer akan otomatis terhubung saat Anda mencetak struk.'
-                    : 'Butuh Chrome/Edge (desktop/Android) dengan koneksi HTTPS. Firefox/Safari tidak mendukung Web Bluetooth.'}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                {bluetooth.isConnected ? (
-                  <Button variant="outline" size="sm" onClick={bluetooth.disconnect}>
-                    Putuskan
-                  </Button>
-                ) : (
-                  <Button
-                    icon={Bluetooth}
-                    size="sm"
-                    loading={bluetooth.busy || bluetooth.connecting}
-                    disabled={!bluetooth.supported}
-                    onClick={async () => {
-                      try {
-                        if (bluetooth.hasStoredDevice) {
-                          await bluetooth.autoConnect();
-                          toast.success('Printer Bluetooth otomatis terhubung');
-                        } else {
-                          await bluetooth.connect();
-                          toast.success('Printer Bluetooth terhubung');
-                        }
-                      } catch (err) {
-                        toast.error(getErrorMessage(err, 'Gagal menghubungkan printer Bluetooth'));
-                      }
-                    }}
-                  >
-                    {bluetooth.hasStoredDevice ? 'Sambungkan Ulang' : 'Hubungkan Printer'}
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-lg border-2 border-black bg-white p-4 text-xs text-slate-500">
-              <p className="font-medium text-slate-600">Cara penggunaan:</p>
-              <ul className="mt-1.5 list-disc space-y-1 pl-4">
-                <li>Pastikan printer thermal menyala & dalam mode Bluetooth (pairing).</li>
-                <li>Klik <b>Hubungkan Printer</b> sekali saja, lalu pilih printer dari dialog browser.</li>
-                <li>Setelah itu, printer akan <b>otomatis terhubung</b> setiap kali Anda mencetak struk.</li>
-                <li>Struk <b>selalu dicetak otomatis</b> setelah setiap transaksi — tanpa perlu pengaturan tambahan.</li>
-              </ul>
-            </div>
-
-            <div className="flex items-center justify-between gap-3 border-t-2 border-black pt-4">
-              <div>
-                <p className="text-sm font-medium text-slate-700">Uji cetak struk</p>
-                <p className="text-xs text-slate-400">Cetak struk contoh untuk memastikan printer & lebar kertas sudah benar.</p>
-              </div>
-              <Button
-                icon={Printer}
-                variant="secondary"
-                disabled={!bluetooth.supported || (!bluetooth.isConnected && !bluetooth.hasStoredDevice)}
-                loading={bluetooth.connecting}
-                onClick={async () => {
-                  try {
-                    await bluetooth.printStruk(
-                      {
-                        invoice_number: 'INV-UJI-000001',
-                        created_at: new Date().toISOString(),
-                        cashier: { username: 'Uji', profiles: { full_name: 'Uji Struk' } },
-                        customer: { name: 'Pelanggan Uji' },
-                        items: [{ id: '1', product: { name: 'Produk Contoh' }, quantity: 2, price: 15000, discount: 0, subtotal: 30000 }],
-                        subtotal: 30000,
-                        discount: 0,
-                        tax: 0,
-                        additional_cost: 0,
-                        total: 30000,
-                        payment_method: 'CASH',
-                        payments: [{ cash_received: 50000, change_amount: 20000 }],
-                      },
-                      { name: (form?.store?.name) || 'Toko Anda', address: form?.store?.address, phone: form?.store?.phone, npwp: form?.store?.npwp },
-                      { receipt_width: form?.pos?.receipt_width || '58mm' }
-                    );
-                    toast.success('Struk uji berhasil dicetak');
-                  } catch (err) {
-                    toast.error(getErrorMessage(err, 'Gagal mencetak struk uji'));
-                  }
-                }}
-              >
-                Cetak Struk Uji
               </Button>
             </div>
           </div>

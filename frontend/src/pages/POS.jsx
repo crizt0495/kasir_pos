@@ -158,6 +158,12 @@ export default function POS() {
 
   const handleCheckout = async (payload) => {
     try {
+      // Auto-konek printer Bluetooth: jika belum ada printer tersimpan,
+      // dialog pairing browser langsung muncul (masih dalam konteks klik user).
+      // Gagal/batal tidak menggagalkan transaksi — cukup tanpa cetak otomatis.
+      if (bluetooth.supported && !bluetooth.isConnected && !bluetooth.hasStoredDevice) {
+        await bluetooth.connect().catch(() => {});
+      }
       // Kirim item keranjang ke API (product_id, qty, harga, diskon)
       const items = cart.items.map((i) => ({
         product_id: i.product.id,
