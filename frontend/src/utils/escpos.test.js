@@ -65,7 +65,7 @@ describe('buildReceiptLayout', () => {
       }
     }
   });
-  it('diskon item dirender rapi (inline jika muat, baris sendiri jika tidak)', () => {
+  it('diskon item dirender rapi (catatan di bawah item, tidak ada baris qty)', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
     const texts = layout.lines.map((l) => l.text);
     const discIdx = texts.findIndex((t) => t.includes('disc'));
@@ -74,10 +74,12 @@ describe('buildReceiptLayout', () => {
     // Baris diskon diindentasi & tidak melebihi lebar
     expect(discLine.trim().startsWith('(')).toBe(true);
     expect(discLine.length).toBeLessThanOrEqual(32);
-    // Baris di atasnya memuat "1 x Rp 15.000" + subtotal (2 kolom)
+    // Baris di atasnya memuat nama item + subtotal mentok kanan (2 kolom)
     const prev = texts[discIdx - 1];
-    expect(prev).toContain('1 x Rp 15.000');
+    expect(prev).toContain('Mie Sedap');
     expect(prev).toContain('Rp 14.000');
+    // Tidak ada baris "qty x harga" (qty tidak tampil di struk)
+    expect(texts.some((t) => /\s\d+ x Rp/.test(t))).toBe(false);
   });
   it('garis solid (=) muncul sebelum TOTAL', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });

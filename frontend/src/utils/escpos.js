@@ -1,4 +1,4 @@
-import { formatRupiah, formatDateTimeWIB, paymentMethodLabel, formatQty } from './format.js';
+import { formatRupiah, formatDateTimeWIB, paymentMethodLabel } from './format.js';
 
 // ============================================================
 // ESC/POS encoder untuk printer thermal (58mm / 80mm)
@@ -127,24 +127,26 @@ export function buildReceiptLayout({ sale, store, pos }) {
   push(dashed(width));
 
   // ---------- Item ----------
-  // Header hanya "Item" (kiri) + "Subtotal" (kanan) — nilai uang selalu rata
-  // kanan, jadi kolom header & data persis sejajar (tanpa kolom "Qty" palsu).
+  // Header "Item" (kiri) + "Subtotal" (kanan) — tanpa kolom & baris Qty.
+  // Tiap item: nama rata kiri, subtotal mentok kanan pada baris terakhir.
   push(row(width, 'Item', 'Subtotal'), { style: 'bold' });
   push(dashed(width));
 
   for (const it of sale?.items || []) {
-    for (const t of wrap(it.product?.name || 'Produk', width)) push(t);
-
-    const qtyPrice = `${formatQty(it.quantity)} x ${formatRupiah(it.price)}`;
+    const name = it.product?.name || 'Produk';
     const sub = formatRupiah(it.subtotal);
-    const disc = Number(it.discount) > 0 ? `(disc -${formatRupiah(it.discount)})` : '';
-    const leftFull = `  ${qtyPrice}${disc ? ` ${disc}` : ''}`;
-
-    if (disc && sanitize(leftFull).length + sanitize(sub).length < width) {
-      push(row(width, leftFull, sub));
-    } else {
-      push(row(width, `  ${qtyPrice}`, sub));
-      if (disc) push(`   ${disc}`);
+    const subLen = sanitize(sub).length;
+    const avail = Math.max(1, width - subLen - 1);
+    const nameLines = wrap(name, avail);
+    nameLines.forEach((t, i) => {
+      if (i === nameLines.length - 1) {
+        push(row(width, t, sub));
+      } else {
+        push(t);
+      }
+    });
+    if (Number(it.discount) > 0) {
+      push(`  (disc -${formatRupiah(it.discount)})`);
     }
   }
   push(dashed(width));
