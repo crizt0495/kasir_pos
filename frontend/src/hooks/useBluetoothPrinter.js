@@ -27,20 +27,43 @@ export function useBluetoothPrinter() {
   const [connecting, setConnecting] = useState(false);
   const [hasStoredDevice, setHasStoredDevice] = useState(false);
 
-  // Cek apakah ada perangkat tersimpan di IndexedDB.
+  // Auto-connect saat halaman dimuat: jika ada printer tersimpan di IndexedDB,
+  // sambungkan diam-diam lewat gatt.connect() (tidak butuh klik/picker).
   useEffect(() => {
+    if (!supported) return;
     let active = true;
-    loadDeviceFromIDB().then((device) => {
-      if (active) setHasStoredDevice(Boolean(device));
-    });
-    return () => { active = false; };
-  }, []);
 
-  // Pulihkan sesi aktif (module-level antar route).
-  useEffect(() => {
-    const w = getSessionWriter();
-    if (w) setConnectedName(w.deviceName);
-  }, []);
+    const init = async () => {
+      const w = getSessionWriter();
+      if (w) {
+        if (active) setConnectedName(w.deviceName);
+        return;
+      }
+
+      const device = await loadDeviceFromIDB();
+      if (!active) return;
+      if (!device) {
+        setHasStoredDevice(false);
+        return;
+      }
+
+      setHasStoredDevice(true);
+      setConnecting(true);
+      try {
+        const writer = await connectPrinter(device, { timeout: CONNECT_TIMEOUT });
+        if (!active) return;
+        setSessionWriter(writer);
+        setConnectedName(writer.deviceName);
+      } catch {
+        // Printer mati / tidak terjangkau → biarkan; saat cetak akan dicoba ulang.
+      } finally {
+        if (active) setConnecting(false);
+      }
+    };
+
+    init();
+    return () => { active = false; };
+  }, [supported]);
 
   /** Hubungkan ulang dari device tersimpan di IndexedDB tanpa picker. */
   const autoConnect = useCallback(async () => {
@@ -91,15 +114,28 @@ export function useBluetoothPrinter() {
 
   /**
    * Cetak struk via Bluetooth. Prioritas:
-   * 1. Sesi aktif → langsung cetak.
+   * 1. Sesi aktif → langsung cetak. Jika gagal (putus), reconnect + coba lagi.
    * 2. Device tersimpan di IndexedDB → auto-connect diam-diam, lalu cetak.
    * 3. Tidak ada → lempar error (user perlu pairing sekali).
    */
   const printStruk = useCallback(
     async (sale, store, pos) => {
       if (!supported) throw new Error('Web Bluetooth tidak didukung browser ini');
-      const writer = await autoConnect();
       const bytes = buildEscPosReceipt({ sale, store, pos });
+      let writer = getSessionWriter();
+      // Coba cetak dengan sesi aktif; bila gagal, reconnect lalu coba ulang sekali.
+      try {
+        if (writer) {
+          await writePrinterBytes(writer.char, bytes);
+          return true;
+        }
+      } catch {
+        clearSessionWriter();
+        writer = null;
+      }
+      if (!writer) {
+        writer = await autoConnect();
+      }
       await writePrinterBytes(writer.char, bytes);
       return true;
     },
