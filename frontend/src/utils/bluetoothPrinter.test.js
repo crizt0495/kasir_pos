@@ -1,45 +1,23 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { storeBluetoothDevice, getStoredBluetoothDevice, clearStoredBluetoothDevice } from './bluetoothPrinter.js';
+import { describe, it, expect } from 'vitest';
+import { storeDeviceInIDB, loadDeviceFromIDB, clearDeviceFromIDB } from './bluetoothPrinter.js';
 
-const storageMock = () => {
-  const store = new Map();
-  return {
-    getItem: (k) => (store.has(k) ? store.get(k) : null),
-    setItem: (k, v) => store.set(k, String(v)),
-    removeItem: (k) => store.delete(k),
-    clear: () => store.clear(),
-  };
-};
-
-describe('bluetoothPrinter localStorage', () => {
-  beforeEach(() => {
-    globalThis.localStorage = storageMock();
+describe('bluetoothPrinter IndexedDB', () => {
+  it('tidak crash bila indexedDB tidak tersedia (try/catch)', async () => {
+    globalThis.indexedDB = undefined;
+    await expect(storeDeviceInIDB({ id: 'dev-1', name: 'Thermal 80' })).resolves.toBeUndefined();
+    await expect(loadDeviceFromIDB()).resolves.toBeNull();
+    await expect(clearDeviceFromIDB()).resolves.toBeUndefined();
   });
 
-  it('storeBluetoothDevice menyimpan id & nama perangkat', () => {
-    storeBluetoothDevice({ id: 'dev-1', name: 'Thermal 80' });
-    expect(getStoredBluetoothDevice()).toEqual({ id: 'dev-1', name: 'Thermal 80' });
-  });
-
-  it('menggunakan nama default bila device tidak punya nama', () => {
-    storeBluetoothDevice({ id: 'dev-2' });
-    expect(getStoredBluetoothDevice().name).toBe('Printer Bluetooth');
-  });
-
-  it('getStoredBluetoothDevice mengembalikan null bila kosong', () => {
-    expect(getStoredBluetoothDevice()).toBeNull();
-  });
-
-  it('clearStoredBluetoothDevice menghapus data', () => {
-    storeBluetoothDevice({ id: 'dev-1', name: 'Thermal' });
-    clearStoredBluetoothDevice();
-    expect(getStoredBluetoothDevice()).toBeNull();
-  });
-
-  it('tidak crash bila device null atau localStorage error', () => {
-    storeBluetoothDevice(null);
-    expect(getStoredBluetoothDevice()).toBeNull();
-    globalThis.localStorage = undefined;
-    storeBluetoothDevice({ id: 'dev-3' });
+  it('tidak crash bila indexedDB.open mengembalikan request gagal', async () => {
+    globalThis.indexedDB = {
+      open: () => {
+        const req = { result: null, error: new Error('gagal') };
+        queueMicrotask(() => { if (req.onerror) req.onerror(); });
+        return req;
+      },
+    };
+    await expect(storeDeviceInIDB({ id: 'dev-1' })).resolves.toBeUndefined();
+    await expect(loadDeviceFromIDB()).resolves.toBeNull();
   });
 });

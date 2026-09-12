@@ -1,30 +1,69 @@
 import { useCallback, useEffect, useState } from 'react';
-import { bluetoothSupported, connectPrinter, writePrinterBytes, getSessionWriter, setSessionWriter, clearSessionWriter, autoConnect, getStoredBluetoothDevice } from '../utils/bluetoothPrinter.js';
+import {
+  bluetoothSupported,
+  connectPrinter,
+  writePrinterBytes,
+  getSessionWriter,
+  setSessionWriter,
+  clearSessionWriter,
+  loadDeviceFromIDB,
+  clearDeviceFromIDB,
+} from '../utils/bluetoothPrinter.js';
 import { buildEscPosReceipt } from '../utils/escpos.js';
 
 const CONNECT_TIMEOUT = 15000;
 
 /**
- * State + aksi printer Bluetooth.
- * - connect(): minta pairing via navigator.bluetooth.requestDevice (perlu klik user)
- * - printStruk(sale, store, pos): bangun ESC/POS + kirim. Jika koneksi sesi hilang,
- *   mencoba auto-connect otomatis ke printer yang sudah pernah dipasang (dipicu user gesture).
+ * State + aksi printer Bluetooth (dengan auto-connect persisten via IndexedDB).
+ * - connect(): pairing pertama via navigator.bluetooth.requestDevice (butuh klik user)
+ * - autoConnect(): otomatis sambung ke printer yang tersimpan di IndexedDB — tanpa picker
+ * - printStruk(sale, store, pos): bangun ESC/POS + kirim, auto-connect bila koneksi hilang
  * - disconnect()
  */
 export function useBluetoothPrinter() {
   const [supported] = useState(bluetoothSupported());
-  // Koneksi sesi lintas halaman dalam SPA (module-level) — state awal dari writer aktif.
   const [connectedName, setConnectedName] = useState(() => getSessionWriter()?.deviceName || '');
   const [busy, setBusy] = useState(false);
   const [connecting, setConnecting] = useState(false);
-  const [hasStoredDevice, setHasStoredDevice] = useState(Boolean(getStoredBluetoothDevice()));
+  const [hasStoredDevice, setHasStoredDevice] = useState(false);
 
-  // Pulihkan status sesi yang masih aktif (SPA antar-route, module-level).
+  // Cek apakah ada perangkat tersimpan di IndexedDB.
+  useEffect(() => {
+    let active = true;
+    loadDeviceFromIDB().then((device) => {
+      if (active) setHasStoredDevice(Boolean(device));
+    });
+    return () => { active = false; };
+  }, []);
+
+  // Pulihkan sesi aktif (module-level antar route).
   useEffect(() => {
     const w = getSessionWriter();
     if (w) setConnectedName(w.deviceName);
   }, []);
 
+  /** Hubungkan ulang dari device tersimpan di IndexedDB tanpa picker. */
+  const autoConnect = useCallback(async () => {
+    if (!supported) throw new Error('Web Bluetooth tidak didukung browser ini');
+    // Sesi aktif → langsung pakai.
+    if (getSessionWriter()) return getSessionWriter();
+
+    const device = await loadDeviceFromIDB();
+    if (!device) throw new Error('Tidak ada printer tersimpan — klik "Hubungkan Printer" sekali');
+
+    setConnecting(true);
+    try {
+      const writer = await connectPrinter(device, { timeout: CONNECT_TIMEOUT });
+      setSessionWriter(writer);
+      setConnectedName(writer.deviceName);
+      setHasStoredDevice(true);
+      return writer;
+    } finally {
+      setConnecting(false);
+    }
+  }, [supported]);
+
+  /** Pairing pertama manual (reqDevice) — hanya perlu sekali. */
   const connect = useCallback(async () => {
     if (!supported) throw new Error('Browser tidak mendukung Web Bluetooth (butuh Chrome/Edge via HTTPS)');
     setBusy(true);
@@ -43,41 +82,28 @@ export function useBluetoothPrinter() {
     }
   }, [supported]);
 
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback(async () => {
     clearSessionWriter();
+    clearDeviceFromIDB();
     setConnectedName('');
     setHasStoredDevice(false);
   }, []);
 
   /**
    * Cetak struk via Bluetooth. Prioritas:
-   * 1. Koneksi sesi aktif → langsung cetak.
-   * 2. Belum ada sesi → auto-connect ke printer tersimpan (requestDevice dalam
-   *    user gesture; browser ingat pilihan sebelumnya).
-   * Gagal → lempar error agar caller menampilkan pesan.
+   * 1. Sesi aktif → langsung cetak.
+   * 2. Device tersimpan di IndexedDB → auto-connect diam-diam, lalu cetak.
+   * 3. Tidak ada → lempar error (user perlu pairing sekali).
    */
   const printStruk = useCallback(
     async (sale, store, pos) => {
       if (!supported) throw new Error('Web Bluetooth tidak didukung browser ini');
-      let writer = getSessionWriter();
-      if (!writer) {
-        setConnecting(true);
-        try {
-          writer = await autoConnect();
-          setSessionWriter(writer);
-          setConnectedName(writer.deviceName);
-          setHasStoredDevice(true);
-        } catch {
-          throw new Error('Printer Bluetooth tidak terhubung — tekan "Cetak via Bluetooth" setelah memilih printer');
-        } finally {
-          setConnecting(false);
-        }
-      }
+      const writer = await autoConnect();
       const bytes = buildEscPosReceipt({ sale, store, pos });
       await writePrinterBytes(writer.char, bytes);
       return true;
     },
-    [supported]
+    [supported, autoConnect]
   );
 
   return {
@@ -88,6 +114,7 @@ export function useBluetoothPrinter() {
     hasStoredDevice,
     isConnected: Boolean(connectedName),
     connect,
+    autoConnect,
     disconnect,
     printStruk,
   };

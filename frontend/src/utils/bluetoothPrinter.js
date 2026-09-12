@@ -78,7 +78,7 @@ export async function connectPrinter(device, { timeout } = {}) {
       await device.gatt.disconnect().catch(() => {});
       throw new Error(`Perangkat "${device.name || 'Bluetooth'}" tidak memiliki karakteristik cetak`);
     }
-    storeBluetoothDevice(device);
+    storeDeviceInIDB(device);
     return { char: found.char, deviceName: device.name || 'Printer Bluetooth' };
   } catch (err) {
     try { await device.gatt.disconnect(); } catch { /* bo */ }
@@ -105,24 +105,74 @@ export async function writePrinterBytes(char, bytes) {
   }
 }
 
-/**
- * Auto-reconnect ke printer yang sebelumnya dipasangkan.
- * Menggunakan navigator.bluetooth.requestDevice() dengan filter nama.
- * Browser akan ingat pairing sebelumnya dan bisa connect tanpa dialog baru.
- * @returns {{ char: BluetoothRemoteGATTCharacteristic, deviceName: string }}
- */
-export async function autoConnect() {
-  const stored = getStoredBluetoothDevice();
-  if (!stored) throw new Error('Tidak ada perangkat yang tersimpan');
-  // Coba koneksi ulang sesi yang masih aktif (tanpa dialog).
-  if (sessionWriter) return sessionWriter;
-  const device = await navigator.bluetooth.requestDevice({
-    acceptAllDevices: false,
-    optionalServices: ['49535343-fe7d-4ae5-8fa9-9fafd205e455', '000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2'],
-    filters: [{ name: stored.name }],
+// ===================== IndexedDB Device Storage =====================
+
+const IDB_NAME = 'bt_printer_db';
+const IDB_VERSION = 1;
+const STORE_NAME = 'device';
+
+function openIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+    req.onerror = () => reject(req.error);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
   });
-  return connectPrinter(device);
 }
+
+/**
+ * Simpan objek BluetoothDevice di IndexedDB (bisa di-reconnect tanpa picker).
+ * @param {BluetoothDevice} device
+ */
+export async function storeDeviceInIDB(device) {
+  try {
+    const db = await openIDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(device, 'current');
+    return new Promise((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+    // IndexedDB tidak tersedia — tetap gunakan koneksi sesi aktif
+  }
+}
+
+/**
+ * Ambil BluetoothDevice dari IndexedDB untuk auto-reconnect.
+ * @returns {BluetoothDevice|null}
+ */
+export async function loadDeviceFromIDB() {
+  try {
+    const db = await openIDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const req = tx.objectStore(STORE_NAME).get('current');
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch {
+    return null;
+  }
+}
+
+/** Hapus device dari IndexedDB (saat putuskan/printer diganti). */
+export async function clearDeviceFromIDB() {
+  try {
+    const db = await openIDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).clear();
+  } catch {
+    // ignore
+  }
+}
+
+// ===================== Session Writer =====================
 
 /**
  * Simpan "writer" (device + char handle) di memori sesi untuk dipakai
@@ -140,36 +190,4 @@ export function setSessionWriter(w) {
 
 export function clearSessionWriter() {
   sessionWriter = null;
-}
-
-/**
- * Simpan info perangkat Bluetooth di localStorage agar bisa auto-connect
- * saat halaman dimuat kembali (browser menyimpan BluetoothDevice di memori).
- */
-export function storeBluetoothDevice(device) {
-  try {
-    localStorage.setItem('bt_printer_device', JSON.stringify({
-      id: device.id,
-      name: device.name || 'Printer Bluetooth',
-    }));
-  } catch {
-    // localStorage tidak tersedia — tetap gunakan koneksi sesi aktif
-  }
-}
-
-export function getStoredBluetoothDevice() {
-  try {
-    const raw = localStorage.getItem('bt_printer_device');
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-export function clearStoredBluetoothDevice() {
-  try {
-    localStorage.removeItem('bt_printer_device');
-  } catch {
-    // ignore
-  }
 }
