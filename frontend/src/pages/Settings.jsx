@@ -59,7 +59,14 @@ export default function Settings() {
   if (!form && !settings.loading) {
     setForm({
       store: { name: '', phone: '', address: '', logo_url: '', npwp: '', ...(s.store || {}) },
-      pos: { default_payment_method: 'CASH', receipt_width: '58mm', auto_print_receipt: false, print_method: 'browser', ...(s.pos || {}) },
+      pos: {
+        default_payment_method: 'CASH',
+        receipt_width: '58mm',
+        auto_print_receipt: s.pos?.print_method === 'bluetooth' ? true : false,
+        print_method: 'browser',
+        ...(s.pos || {}),
+        auto_print_receipt: s.pos?.print_method === 'bluetooth' ? true : (s.pos?.auto_print_receipt ?? false),
+      },
       tax: { enabled: false, percentage: 0, ...(s.tax || {}) },
       inventory: { allow_negative_stock: false, low_stock_threshold: 0, ...(s.inventory || {}) },
       user_session: { session_timeout_minutes: 480, ...(s.user_session || {}) },
@@ -197,12 +204,17 @@ export default function Settings() {
                 error={!!errors.invoice?.prefix}
               />
             </Field>
-            <Checkbox
-              label="Cetak struk otomatis setelah transaksi"
-              checked={form.pos.auto_print_receipt === true}
-              onChange={(e) => update('pos', { auto_print_receipt: e.target.checked })}
-              className="md:mt-7"
-            />
+            <div className="md:mt-7">
+              <Checkbox
+                label="Cetak struk otomatis setelah transaksi"
+                checked={form.pos.print_method === 'bluetooth' ? true : form.pos.auto_print_receipt === true}
+                disabled={form.pos.print_method === 'bluetooth'}
+                onChange={(e) => update('pos', { auto_print_receipt: e.target.checked })}
+              />
+              {form.pos.print_method === 'bluetooth' && (
+                <p className="mt-1 text-xs text-slate-500">Printer Bluetooth selalu mencetak struk otomatis setelah transaksi.</p>
+              )}
+            </div>
           </div>
           <div className="mt-4 flex flex-wrap items-start gap-4 rounded-xl border-2 border-black bg-slate-50 p-4">
             <div className="min-w-[220px] flex-1">
@@ -211,8 +223,12 @@ export default function Settings() {
                   value={form.pos.print_method || 'browser'}
                   onChange={(e) => {
                     const v = e.target.value;
-                    update('pos', { print_method: v });
-                    if (v === 'bluetooth') setTab('printer');
+                    const changes = { print_method: v };
+                    if (v === 'bluetooth') {
+                      changes.auto_print_receipt = true;
+                      setTab('printer');
+                    }
+                    update('pos', changes);
                   }}
                 >
                   <option value="browser">Browser (dialog cetak / PDF)</option>

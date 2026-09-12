@@ -183,12 +183,11 @@ export default function POS() {
       // Refresh data hutang & daftar pelanggan agar info hutang selalu terbaru
       loadDebtStats();
       customerResults.reload();
-      if (settings?.pos?.auto_print_receipt === true) {
-        if (settings?.pos?.print_method === 'bluetooth' && bluetooth.supported) {
-          bluetooth
-            .printStruk(res.data.sale, settings?.store, settings?.pos)
-            .catch(() => toast.error('Gagal cetak ke printer Bluetooth'));
-        }
+      // Printer Bluetooth = langsung cetak struk otomatis (auto-connect bila perlu).
+      if (settings?.pos?.print_method === 'bluetooth' && bluetooth.supported) {
+        bluetooth
+          .printStruk(res.data.sale, settings?.store, settings?.pos)
+          .catch(() => toast.error('Gagal cetak ke printer Bluetooth'));
       }
     } catch (error) {
       toast.error(getErrorMessage(error, 'Transaksi gagal'));
