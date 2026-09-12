@@ -14,6 +14,8 @@ const CMD = {
   init: () => Uint8Array.of(ESC, 0x40),
   align: (n) => Uint8Array.of(ESC, 0x61, n), // 0 kiri, 1 tengah, 2 kanan
   printMode: (n) => Uint8Array.of(ESC, 0x21, n), // bit1 fontB, bit3 bold, bit4 dh, bit5 dw
+  selectFontA: () => Uint8Array.of(ESC, 0x4d, 0), // ESC M 0 = font standar (32 kolom @58mm / 48 @80mm)
+  charSize: (n) => Uint8Array.of(GS, 0x21, n), // GS ! n — n=0 ukuran normal
   feed: (n) => Uint8Array.of(ESC, 0x64, n),
   cutFull: () => Uint8Array.of(GS, 0x56, 0),
   cutPartial: () => Uint8Array.of(GS, 0x56, 65, 0),
@@ -197,6 +199,11 @@ export function buildReceiptLayout({ sale, store, pos }) {
 export function encodeLinesToBytes({ width, lines }) {
   const parts = [];
   parts.push(CMD.init());
+  // Kunci font standar + ukuran normal + alignment kiri, agar lebar baris
+  // persis width (32/48 kolom) di semua printer thermal — mencegah struk jorok.
+  parts.push(CMD.selectFontA());
+  parts.push(CMD.charSize(0));
+  parts.push(CMD.align(0));
   for (const item of lines) {
     const text = item.align === 'center' ? center(item.text, width) : sanitize(item.text).slice(0, width);
     let mode = NORMAL;

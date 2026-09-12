@@ -102,6 +102,21 @@ describe('encodeLinesToBytes / buildEscPosReceipt', () => {
     expect(text).toContain('INV-20260910-000001');
     expect(text).toContain('Terima kasih');
   });
+  it('mengunci font standar (ESC M 0) + ukuran normal (GS ! 0) di awal stream', () => {
+    const bytes = buildEscPosReceipt({ sale: baseSale, store: baseStore, pos: pos58 });
+    // Urutan: ESC @ (init) → ESC M 0 (font A) → GS ! 0 (size normal) → ESC a 0 (kiri)
+    expect(bytes[0]).toBe(0x1b);
+    expect(bytes[1]).toBe(0x40);
+    expect(bytes[2]).toBe(0x1b);
+    expect(bytes[3]).toBe(0x4d);
+    expect(bytes[4]).toBe(0x00);
+    expect(bytes[5]).toBe(0x1d);
+    expect(bytes[6]).toBe(0x21);
+    expect(bytes[7]).toBe(0x00);
+    expect(bytes[8]).toBe(0x1b);
+    expect(bytes[9]).toBe(0x61);
+    expect(bytes[10]).toBe(0x00);
+  });
   it('berakhir dengan feed + cut', () => {
     const bytes = buildEscPosReceipt({ sale: baseSale, store: baseStore, pos: pos58 });
     const n = bytes.length;
