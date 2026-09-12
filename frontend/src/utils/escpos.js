@@ -1,4 +1,4 @@
-import { formatRupiah, formatDateTime, paymentMethodLabel } from './format.js';
+import { formatRupiah, formatDateTime, paymentMethodLabel, formatQty } from './format.js';
 
 // ============================================================
 // ESC/POS encoder untuk printer thermal (58mm / 80mm)
@@ -134,7 +134,7 @@ export function buildReceiptLayout({ sale, store, pos }) {
     for (const t of wrap(name, width)) {
       lines.push({ text: t });
     }
-    const qty = formatQtyAPI(it.quantity);
+    const qty = formatQty(it.quantity);
     const price = formatRupiah(it.price);
     const qtyPrice = `${qty} x ${price}`;
     const sub = formatRupiah(it.subtotal);
@@ -191,10 +191,7 @@ export function buildReceiptLayout({ sale, store, pos }) {
   return { width, lines };
 }
 
-function formatQtyAPI(value) {
-  const n = Number(value || 0);
-  return Number.isInteger(n) ? String(n) : String(n).replace('.', ',');
-}
+
 
 /** Terjemahkan layout → byte ESC/POS (Uint8Array). */
 export function encodeLinesToBytes({ width, lines }) {
