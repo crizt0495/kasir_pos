@@ -1,4 +1,4 @@
-import { formatRupiah, formatDateTimeWIB, paymentMethodLabel } from './format.js';
+import { formatRupiah, formatDateTimeWIB, paymentMethodLabel, formatQty } from './format.js';
 
 // ============================================================
 // ESC/POS encoder untuk printer thermal (58mm / 80mm)
@@ -127,8 +127,8 @@ export function buildReceiptLayout({ sale, store, pos }) {
   push(dashed(width));
 
   // ---------- Item ----------
-  // Header "Item" (kiri) + "Subtotal" (kanan) — tanpa kolom & baris Qty.
-  // Tiap item: nama rata kiri, subtotal mentok kanan pada baris terakhir.
+  // Header "Item" (kiri) + "Subtotal" (kanan) — tanpa KOLOM Qty. Jumlah
+  // barang tetap tampil inline di depan nama (mis. "2x Kopi Susu").
   push(row(width, 'Item', 'Subtotal'), { style: 'bold' });
   push(dashed(width));
 
@@ -137,7 +137,7 @@ export function buildReceiptLayout({ sale, store, pos }) {
     const sub = formatRupiah(it.subtotal);
     const subLen = sanitize(sub).length;
     const avail = Math.max(1, width - subLen - 1);
-    const nameLines = wrap(name, avail);
+    const nameLines = wrap(`${formatQty(it.quantity)}x ${name}`, avail);
     nameLines.forEach((t, i) => {
       if (i === nameLines.length - 1) {
         push(row(width, t, sub));
