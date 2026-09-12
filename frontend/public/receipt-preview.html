@@ -112,7 +112,7 @@
   <div class="scene" id="scene"></div>
 
   <script type="module">
-    import { buildReceiptLayout } from '/src/utils/escpos.js';
+    import { buildReceiptLayout, scoreReceiptLayout } from '/src/utils/escpos.js';
 
     const dummySale = {
       invoice_number: 'INV-20260912-000123',
@@ -142,14 +142,13 @@
           discount: 2000,
         },
       ],
+      subtotal: 118500,
       discount: 2000,
       tax: 1250,
-      service_charge: 3000,
-      total: 51750,
-      payment_method: 'qris',
-      amount_paid: 60000,
-      change: 8250,
-      due: 0,
+      additional_cost: 0,
+      total: 117750,
+      payment_method: 'CASH',
+      payments: [{ cash_received: 120000, change_amount: 2250 }],
     };
 
     const dummyStore = {
@@ -168,6 +167,7 @@
     function render(mm) {
       const pos = { receipt_width: mm };
       const { width, lines } = buildReceiptLayout({ sale: dummySale, store: dummyStore, pos });
+      const { score, issues } = scoreReceiptLayout({ width, lines });
       const scene = document.getElementById('scene');
       scene.innerHTML = '';
 
@@ -192,6 +192,18 @@
         paper.appendChild(div);
       }
       col.appendChild(paper);
+
+      const badge = document.createElement('div');
+      badge.style.cssText = 'margin-top:10px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;display:inline-block;' +
+        (score === 100 ? 'background:#dcfce7;color:#166534;' : 'background:#fee2e2;color:#991b1b;') +
+        (issues.length ? '' : '');
+      badge.textContent = `Kerapian: ${score}/100`;
+      if (issues.length) {
+        badge.title = issues.map((i) => `baris ${i.line || '-'}: ${i.type}`).join('\n');
+        badge.textContent += ` (${issues.length} temuan)`;
+      }
+      col.appendChild(badge);
+
       scene.appendChild(col);
     }
 

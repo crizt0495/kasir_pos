@@ -1,4 +1,4 @@
-import { formatRupiah, formatDateTime, paymentMethodLabel, formatQty } from './format.js';
+import { formatRupiah, formatDateTimeWIB, paymentMethodLabel, formatQty } from './format.js';
 
 // ============================================================
 // ESC/POS encoder untuk printer thermal (58mm / 80mm)
@@ -59,12 +59,6 @@ function row(width, label, value) {
   return (l + ' '.repeat(Math.max(0, width - l.length - v.length)) + v).slice(0, width);
 }
 
-function center(text, width) {
-  const t = sanitize(text).slice(0, width);
-  const pad = Math.max(0, Math.floor((width - t.length) / 2));
-  return ' '.repeat(pad) + t;
-}
-
 function dashed(width) {
   return '-'.repeat(width);
 }
@@ -107,90 +101,129 @@ export function buildReceiptLayout({ sale, store, pos }) {
   const width = pos?.receipt_width === '80mm' ? 48 : 32;
 
   const lines = [];
-  const storeName = (store?.name || 'Toko Anda').toUpperCase();
+  const push = (text, extra = {}) => lines.push({ text, ...extra });
+  const pushRow = (label, value, extra = {}) => push(row(width, label, value), extra);
+  const centered = (text, extra = {}) => {
+    for (const t of wrap(text, width)) push(t, { align: 'center', ...extra });
+  };
 
-  // Kop
-  lines.push({ text: storeName, style: 'bold-double', align: 'center' });
-  if (store?.address) lines.push({ text: store.address, align: 'center' });
-  if (store?.phone) lines.push({ text: `Telp: ${store.phone}`, align: 'center' });
-  if (store?.npwp) lines.push({ text: `NPWP: ${store.npwp}`, align: 'center' });
-  lines.push({ text: dashed(width) });
+  // ---------- Kop toko ----------
+  push((store?.name || 'Toko Anda').toUpperCase(), { style: 'bold-double', align: 'center' });
+  if (store?.address) centered(store.address);
+  if (store?.phone) centered(`Telp: ${store.phone}`);
+  if (store?.npwp) centered(`NPWP: ${store.npwp}`);
+  push(dashed(width));
 
-  // Info transaksi
-  lines.push({ text: `No : ${sale?.invoice_number || '-'}` });
-  lines.push({ text: `Tanggal : ${sale?.created_at ? formatDateTime(sale.created_at) : '-'}` });
-  lines.push({ text: `Kasir : ${sale?.cashier?.profiles?.full_name || sale?.cashier?.username || '-'}` });
-  if (sale?.customer) lines.push({ text: `Pelanggan : ${sale.customer.name}` });
-  lines.push({ text: dashed(width) });
+  // ---------- Info transaksi (titik dua sejajar) ----------
+  const info = (label, value) => {
+    const prefix = `${label.padEnd(9)} : `;
+    const parts = wrap(value == null || value === '' ? '-' : String(value), width - prefix.length);
+    parts.forEach((t, i) => push((i === 0 ? prefix : ' '.repeat(prefix.length)) + t));
+  };
+  info('No.', sale?.invoice_number);
+  info('Tanggal', sale?.created_at ? formatDateTimeWIB(sale.created_at) : '-');
+  info('Kasir', sale?.cashier?.profiles?.full_name || sale?.cashier?.username);
+  if (sale?.customer) info('Pelanggan', sale.customer.name);
+  push(dashed(width));
 
-  // Item header — disamakan Receipt.jsx: flex-1 + w-16 + w-24
-  const qtyCol = pos?.receipt_width === '80mm' ? 12 : 8;
-  const subCol = pos?.receipt_width === '80mm' ? 16 : 12;
-  const nameCol = width - qtyCol - subCol;
-  const hdr = 'Item' + ' '.repeat(Math.max(0, nameCol - 4)) + 'Qty'.padStart(qtyCol) + 'Subtotal'.padStart(subCol);
-  lines.push({ text: hdr.slice(0, width), style: 'bold' });
+  // ---------- Item ----------
+  // Header hanya "Item" (kiri) + "Subtotal" (kanan) — nilai uang selalu rata
+  // kanan, jadi kolom header & data persis sejajar (tanpa kolom "Qty" palsu).
+  push(row(width, 'Item', 'Subtotal'), { style: 'bold' });
+  push(dashed(width));
 
-  // Item detail — qty x harga (disc)   subtotal, sejajar dengan Receipt.jsx
   for (const it of sale?.items || []) {
-    const name = it.product?.name || 'Produk';
-    for (const t of wrap(name, width)) {
-      lines.push({ text: t });
-    }
-    const qty = formatQty(it.quantity);
-    const price = formatRupiah(it.price);
-    const qtyPrice = `${qty} x ${price}`;
+    for (const t of wrap(it.product?.name || 'Produk', width)) push(t);
+
+    const qtyPrice = `${formatQty(it.quantity)} x ${formatRupiah(it.price)}`;
     const sub = formatRupiah(it.subtotal);
-    const subLen = sanitize(sub).length;
+    const disc = Number(it.discount) > 0 ? `(disc -${formatRupiah(it.discount)})` : '';
+    const leftFull = `  ${qtyPrice}${disc ? ` ${disc}` : ''}`;
 
-    if (Number(it.discount) > 0) {
-      const disc = ` (disc -${formatRupiah(it.discount)})`;
-      const leftFull = `  ${qtyPrice}${disc}`;
-      // Apakah muat satu baris: [qty x harga (disc)] + subtotal?
-      if (leftFull.length + subLen < width) {
-        lines.push({ text: row(width, leftFull, sub) });
-      } else {
-        // Tidak muat: qty x harga + subtotal, diskon di baris berikutnya
-        lines.push({ text: row(width, `  ${qtyPrice}`, sub) });
-        lines.push({ text: `   ${disc}`.slice(0, width) });
-      }
+    if (disc && sanitize(leftFull).length + sanitize(sub).length < width) {
+      push(row(width, leftFull, sub));
     } else {
-      lines.push({ text: row(width, `  ${qtyPrice}`, sub) });
+      push(row(width, `  ${qtyPrice}`, sub));
+      if (disc) push(`   ${disc}`);
     }
   }
-  lines.push({ text: dashed(width) });
+  push(dashed(width));
 
-  // Total section
-  lines.push({ text: row(width, 'Subtotal', formatRupiah(sale?.subtotal)) });
-  if (Number(sale?.discount) > 0) lines.push({ text: row(width, 'Diskon', `-${formatRupiah(sale?.discount)}`) });
-  if (Number(sale?.tax) > 0) lines.push({ text: row(width, 'Pajak', formatRupiah(sale?.tax)) });
-  if (Number(sale?.additional_cost) > 0) lines.push({ text: row(width, 'Biaya Lain', formatRupiah(sale?.additional_cost)) });
+  // ---------- Total ----------
+  pushRow('Subtotal', formatRupiah(sale?.subtotal));
+  if (Number(sale?.discount) > 0) pushRow('Diskon', `-${formatRupiah(sale?.discount)}`);
+  if (Number(sale?.tax) > 0) pushRow('Pajak', formatRupiah(sale?.tax));
+  if (Number(sale?.additional_cost) > 0) pushRow('Biaya Lain', formatRupiah(sale?.additional_cost));
 
-  // Garis solid sebelum TOTAL (sama seperti border-t di Receipt.jsx)
-  lines.push({ text: solidLine(width) });
-  lines.push({ text: row(width, 'TOTAL', formatRupiah(sale?.total)), style: 'bold' });
-  lines.push({ text: row(width, paymentMethodLabel(sale?.payment_method), formatRupiah(sale?.payments?.[0]?.cash_received ?? sale?.total)) });
+  push(solidLine(width));
+  pushRow('TOTAL', formatRupiah(sale?.total), { style: 'bold' });
+  pushRow(paymentMethodLabel(sale?.payment_method), formatRupiah(sale?.payments?.[0]?.cash_received ?? sale?.total));
   if (Number(sale?.payments?.[0]?.change_amount) > 0) {
-    lines.push({ text: row(width, 'Kembalian', formatRupiah(sale?.payments?.[0]?.change_amount)) });
+    pushRow('Kembalian', formatRupiah(sale?.payments?.[0]?.change_amount));
   }
 
-  // Hutang
+  // ---------- Hutang ----------
   const cashReceived = Number(sale?.payments?.[0]?.cash_received);
   const total = Number(sale?.total || 0);
   if (sale?.payments?.[0]?.cash_received != null && cashReceived < total) {
-    lines.push({ text: dashed(width) });
-    lines.push({ text: 'SISA HUTANG', style: 'bold', align: 'center' });
-    lines.push({ text: formatRupiah(total - cashReceived), style: 'bold', align: 'center' });
-    lines.push({ text: row(width, 'TOTAL', formatRupiah(total)) });
-    lines.push({ text: row(width, 'DIBAYAR', formatRupiah(cashReceived)) });
-    lines.push({ text: row(width, 'SISA HUTANG', formatRupiah(total - cashReceived)) });
-    lines.push({ text: 'STATUS: BELUM LUNAS', style: 'bold', align: 'center' });
+    push(dashed(width));
+    centered('SISA HUTANG', { style: 'bold' });
+    centered(formatRupiah(total - cashReceived), { style: 'bold' });
+    pushRow('TOTAL', formatRupiah(total));
+    pushRow('DIBAYAR', formatRupiah(cashReceived));
+    pushRow('SISA HUTANG', formatRupiah(total - cashReceived));
+    centered('STATUS: BELUM LUNAS', { style: 'bold' });
   }
 
-  lines.push({ text: dashed(width) });
-  for (const t of wrap('Terima kasih atas kunjungan Anda!', width)) lines.push({ text: t, align: 'center' });
-  for (const t of wrap('Barang yang sudah dibeli tidak dapat dikembalikan kecuali ada kesalahan dari toko.', width)) lines.push({ text: t, align: 'center' });
+  // ---------- Footer ----------
+  push(dashed(width));
+  centered('Terima kasih atas kunjungan Anda!');
+  centered('Barang yang sudah dibeli tidak dapat dikembalikan kecuali ada kesalahan dari toko.');
 
   return { width, lines };
+}
+
+/**
+ * Skor kerapian layout struk (0–100). Dipakai test & halaman preview agar
+ * kualitas cetak terukur. Mengembalikan daftar temuan yang bisa ditindak.
+ */
+export function scoreReceiptLayout({ width, lines }) {
+  const issues = [];
+  const texts = lines.map((l) => l.text);
+
+  // 1) Tidak ada baris melebihi lebar kolom
+  lines.forEach((l, i) => {
+    if (sanitize(l.text).length > width) issues.push({ line: i + 1, type: 'overflow' });
+  });
+
+  // 2) Titik dua blok info harus sejajar
+  const infoColons = texts
+    .filter((t) => /^(No\.|Tanggal|Kasir|Pelanggan)\s*:/.test(t))
+    .map((t) => t.indexOf(':'))
+    .filter((i) => i >= 0);
+  if (infoColons.length > 1 && new Set(infoColons).size > 1) {
+    issues.push({ type: 'info-colon' });
+  }
+
+  // 3) Setiap nilai uang pada baris kolom harus mentok kanan (rata kanan).
+  //    Baris catatan (mis. "(disc -Rp 2.000)") bukan kolom nilai → dilewati.
+  lines.forEach((l, i) => {
+    if (l.align === 'center') return;
+    if (!/Rp/.test(l.text)) return;
+    if (l.text.trimStart().startsWith('(')) return;
+    if (l.text.length !== width || l.text.endsWith(' ')) {
+      issues.push({ line: i + 1, type: 'money-align' });
+    }
+  });
+
+  // 4) Header kolom "Subtotal" (bila ada) harus rata kanan seperti nilainya
+  const header = lines.find((l) => l.style === 'bold' && /Subtotal/.test(l.text));
+  if (header && (header.text.length !== width || !header.text.endsWith('Subtotal'))) {
+    issues.push({ type: 'header-align' });
+  }
+
+  const penalty = issues.reduce((acc, it) => acc + (it.type === 'overflow' ? 20 : 10), 0);
+  return { score: Math.max(0, 100 - penalty), issues };
 }
 
 
@@ -205,7 +238,10 @@ export function encodeLinesToBytes({ width, lines }) {
   parts.push(CMD.charSize(0));
   parts.push(CMD.align(0));
   for (const item of lines) {
-    const text = item.align === 'center' ? center(item.text, width) : sanitize(item.text).slice(0, width);
+    // Baris tengah: kirim teks APA ADANYA + perintah ESC a 1 (printer yang
+    // memusatkan). Jangan di-pad manual — dulu dua-duanya membuat teks
+    // tergeser ke kanan (dobel center) di kertas.
+    const text = sanitize(item.align === 'center' ? item.text.trim() : item.text).slice(0, width);
     let mode = NORMAL;
     if (item.style === 'bold') mode = BOLD;
     if (item.style === 'bold-double') mode = BOLD_DOUBLE;
