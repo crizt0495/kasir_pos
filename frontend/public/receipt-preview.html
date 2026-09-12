@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Preview Struk Thermal — POS</title>
+  <link rel="icon" href="data:," />
+  <style>
+    :root {
+      color-scheme: light;
+    }
+    body {
+      margin: 0;
+      font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 32px 16px 64px;
+    }
+    h1 {
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      margin: 0 0 4px;
+    }
+    .sub {
+      text-align: center;
+      color: #64748b;
+      font-size: 13px;
+      margin: 0 0 24px;
+    }
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .controls label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+    }
+    .controls input[type='radio'] {
+      accent-color: #6366f1;
+    }
+    .scene {
+      display: flex;
+      gap: 28px;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .cols {
+      text-align: center;
+    }
+    .cols .cap {
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      background: #e2e8f0;
+      padding: 4px 14px;
+      border-radius: 999px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .paper {
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 10px 30px rgb(15 23 42 / 0.18), 0 2px 6px rgb(15 23 42 / 0.08);
+      padding: 14px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #000;
+      margin: 0 auto;
+      white-space: pre;
+      text-align: left;
+      border-left: 2px dashed #cbd5e1;
+      border-right: 2px dashed #cbd5e1;
+      border-top: 4px dashed #cbd5e1;
+      border-bottom: 4px dashed #cbd5e1;
+    }
+    .center {
+      text-align: center;
+    }
+    .bold {
+      font-weight: 700;
+    }
+    .bold-double {
+      font-weight: 700;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Preview Struk Thermal</h1>
+  <p class="sub">Dirender dari <code>buildReceiptLayout()</code> — fungsi yang sama dengan encoder ESC/POS ke printer. <b>Modal = hasil cetak persis.</b></p>
+
+  <div class="controls">
+    <label><input type="radio" name="mm" value="58mm" checked /> 58mm (32 kolom)</label>
+    <label><input type="radio" name="mm" value="80mm" /> 80mm (48 kolom)</label>
+  </div>
+
+  <div class="scene" id="scene"></div>
+
+  <script type="module">
+    import { buildReceiptLayout } from '/src/utils/escpos.js';
+
+    const dummySale = {
+      invoice_number: 'INV-20260912-000123',
+      created_at: '2026-09-12T10:25:00.000Z',
+      cashier: { username: 'kasir1', profiles: { full_name: 'Budi Santoso' } },
+      customer: { name: 'PT Maju Jaya' },
+      items: [
+        {
+          product: { name: 'Kopi Susu Gula Aren' },
+          quantity: 2,
+          price: 27000,
+          subtotal: 54000,
+          discount: 0,
+        },
+        {
+          product: { name: 'Roti Bakar Coklat Keju' },
+          quantity: 1,
+          price: 18000,
+          subtotal: 18000,
+          discount: 0,
+        },
+        {
+          product: { name: 'Indomie Goreng Spesial Telur Ayam Kampung' },
+          quantity: 3,
+          price: 15500,
+          subtotal: 46500,
+          discount: 2000,
+        },
+      ],
+      discount: 2000,
+      tax: 1250,
+      service_charge: 3000,
+      total: 51750,
+      payment_method: 'qris',
+      amount_paid: 60000,
+      change: 8250,
+      due: 0,
+    };
+
+    const dummyStore = {
+      name: 'TOKO ANDI',
+      address: 'Jl. Ahmad Yani No. 45',
+      phone: '0812-3456-7890',
+      npwp: '45.678.901.2-345.000',
+    };
+
+    function esc(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    function render(mm) {
+      const pos = { receipt_width: mm };
+      const { width, lines } = buildReceiptLayout({ sale: dummySale, store: dummyStore, pos });
+      const scene = document.getElementById('scene');
+      scene.innerHTML = '';
+
+      const col = document.createElement('div');
+      col.className = 'cols';
+
+      const cap = document.createElement('div');
+      cap.className = 'cap';
+      cap.textContent = `${mm} — ${width} kolom, lebar ${width}ch`;
+      col.appendChild(cap);
+
+      const paper = document.createElement('div');
+      paper.className = 'paper';
+      paper.style.width = `${width}ch`;
+
+      for (const line of lines) {
+        const div = document.createElement('div');
+        if (line.align === 'center') div.className += 'center';
+        if (line.style === 'bold') div.className += ' bold';
+        if (line.style === 'bold-double') div.className += ' bold-double';
+        div.innerHTML = esc(line.text);
+        paper.appendChild(div);
+      }
+      col.appendChild(paper);
+      scene.appendChild(col);
+    }
+
+    document.querySelectorAll('input[name="mm"]').forEach((r) => {
+      r.addEventListener('change', () => render(r.value));
+    });
+
+    render('58mm');
+  </script>
+</body>
+</html>
