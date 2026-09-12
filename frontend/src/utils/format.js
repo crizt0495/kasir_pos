@@ -51,6 +51,26 @@ export function formatDateTime(value) {
   return valid ? `${day} ${month} ${year}, ${time}` : '-';
 }
 
+/** Format tanggal + jam konsisten zona WIB (Asia/Jakarta): 15 Agu 2026, 14:30.
+ *  Dipakai notifikasi agar tanggal/jam tidak melenceng bergantung timezone
+ *  browser/server (created_at disimpan UTC oleh Supabase). */
+export function formatDateTimeWIB(value) {
+  if (!value) return '-';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '-';
+  const parts = new Intl.DateTimeFormat('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(d);
+  const get = (t) => parts.find((p) => p.type === t)?.value ?? '';
+  return `${get('day')} ${get('month')} ${get('year')}, ${get('hour')}:${get('minute')}`;
+}
+
 /** Tanggal input HTML (YYYY-MM-DD) hari ini */
 export function todayInput() {
   return dayjs().format('YYYY-MM-DD');

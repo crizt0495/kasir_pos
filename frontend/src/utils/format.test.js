@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatRupiah, formatQty, paymentMethodLabel, initials } from './format.js';
+import { formatRupiah, formatQty, paymentMethodLabel, initials, formatDateTimeWIB } from './format.js';
 
 describe('formatRupiah', () => {
   it('memformat angka menjadi Rupiah', () => {
@@ -36,5 +36,18 @@ describe('initials', () => {
   });
   it('fallback untuk nama kosong', () => {
     expect(initials('')).toBe('?');
+  });
+});
+
+describe('formatDateTimeWIB', () => {
+  it('mengonversi UTC ke WIB (UTC+7)', () => {
+    expect(formatDateTimeWIB('2026-09-10T03:00:00.000Z')).toBe('10 Sep 2026, 10:00');
+  });
+  it('tanggal bergeser saat UTC sudah lewat tengah malam WIB', () => {
+    expect(formatDateTimeWIB('2026-09-09T18:30:00.000Z')).toBe('10 Sep 2026, 01:30');
+  });
+  it('fallback untuk nilai kosong', () => {
+    expect(formatDateTimeWIB(null)).toBe('-');
+    expect(formatDateTimeWIB('bukan-tanggal')).toBe('-');
   });
 });

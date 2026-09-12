@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Bell, BellOff, CheckCheck } from 'lucide-react';
 import { notificationsApi } from '../../api/index.js';
 import { usePermission } from '../../hooks/usePermission.js';
-import { formatDateTime } from '../../utils/format.js';
+import { formatDateTimeWIB } from '../../utils/format.js';
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 
@@ -25,6 +25,30 @@ function arrayBufferToBase64Url(buffer) {
 }
 
 const VAPID_KEY_LS = 'pos_vapid_key';
+
+/** Prioritas tipe saat dedupe per sale_id — DEBT & SALE paling informatif,
+ *  SALE_SMS/SALE_TG adalah channel lama yang dulu menambah baris duplikat. */
+const TYPE_RANK = { DEBT: 0, SALE: 1, SALE_SMS: 2, SALE_TG: 3 };
+
+/** Gabungkan entri duplikat milik transaksi yang sama (payload.sale_id).
+ *  Satu transaksi → satu baris di bell (perbaikan "1 transaksi = 3 notif"). */
+function dedupeSale(items) {
+  const bySale = new Map();
+  const others = [];
+  for (const n of items) {
+    if (n.payload?.sale_id) {
+      const prev = bySale.get(n.payload.sale_id);
+      if (!prev || (TYPE_RANK[n.type] ?? 9) < (TYPE_RANK[prev.type] ?? 9)) {
+        bySale.set(n.payload.sale_id, n);
+      }
+    } else {
+      others.push(n);
+    }
+  }
+  return [...others, ...bySale.values()].sort(
+    (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)
+  );
+}
 
 /** Daftarkan subscription Web Push ke backend (Owner). Dipakai Settings & Bell.
  *  Mengembalikan true bila berhasil, false bila batal/ditolak/gagal (tidak melempar). */
@@ -87,9 +111,10 @@ export function NotificationsBell() {
   // load dengan referensi stabil — tidak memicu useEffect berulang
   const load = useCallback(async () => {
     try {
-      const res = await notificationsApi.list({ limit: 15 });
-      setItems(res.data?.items || []);
-      setUnread(res.data?.unread || 0);
+      const res = await notificationsApi.list({ limit: 25 });
+      const deduped = dedupeSale(res.data?.items || []);
+      setItems(deduped);
+      setUnread(deduped.filter((n) => n.status === 'sent').length);
     } catch {
       /* abaikan */
     }
@@ -191,7 +216,7 @@ export function NotificationsBell() {
                     </div>
                     <p className="mt-0.5 whitespace-pre-line text-xs font-medium text-slate-600">{n.body}</p>
                     <p className="mt-1 text-[0.6rem] font-bold text-slate-400">
-                      {formatDateTime(n.created_at)}
+                      {formatDateTimeWIB(n.created_at)}
                       {n.status === 'failed' && <span className="ml-2 text-danger-500">gagal terkirim</span>}
                     </p>
                   </div>

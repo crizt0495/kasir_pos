@@ -4,6 +4,10 @@ import { resolveProvider } from './smsProviders.js';
 import { getSetting } from './settingsService.js';
 import webpush from 'web-push';
 
+// Zona waktu toko (Indonesia WIB) — dipakai untuk format tanggal/jam
+// di isi notifikasi agar konsisten di semua server (Vercel/cloud = UTC).
+const STORE_TZ = 'Asia/Jakarta';
+
 // Web Push — parameter keandalan tinggi (delivery ~100%)
 const PUSH_RETRIES = 3;              // total attempt = retries + 1
 const PUSH_RETRY_DELAYS = [300, 900]; // backoff ms antar retry
@@ -47,6 +51,7 @@ export function buildSaleNotification(sale) {
   if ((sale.items || []).length > 10) items.push('...');
 
   const dateStr = new Date(sale.created_at).toLocaleString('id-ID', {
+    timeZone: STORE_TZ,
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -193,13 +198,15 @@ export async function findOwnerUsers() {
 /**
  * Kirim Web Push ke semua subscription milik para owner.
  *
- * Bila owner belum punya subscription Web Push tetap dicatat ke
- * notification_logs (push_sent=false) agar tampil di bell & owner
- * menyadari konfigurasi push belum lengkap.
+ * Bila log=true (default), catat SATU baris notification_logs per user
+ * (BUKAN per subscription/perangkat) agar 1 transaksi = 1 notif di bell.
+ * Bila log=false, hanya kirim & kembalikan hasil per user (dipakai
+ * notifyNewSale untuk agregat semua channel jadi satu baris).
  */
-async function sendToOwnersWebPush(recipients, title, body, payload) {
+async function sendToOwnersWebPush(recipients, title, body, payload, { log = true } = {}) {
   let pushSent = 0;
   let pushFailed = 0;
+  const perUser = new Map();
   for (const userId of recipients) {
     const { data: subs } = await supabase
       .from('notification_subscriptions')
@@ -207,17 +214,23 @@ async function sendToOwnersWebPush(recipients, title, body, payload) {
       .eq('user_id', userId);
 
     if (!subs || subs.length === 0) {
-      await logNotification({
-        user_id: userId,
-        type: 'SALE',
-        title,
-        body,
-        payload: { ...payload, push_sent: false },
-        status: 'sent',
-      });
+      perUser.set(userId, { sent: 0, failed: 0, error: null, hasDevice: false });
+      if (log) {
+        await logNotification({
+          user_id: userId,
+          type: 'SALE',
+          title,
+          body,
+          payload: { ...payload, push_sent: false },
+          status: 'sent',
+        });
+      }
       continue;
     }
 
+    let sent = 0;
+    let failed = 0;
+    let lastErr = null;
     for (const sub of subs) {
       const { error: err, prunable } = await sendWebPush(sub, { title, body, url: '/pos', ...payload });
       if (prunable) {
@@ -228,15 +241,29 @@ async function sendToOwnersWebPush(recipients, title, body, payload) {
         }
       }
       if (err) {
-        pushFailed += 1;
-        await logNotification({ user_id: userId, type: 'SALE', title, body, payload: { ...payload, endpoint: sub.endpoint, url: '/pos' }, status: 'failed', error: String(err).slice(0, 500) });
+        failed += 1;
+        lastErr = err;
       } else {
-        pushSent += 1;
-        await logNotification({ user_id: userId, type: 'SALE', title, body, payload: { ...payload, url: '/pos' }, status: 'sent' });
+        sent += 1;
       }
     }
+    pushSent += sent;
+    pushFailed += failed;
+    perUser.set(userId, { sent, failed, error: lastErr, hasDevice: true });
+
+    if (log) {
+      await logNotification({
+        user_id: userId,
+        type: 'SALE',
+        title,
+        body,
+        payload: { ...payload, push_sent: sent > 0, devices: { sent, failed } },
+        status: sent > 0 ? 'sent' : 'failed',
+        error: sent > 0 ? null : String(lastErr || 'Gagal mengirim push').slice(0, 500),
+      });
+    }
   }
-  return { pushSent, pushFailed };
+  return { pushSent, pushFailed, perUser };
 }
 
 /**
@@ -317,55 +344,68 @@ export async function notifyNewSale(sale) {
 
     // Pesan SMS ringkas utk HP owner
     const customerName = sale.customer?.name || 'Umum';
-    const dateShort = new Date(sale.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    const dateShort = new Date(sale.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: STORE_TZ });
     const smsMessage =
       `${sale.invoice_number} - ${customerName} - ` +
       `Rp${Number(sale.total || 0).toLocaleString('id-ID')} (${sale.payment_method || '-'}) ${dateShort}`;
 
     // Cari user yang punya permission notifications.view (Owner).
-    // Semua level embebed pakai !inner agar filter benar-benar menyaring.
+    // Semua level embedded pakai !inner agar filter benar-benar menyaring.
     const recipients = await findOwnerUsers();
 
-    // 1) Web Push
-    if (notifSettings.channels.web_push) {
-      await sendToOwnersWebPush(recipients, title, body, payload);
-    }
+    // 1) Web Push — kirim ke SEMUA perangkat owner, hasil dirangkum per user
+    //    (SMS/Telegram tetap sekali kirim utk channel masing-masing).
+    //    log=false agar log agregat dibuat sekali saja di bawah.
+    const { perUser } = notifSettings.channels.web_push
+      ? await sendToOwnersWebPush(recipients, title, body, payload, { log: false })
+      : { perUser: new Map() };
 
-    // 2) SMS
+    // 2) SMS — sekali kirim ke no. HP owner
+    let smsErr = null;
     if (notifSettings.channels.sms) {
       const ownerPhone = notifSettings.owner_phone || env.SMS_TO;
-      if (ownerPhone) {
-        const smsErr = await sendSMS(smsMessage, { to: ownerPhone });
-        await logNotification({
-          user_id: recipients[0] || null,
-          type: 'SALE_SMS',
-          title: 'SMS',
-          body: smsMessage,
-          payload: { invoice_number: sale.invoice_number, sale_id: sale.id },
-          status: smsErr ? 'failed' : 'sent',
-          error: smsErr ? smsErr.slice(0, 500) : null,
-        });
-      }
+      if (ownerPhone) smsErr = await sendSMS(smsMessage, { to: ownerPhone });
     }
 
-    // 3) Telegram
+    // 3) Telegram — sekali kirim
+    let tgErr = null;
     if (notifSettings.channels.telegram) {
       const tgChatId = notifSettings.telegram_chat_id || env.TELEGRAM_CHAT_ID;
-      if (tgChatId && env.TELEGRAM_BOT_TOKEN) {
-        const tgErr = await sendTelegram(`${title}\n\n${body}`, tgChatId);
-        await logNotification({
-          user_id: recipients[0] || null,
-          type: 'SALE_TG',
-          title,
-          body,
-          payload,
-          status: tgErr ? 'failed' : 'sent',
-          error: tgErr ? tgErr.slice(0, 500) : null,
-        });
-      }
+      if (tgChatId && env.TELEGRAM_BOT_TOKEN) tgErr = await sendTelegram(`${title}\n\n${body}`, tgChatId);
     }
 
-    // 4) Hutang notification — catat di notification_logs bila ada shortfall
+    // 4) SATU baris log per recipient — semua channel dirangkum dalam payload
+    //    agar 1 transaksi = 1 notif di bell (bukan 1 per perangkat/channel).
+    const smsStatus = notifSettings.channels.sms ? (smsErr ? 'failed' : 'sent') : null;
+    const tgStatus = notifSettings.channels.telegram ? (tgErr ? 'failed' : 'sent') : null;
+
+    for (const userId of recipients) {
+      const p = perUser.get(userId) || { sent: 0, failed: 0, error: null, hasDevice: false };
+      const webStatus = notifSettings.channels.web_push
+        ? p.sent > 0
+          ? 'sent'
+          : p.hasDevice
+            ? 'failed'
+            : 'no-device'
+        : null;
+      const anyGagal = p.failed > 0 || Boolean(smsErr) || Boolean(tgErr);
+
+      await logNotification({
+        user_id: userId,
+        type: 'SALE',
+        title,
+        body,
+        payload: {
+          ...payload,
+          push_sent: p.sent > 0,
+          channels: { web_push: webStatus, sms: smsStatus, telegram: tgStatus },
+        },
+        status: anyGagal ? 'failed' : 'sent',
+        error: anyGagal ? String(p.error || smsErr || tgErr).slice(0, 500) : null,
+      });
+    }
+
+    // 5) Hutang notification — catat di notification_logs bila ada shortfall
     //    Fire-and-forget, tidak boleh menggagalkan transaksi (spec §18)
     const cashReceived = Number(sale?.payments?.[0]?.cash_received);
     const total = Number(sale?.total || 0);
@@ -377,7 +417,7 @@ export async function notifyNewSale(sale) {
         `Pelanggan: ${cName}\nNo. Transaksi: ${sale.invoice_number}\n` +
         `Total: Rp${total.toLocaleString('id-ID')}\nDibayar: Rp${cashReceived.toLocaleString('id-ID')}\n` +
         `Hutang: Rp${debtAmount.toLocaleString('id-ID')}\nKasir: ${cKasir}\n` +
-        `Tanggal: ${new Date(sale.created_at).toLocaleString('id-ID')}`;
+        `Tanggal: ${new Date(sale.created_at).toLocaleString('id-ID', { timeZone: STORE_TZ, day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
       const debtPayload = {
         invoice_number: sale.invoice_number,
         sale_id: sale.id,
