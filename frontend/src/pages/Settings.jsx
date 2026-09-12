@@ -62,10 +62,8 @@ export default function Settings() {
       pos: {
         default_payment_method: 'CASH',
         receipt_width: '58mm',
-        auto_print_receipt: s.pos?.print_method === 'bluetooth' ? true : false,
-        print_method: 'browser',
+        print_method: 'bluetooth',
         ...(s.pos || {}),
-        auto_print_receipt: s.pos?.print_method === 'bluetooth' ? true : (s.pos?.auto_print_receipt ?? false),
       },
       tax: { enabled: false, percentage: 0, ...(s.tax || {}) },
       inventory: { allow_negative_stock: false, low_stock_threshold: 0, ...(s.inventory || {}) },
@@ -204,41 +202,6 @@ export default function Settings() {
                 error={!!errors.invoice?.prefix}
               />
             </Field>
-            <div className="md:mt-7">
-              <Checkbox
-                label="Cetak struk otomatis setelah transaksi"
-                checked={form.pos.print_method === 'bluetooth' ? true : form.pos.auto_print_receipt === true}
-                disabled={form.pos.print_method === 'bluetooth'}
-                onChange={(e) => update('pos', { auto_print_receipt: e.target.checked })}
-              />
-              {form.pos.print_method === 'bluetooth' && (
-                <p className="mt-1 text-xs text-slate-500">Printer Bluetooth selalu mencetak struk otomatis setelah transaksi.</p>
-              )}
-            </div>
-          </div>
-          <div className="mt-4 flex flex-wrap items-start gap-4 rounded-xl border-2 border-black bg-slate-50 p-4">
-            <div className="min-w-[220px] flex-1">
-              <Field label="Metode Cetak">
-                <Select
-                  value={form.pos.print_method || 'browser'}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    const changes = { print_method: v };
-                    if (v === 'bluetooth') {
-                      changes.auto_print_receipt = true;
-                      setTab('printer');
-                    }
-                    update('pos', changes);
-                  }}
-                >
-                  <option value="browser">Browser (dialog cetak / PDF)</option>
-                  <option value="bluetooth">Printer Bluetooth (thermal)</option>
-                </Select>
-                <span className="mt-1 block text-xs text-slate-500">
-                  Bluetooth butuh Chrome/Edge via HTTPS, printer ESC/POS (58mm/80mm). Pasangkan printer di tab "Printer".
-                </span>
-              </Field>
-            </div>
           </div>
         </Card>
       )}
@@ -463,7 +426,7 @@ export default function Settings() {
                 <li>Pastikan printer thermal menyala & dalam mode Bluetooth (pairing).</li>
                 <li>Klik <b>Hubungkan Printer</b> sekali saja, lalu pilih printer dari dialog browser.</li>
                 <li>Setelah itu, printer akan <b>otomatis terhubung</b> setiap kali Anda mencetak struk.</li>
-                <li>Untuk cetak otomatis: set metode cetak ke <b>Printer Bluetooth</b> di tab "POS & Struk" dan aktifkan "Cetak struk otomatis".</li>
+                <li>Struk <b>selalu dicetak otomatis</b> setelah setiap transaksi — tanpa perlu pengaturan tambahan.</li>
               </ul>
             </div>
 

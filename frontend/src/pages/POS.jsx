@@ -183,8 +183,8 @@ export default function POS() {
       // Refresh data hutang & daftar pelanggan agar info hutang selalu terbaru
       loadDebtStats();
       customerResults.reload();
-      // Printer Bluetooth = langsung cetak struk otomatis (auto-connect bila perlu).
-      if (settings?.pos?.print_method === 'bluetooth' && bluetooth.supported) {
+      // Printer Bluetooth = cetak struk otomatis selalu (auto-connect bila perlu).
+      if (bluetooth.supported) {
         bluetooth
           .printStruk(res.data.sale, settings?.store, settings?.pos)
           .catch(() => toast.error('Gagal cetak ke printer Bluetooth'));
