@@ -121,4 +121,23 @@ describe('encodeLinesToBytes / buildEscPosReceipt', () => {
     }
     expect(hasBold).toBe(true);
   });
+  it('output byte = layout baris-per-baris yang sama dengan preview modal (48mm/80mm)', () => {
+    for (const pos of [pos58, pos80]) {
+      const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos });
+      const bytes = encodeLinesToBytes(layout);
+      const encoded = new TextDecoder().decode(bytes);
+      // Setiap baris (sudah disanitasi) harus muncul utuh berurutan di byte stream
+      let cursor = 0;
+      for (const line of layout.lines) {
+        const expected = sanitize(line.align === 'center' ? line.text.trim() : line.text).slice(0, layout.width);
+        expect(expected.length).toBeLessThanOrEqual(layout.width);
+        // Baris non-kosong harus ada persis (tidak boleh terpotong/jorok)
+        if (expected.trim()) {
+          const idx = encoded.indexOf(expected, cursor);
+          expect(idx).toBeGreaterThanOrEqual(cursor);
+          cursor = idx + expected.length;
+        }
+      }
+    }
+  });
 });

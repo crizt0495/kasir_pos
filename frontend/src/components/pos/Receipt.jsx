@@ -6,11 +6,14 @@ import { buildReceiptLayout } from '../../utils/escpos.js';
  * dengan encoder ESC/POS, sehingga tampilan modal = hasil cetak persis.
  */
 export default function Receipt({ sale, store, pos }) {
-  const width = pos?.receipt_width === '80mm' ? '80mm' : '58mm';
-  const { lines } = buildReceiptLayout({ sale, store, pos });
+  const { width, lines } = buildReceiptLayout({ sale, store, pos });
+  const is80 = pos?.receipt_width === '80mm';
 
   return (
-    <div className="receipt-print mx-auto bg-white p-4 font-mono text-black" style={{ width }}>
+    <div
+      className="receipt-print mx-auto bg-white p-3 font-mono text-black"
+      style={{ width: `${width}ch`, maxWidth: is80 ? '75mm' : '60mm' }}
+    >
       {lines.map((line, i) => (
         <div
           key={i}
