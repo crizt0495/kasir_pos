@@ -423,8 +423,13 @@ export default function Settings() {
                     disabled={!bluetooth.supported}
                     onClick={async () => {
                       try {
-                        await bluetooth.connect();
-                        toast.success('Printer Bluetooth terhubung');
+                        if (bluetooth.hasStoredDevice) {
+                          await bluetooth.autoConnect();
+                          toast.success('Printer Bluetooth otomatis terhubung');
+                        } else {
+                          await bluetooth.connect();
+                          toast.success('Printer Bluetooth terhubung');
+                        }
                       } catch (err) {
                         toast.error(getErrorMessage(err, 'Gagal menghubungkan printer Bluetooth'));
                       }
@@ -454,7 +459,8 @@ export default function Settings() {
               <Button
                 icon={Printer}
                 variant="secondary"
-                disabled={!bluetooth.isConnected}
+                disabled={!bluetooth.supported || (!bluetooth.isConnected && !bluetooth.hasStoredDevice)}
+                loading={bluetooth.connecting}
                 onClick={async () => {
                   try {
                     await bluetooth.printStruk(
