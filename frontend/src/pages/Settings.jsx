@@ -96,6 +96,7 @@ export default function Settings() {
         default_payment_method: 'CASH',
         receipt_width: '58mm',
         print_method: 'bluetooth',
+        show_unit_price: true,
         ...(s.pos || {}),
       },
       tax: { enabled: false, percentage: 0, ...(s.tax || {}) },
@@ -341,6 +342,21 @@ export default function Settings() {
             }}>
               Hapus Koneksi Printer
             </Button>
+          </Card>
+
+          <Card title={<span className="flex items-center gap-2"><Receipt className="h-4 w-4" /> Pengaturan Struk</span>} bodyClassName="p-5">
+            <div className="space-y-3">
+              <Checkbox
+                label="Tampilkan Harga Satuan"
+                checked={form.pos.show_unit_price !== false}
+                onChange={(e) => update('pos', { show_unit_price: e.target.checked })}
+              />
+              <p className="text-xs text-slate-400">
+                Saat aktif, setiap item struk menampilkan kolom Qty, Harga Satuan, dan Subtotal
+                (contoh: <code className="rounded bg-slate-100 px-1">1 x 150.000 = 150.000</code>).
+                Saat tidak aktif, kolom harga satuan disembunyikan.
+              </p>
+            </div>
           </Card>
         </div>
       )}

@@ -13,7 +13,7 @@ const baseSale = {
   items: [
     { product: { name: 'Kopi Susu Gula Aren' }, quantity: 2, price: 27000, subtotal: 54000, discount: 0 },
     { product: { name: 'Roti Bakar Coklat Keju' }, quantity: 1, price: 18000, subtotal: 18000, discount: 0 },
-    { product: { name: 'Indomie Goreng Spesial Telur Ayam Kampung' }, quantity: 3, price: 15500, subtotal: 46500, discount: 2000 },
+    { product: { name: 'Indomie Goreng Spesial Telur Ayam Kampung', unit: { name: 'Gram', short_name: 'gr' } }, quantity: 3, price: 15500, subtotal: 46500, discount: 2000 },
   ],
   subtotal: 118500,
   discount: 2000,
@@ -42,18 +42,41 @@ describe('scoreReceiptLayout', () => {
     expect(colons[0]).toBe(10);
   });
 
-  it('nilai uang & header Subtotal rata kanan sampai tepi kolom', () => {
+  it('header kolom item rata kanan sampai tepi kolom (Subtotal di ujung)', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store, pos: pos58 });
-    const header = layout.lines.find((l) => l.style === 'bold' && /Subtotal/.test(l.text));
+    const header = layout.lines.find((l) => l.style === 'bold' && /^Item/.test(l.text));
     expect(header.text.endsWith('Subtotal')).toBe(true);
     expect(header.text.length).toBe(32);
   });
 
+  it('baris nilai item & ringkasan berada di posisi yang rapi (mentok kanan + titik dua)', () => {
+    const layout = buildReceiptLayout({ sale: baseSale, store, pos: pos58 });
+    const texts = layout.lines.map((l) => l.text);
+    // JUMLAH ITEM = 2 + 1 + 3 = 6
+    expect(texts.some((t) => /^JUMLAH ITEM\s*:\s*6$/.test(t))).toBe(true);
+    // Baris nilai item pakai format Qty / Harga / Subtotal (rata kanan)
+    expect(texts.some((t) => /^\s+\d+\s+27\.000\s+54\.000$/.test(t))).toBe(true);
+    // Semua baris nilai (diawali spasi, diakhiri angka) panjang penuh
+    for (const t of texts) {
+      if (/^\s{4,}/.test(t) && /\d$/.test(t)) {
+        expect(t.length).toBe(32);
+        expect(t.endsWith(' ')).toBe(false);
+      }
+    }
+  });
+
   it('mendeteksi layout yang berantakan (skor < 100)', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store, pos: pos58 });
-    layout.lines.push({ text: 'Rp 5.000           ' }); // kolom nilai tidak mentok kanan
+    // Baris nilai tidak mentok kanan → money-align (skor turun)
+    layout.lines.push({ text: '    1  10.000' });
     const { score } = scoreReceiptLayout(layout);
     expect(score).toBeLessThan(100);
+  });
+
+  it('show_unit_price=false tetap rapih 100/100', () => {
+    const layout = buildReceiptLayout({ sale: baseSale, store, pos: { ...pos58, show_unit_price: false } });
+    const { score, issues } = scoreReceiptLayout(layout);
+    expect(score, `issue: ${issues.map((i) => i.type).join(', ')}`).toBe(100);
   });
 });
 
@@ -63,15 +86,12 @@ describe('encodeLinesToBytes — tidak dobel center', () => {
     const bytes = encodeLinesToBytes(layout);
     const encoded = new TextDecoder().decode(bytes);
 
-    // Teks tengah tidak boleh diawali spasi pad di byte stream — printer
-    // yang memusatkan via ESC a 1 (jika kita pad manual, hasilnya geser kanan).
     const centerLines = layout.lines.filter((l) => l.align === 'center');
     for (const line of centerLines) {
       const needle = sanitize(line.text.trim());
       if (!needle) continue;
       const idx = encoded.indexOf(needle);
       expect(idx).toBeGreaterThan(-1);
-      // Karakter sebelum teks tidak boleh spasi (harus langsung align cmd / tidak ada pad)
       const before = encoded[idx - 1];
       expect(before === ' ' ? { before, msg: 'baris tengah ke-pad manual' } : undefined).toBeUndefined();
     }
@@ -84,6 +104,7 @@ describe('encodeLinesToBytes — tidak dobel center', () => {
     const texts = layout.lines.map((l) => l.text);
     expect(encoded).toContain('Item');
     expect(encoded).toContain('Kopi Susu Gula Aren');
+    expect(encoded).toContain('JUMLAH ITEM');
     expect(encoded).toContain('TOTAL');
     expect(encoded).toContain('Terima kasih');
     expect(texts.every((t) => t.length <= layout.width)).toBe(true);

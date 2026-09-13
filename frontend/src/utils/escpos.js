@@ -1,4 +1,4 @@
-import { formatRupiah, formatDateTimeWIB, paymentMethodLabel, formatQty } from './format.js';
+import { formatRupiah, formatDateTimeWIB, paymentMethodLabel, formatQty, formatNumber } from './format.js';
 
 // ============================================================
 // ESC/POS encoder untuk printer thermal (58mm / 80mm)
@@ -51,13 +51,6 @@ export function sanitize(text) {
     .join('');
 }
 
-/** Pad kanan label + nilai rata kanan ke lebar baris. */
-function row(width, label, value) {
-  const l = sanitize(label).slice(0, Math.max(0, width - 3));
-  const v = sanitize(value).slice(0, Math.max(0, width - l.length));
-  return (l + ' '.repeat(Math.max(0, width - l.length - v.length)) + v).slice(0, width);
-}
-
 function dashed(width) {
   return '-'.repeat(width);
 }
@@ -93,6 +86,45 @@ function solidLine(width) {
 }
 
 /**
+ * Kolom angka item (Qty / Harga / Subtotal) — semuanya rata kanan.
+ * Subtotal selalu mentok ke tepi kanan; Qty & Harga mengikuti di kirinya.
+ */
+function numberColumns(width, showHarga) {
+  const subtotalRight = width - 1;
+  const hargaRight = showHarga ? subtotalRight - 10 : -1;
+  const qtyRight = showHarga ? hargaRight - 8 : subtotalRight - 12;
+  return { qtyRight, hargaRight, subtotalRight };
+}
+
+/** Tulis teks rata kanan ke buffer (berakhir tepat di kolom `right`). */
+function putRight(buf, text, right) {
+  const t = sanitize(text).slice(0, buf.length);
+  let start = right - t.length + 1;
+  if (start < 0) start = 0;
+  for (let i = 0; i < t.length; i += 1) buf[start + i] = t[i];
+  return buf;
+}
+
+/** Header kolom item: "Item" (kiri) + Qty/Harga/Subtotal (rata kanan). */
+function itemHeader(width, cols, showHarga) {
+  const buf = new Array(width).fill(' ');
+  for (let i = 0; i < 'Item'.length; i += 1) buf[i] = 'Item'[i];
+  putRight(buf, 'Qty', cols.qtyRight);
+  if (showHarga) putRight(buf, 'Harga', cols.hargaRight);
+  putRight(buf, 'Subtotal', cols.subtotalRight);
+  return buf.join('');
+}
+
+/** Baris nilai item (qty / harga satuan / subtotal) rata kanan. */
+function itemValueRow(width, cols, showHarga, qty, harga, subtotal) {
+  const buf = new Array(width).fill(' ');
+  putRight(buf, formatQty(Number(qty) || 0), cols.qtyRight);
+  if (showHarga) putRight(buf, formatNumber(harga), cols.hargaRight);
+  putRight(buf, formatNumber(subtotal), cols.subtotalRight);
+  return buf.join('');
+}
+
+/**
  * Susun struktur struk sebagai [ { text, style, align } ].
  * Layout disamakan persis dengan Receipt.jsx (modal preview).
  */
@@ -101,7 +133,6 @@ export function buildReceiptLayout({ sale, store, pos }) {
 
   const lines = [];
   const push = (text, extra = {}) => lines.push({ text, ...extra });
-  const pushRow = (label, value, extra = {}) => push(row(width, label, value), extra);
   const centered = (text, extra = {}) => {
     for (const t of wrap(text, width)) push(t, { align: 'center', ...extra });
   };
@@ -114,10 +145,10 @@ export function buildReceiptLayout({ sale, store, pos }) {
   push(dashed(width));
 
   // ---------- Info transaksi (titik dua sejajar) ----------
-  const info = (label, value) => {
+  const info = (label, value, extra = {}) => {
     const prefix = `${label.padEnd(9)} : `;
     const parts = wrap(value == null || value === '' ? '-' : String(value), width - prefix.length);
-    parts.forEach((t, i) => push((i === 0 ? prefix : ' '.repeat(prefix.length)) + t));
+    parts.forEach((t, i) => push((i === 0 ? prefix : ' '.repeat(prefix.length)) + t, extra));
   };
   info('No.', sale?.invoice_number);
   info('Tanggal', sale?.created_at ? formatDateTimeWIB(sale.created_at) : '-');
@@ -126,41 +157,38 @@ export function buildReceiptLayout({ sale, store, pos }) {
   push(dashed(width));
 
   // ---------- Item ----------
-  // Header "Item" (kiri) + "Subtotal" (kanan) — tanpa KOLOM Qty. Jumlah
-  // barang tetap tampil inline di depan nama (mis. "2x Kopi Susu").
-  push(row(width, 'Item', 'Subtotal'), { style: 'bold' });
+  // Nama produk (bold) di baris sendiri; baris berikutnya memuat kolom
+  // Qty / Harga Satuan / Subtotal rata kanan (atan "Tampilkan Harga
+  // Satuan" dimatikan, kolom Harga dihilangkan).
+  const showHarga = pos?.show_unit_price !== false;
+  const itemCols = numberColumns(width, showHarga);
+  push(itemHeader(width, itemCols, showHarga), { style: 'bold' });
   push(dashed(width));
 
   for (const it of sale?.items || []) {
     const name = it.product?.name || 'Produk';
-    const sub = formatRupiah(it.subtotal);
-    const subLen = sanitize(sub).length;
-    const avail = Math.max(1, width - subLen - 1);
-    const nameLines = wrap(`${formatQty(it.quantity)}x ${name}`, avail);
-    nameLines.forEach((t, i) => {
-      if (i === nameLines.length - 1) {
-        push(row(width, t, sub));
-      } else {
-        push(t);
-      }
-    });
+    const unitLabel = it.product?.unit?.short_name || it.product?.unit?.name;
+    for (const t of wrap(name, width)) push(t, { style: 'bold' });
+    if (unitLabel) push(sanitize(unitLabel));
+    push(itemValueRow(width, itemCols, showHarga, it.quantity, it.price, it.subtotal));
     if (Number(it.discount) > 0) {
       push(`  (disc -${formatRupiah(it.discount)})`);
     }
   }
   push(dashed(width));
 
-  // ---------- Total ----------
-  pushRow('Subtotal', formatRupiah(sale?.subtotal));
-  if (Number(sale?.discount) > 0) pushRow('Diskon', `-${formatRupiah(sale?.discount)}`);
-  if (Number(sale?.tax) > 0) pushRow('Pajak', formatRupiah(sale?.tax));
-  if (Number(sale?.additional_cost) > 0) pushRow('Biaya Lain', formatRupiah(sale?.additional_cost));
+  // ---------- Rangkuman ----------
+  const totalQty = (sale?.items || []).reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
+  info('JUMLAH ITEM', formatQty(totalQty));
+  if (Number(sale?.discount) > 0) info('Diskon', `-${formatRupiah(sale?.discount)}`);
+  if (Number(sale?.tax) > 0) info('Pajak', formatRupiah(sale?.tax));
+  if (Number(sale?.additional_cost) > 0) info('Biaya Lain', formatRupiah(sale?.additional_cost));
 
   push(solidLine(width));
-  pushRow('TOTAL', formatRupiah(sale?.total), { style: 'bold' });
-  pushRow(paymentMethodLabel(sale?.payment_method), formatRupiah(sale?.payments?.[0]?.cash_received ?? sale?.total));
+  info('TOTAL', formatRupiah(sale?.total), { style: 'bold' });
+  info(paymentMethodLabel(sale?.payment_method), formatRupiah(sale?.payments?.[0]?.cash_received ?? sale?.total));
   if (Number(sale?.payments?.[0]?.change_amount) > 0) {
-    pushRow('Kembalian', formatRupiah(sale?.payments?.[0]?.change_amount));
+    info('Kembalian', formatRupiah(sale?.payments?.[0]?.change_amount));
   }
 
   // ---------- Hutang ----------
@@ -170,14 +198,15 @@ export function buildReceiptLayout({ sale, store, pos }) {
     push(dashed(width));
     centered('SISA HUTANG', { style: 'bold' });
     centered(formatRupiah(total - cashReceived), { style: 'bold' });
-    pushRow('TOTAL', formatRupiah(total));
-    pushRow('DIBAYAR', formatRupiah(cashReceived));
-    pushRow('SISA HUTANG', formatRupiah(total - cashReceived));
+    info('TOTAL', formatRupiah(total));
+    info('DIBAYAR', formatRupiah(cashReceived));
+    info('SISA HUTANG', formatRupiah(total - cashReceived));
     centered('STATUS: BELUM LUNAS', { style: 'bold' });
   }
 
   // ---------- Footer ----------
   push(dashed(width));
+  push('');
   centered('Terima kasih atas kunjungan Anda!');
   centered('Barang yang sudah dibeli tidak dapat dikembalikan kecuali ada kesalahan dari toko.');
 
@@ -206,22 +235,28 @@ export function scoreReceiptLayout({ width, lines }) {
     issues.push({ type: 'info-colon' });
   }
 
-  // 3) Setiap nilai uang pada baris kolom harus mentok kanan (rata kanan).
-  //    Baris catatan (mis. "(disc -Rp 2.000)") bukan kolom nilai → dilewati.
-  lines.forEach((l, i) => {
-    if (l.align === 'center') return;
-    if (!/Rp/.test(l.text)) return;
-    if (l.text.trimStart().startsWith('(')) return;
-    if (l.text.length !== width || l.text.endsWith(' ')) {
-      issues.push({ line: i + 1, type: 'money-align' });
-    }
-  });
-
-  // 4) Header kolom "Subtotal" (bila ada) harus rata kanan seperti nilainya
-  const header = lines.find((l) => l.style === 'bold' && /Subtotal/.test(l.text));
-  if (header && (header.text.length !== width || !header.text.endsWith('Subtotal'))) {
+  // 3) Header kolom item harus rata kanan sampai tepi kolom
+  const atRightEdge = (t) => t.length === width && !t.endsWith(' ');
+  const header = lines.find((l) => l.style === 'bold' && /^Item/.test(l.text) && /Subtotal/.test(l.text));
+  if (header && !atRightEdge(header.text)) {
     issues.push({ type: 'header-align' });
   }
+
+  // 4) Baris nilai item (diawali banyak spasi, diakhiri angka) harus mentok
+  //    kanan — hasil putRight() selalu berakhir tepat di tepi kolom.
+  lines.forEach((l, i) => {
+    const t = l.text;
+    if (l.align === 'center') return;
+    if (!/^\s{4,}/.test(t)) return;
+    if (!/\d$/.test(t)) return;
+    if (!atRightEdge(t)) issues.push({ line: i + 1, type: 'money-align' });
+  });
+
+  // 5) Baris rangkuman harus memakai titik dua ("JUMLAH ITEM : 4")
+  const totalLabels = /^(JUMLAH ITEM|Diskon|Pajak|Biaya Lain|TOTAL|Tunai|Debit|QRIS|Kredit|Transfer|E-Wallet|Kembalian|DIBAYAR)\s*/;
+  texts.forEach((t, i) => {
+    if (totalLabels.test(t) && t.indexOf(':') < 0) issues.push({ line: i + 1, type: 'total-colon' });
+  });
 
   const penalty = issues.reduce((acc, it) => acc + (it.type === 'overflow' ? 20 : 10), 0);
   return { score: Math.max(0, 100 - penalty), issues };
