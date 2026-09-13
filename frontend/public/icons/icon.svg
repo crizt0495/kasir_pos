@@ -1,4 +1,71 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="22" fill="#4f46e5"/>
-  <text x="50" y="68" font-size="52" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-weight="bold">P</text>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2E6BFF"/>
+      <stop offset="0.55" stop-color="#1E4FD6"/>
+      <stop offset="1" stop-color="#123099"/>
+    </linearGradient>
+    <linearGradient id="awningGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFB340"/>
+      <stop offset="1" stop-color="#F5641B"/>
+    </linearGradient>
+    <linearGradient id="coinGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFB340"/>
+      <stop offset="1" stop-color="#F5641B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Bayangan lembut di belakang kotak -->
+  <rect x="44" y="52" width="424" height="424" rx="104" fill="#05143B" opacity="0.28"/>
+
+  <!-- Kotak dasar rounded -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#bgGrad)"/>
+
+  <!-- Petunjuk storefront: kanopi toko (givak) dengan gelombang -->
+  <rect x="96" y="92" width="320" height="40" rx="20" fill="url(#awningGrad)"/>
+  <path fill="url(#awningGrad)" d="
+    M96 128 L96 106 Q96 92 110 92 L402 92 Q416 92 416 106 L416 128
+    L390.4 128 A12.8 12.8 0 0 0 364.8 128
+    A12.8 12.8 0 0 0 339.2 128
+    A12.8 12.8 0 0 0 313.6 128
+    A12.8 12.8 0 0 0 288 128
+    A12.8 12.8 0 0 0 262.4 128
+    A12.8 12.8 0 0 0 236.8 128
+    A12.8 12.8 0 0 0 211.2 128
+    A12.8 12.8 0 0 0 185.6 128
+    A12.8 12.8 0 0 0 160 128
+    A12.8 12.8 0 0 0 134.4 128
+    A12.8 12.8 0 0 0 108.8 128
+    Z"/>
+  <!-- garis givak -->
+  <rect x="148" y="92" width="4" height="40" fill="#FFFFFF" opacity="0.55"/>
+  <rect x="196" y="92" width="4" height="40" fill="#FFFFFF" opacity="0.55"/>
+  <rect x="244" y="92" width="4" height="40" fill="#FFFFFF" opacity="0.55"/>
+  <rect x="292" y="92" width="4" height="40" fill="#FFFFFF" opacity="0.55"/>
+  <rect x="340" y="92" width="4" height="40" fill="#FFFFFF" opacity="0.55"/>
+
+  <!-- Keranjang belanja -->
+  <g fill="#FFFFFF">
+    <path d="M150 214h74l-11 84h-52Z"/>
+    <circle cx="160" cy="312" r="13"/>
+    <circle cx="216" cy="312" r="13"/>
+  </g>
+  <path d="M186 214 L228 174" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round"/>
+
+  <!-- Kas register -->
+  <rect x="302" y="196" width="64" height="44" rx="9" fill="#FFFFFF"/>
+  <rect x="330" y="240" width="8" height="18" fill="#FFFFFF"/>
+  <rect x="274" y="256" width="140" height="66" rx="14" fill="#FFFFFF"/>
+  <rect x="295" y="270" width="98" height="10" rx="5" fill="#1E4FD6"/>
+  <circle cx="292" cy="298" r="5" fill="#FFFFFF"/>
+  <circle cx="318" cy="298" r="5" fill="#FFFFFF"/>
+  <circle cx="344" cy="298" r="5" fill="#FFFFFF"/>
+  <circle cx="370" cy="298" r="5" fill="#FFFFFF"/>
+  <rect x="286" y="320" width="116" height="42" rx="9" fill="#FFFFFF"/>
+  <rect x="286" y="326" width="116" height="9" rx="5" fill="#FFB340"/>
+  <rect x="330" y="340" width="28" height="7" rx="3.5" fill="#123099"/>
+
+  <!-- Payung label di bawah -->
+  <text x="256" y="428" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif" font-size="34" font-weight="bold" letter-spacing="4" text-anchor="middle" fill="#FFFFFF">POS KASIR APP</text>
 </svg>

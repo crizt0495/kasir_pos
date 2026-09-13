@@ -2,10 +2,10 @@
    - Cache app shell untuk offline & akses cepat
    - API tidak di-cache (selalu jaringan)
    - Push notification + click → buka aplikasi
-   - Versi: v10 — bump untuk paksa invalidate cache chunk lama
+   - Versi: v11 — bump untuk paksa invalidate cache chunk lama
    - Di server dev (localhost:5173) SW tetap terdaftar untuk Web Push,
      tapi TIDAK meng-cache apa pun agar HMR Vite tidak terganggu. */
-const CACHE = 'pos-shell-v10';
+const CACHE = 'pos-shell-v11';
 const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 const isDevServer =
