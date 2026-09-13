@@ -44,4 +44,4 @@ Aplikasi Point of Sale (POS) modern: React 18 + Vite + Tailwind CSS v4 (frontend
 - PWA `sw.js` dan manifest ada namun belum diverifikasi penuh.
 
 ## Selector E2E yang TIDAK BOLEH diubah
-Login: placeholder `Masukkan username` / `Masukkan password`, button `Login`. Dashboard: heading `Dashboard`. POS: link `POS / Kasir`, teks `Keranjang`, placeholder `Cari produk (F2)...`, tombol /Bayar/, `Grand Total`, testid `cash-received`, tombol /Proses Pembayaran/, `Struk Transaksi`, `INV-`, `Terima kasih`.
+Login: placeholder `Masukkan username` / `Masukkan password`, button `Login`. Dashboard: heading `Dashboard`. POS: link `POS / Kasir`, teks `Keranjang`, placeholder `Cari produk atau Scan Barcode (F2)...`, tombol /Bayar/, `Grand Total`, testid `cash-received`, tombol /Proses Pembayaran/, `Struk Transaksi`, `INV-`, `Terima kasih`.
