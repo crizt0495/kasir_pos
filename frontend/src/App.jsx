@@ -20,6 +20,7 @@ const CustomerDetail = lazy(() => import('./pages/CustomerDetail.jsx'));
 const Suppliers = lazy(() => import('./pages/Suppliers.jsx'));
 const Inventory = lazy(() => import('./pages/Inventory.jsx'));
 const Movements = lazy(() => import('./pages/Movements.jsx'));
+const PriceMovements = lazy(() => import('./pages/PriceMovements.jsx'));
 const Opnames = lazy(() => import('./pages/Opnames.jsx'));
 const OpnameForm = lazy(() => import('./pages/OpnameForm.jsx'));
 const Purchases = lazy(() => import('./pages/Purchases.jsx'));
@@ -97,6 +98,7 @@ function AppRoutes() {
           <Route path="suppliers" element={<RequirePermission permission="suppliers.view"><Suppliers /></RequirePermission>} />
           <Route path="inventory" element={<RequirePermission permission="inventory.view"><Inventory /></RequirePermission>} />
           <Route path="inventory/movements" element={<RequirePermission permission="inventory.view"><Movements /></RequirePermission>} />
+          <Route path="inventory/price-movements" element={<RequirePermission permission="inventory.view"><PriceMovements /></RequirePermission>} />
           <Route path="inventory/opname" element={<RequirePermission permission="stock_opname.view"><Opnames /></RequirePermission>} />
           <Route path="inventory/opname/new" element={<RequirePermission permission="stock_opname.create"><OpnameForm /></RequirePermission>} />
           <Route path="inventory/opname/:id" element={<RequirePermission permission="stock_opname.view"><OpnameForm /></RequirePermission>} />

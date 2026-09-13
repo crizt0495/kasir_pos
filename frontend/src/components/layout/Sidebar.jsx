@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ShoppingCart, ReceiptText, Package, Tags, Users, Truck, Boxes,
   ArrowLeftRight, ClipboardList, ShoppingBag, Wallet, PiggyBank, BarChart3, ShieldCheck,
   UserCog, KeyRound, ScrollText, Settings as SettingsIcon, X, Store, HandCoins, BookUser,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Coins,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore.js';
 
@@ -33,6 +33,7 @@ const MENU = [
     items: [
       { label: 'Stok', to: '/inventory', icon: Boxes, perm: 'inventory.view' },
       { label: 'Pergerakan Stok', to: '/inventory/movements', icon: ArrowLeftRight, perm: 'inventory.view' },
+      { label: 'Pergerakan Harga', to: '/inventory/price-movements', icon: Coins, perm: 'inventory.view' },
       { label: 'Stock Opname', to: '/inventory/opname', icon: ClipboardList, perm: 'stock_opname.view' },
     ],
   },

@@ -10,6 +10,7 @@ router.use(requireAuth);
 
 router.get('/inventory', requirePermission('inventory.view'), asyncHandler(inventory.listInventory));
 router.get('/inventory/movements', requirePermission('inventory.view'), asyncHandler(inventory.listMovements));
+router.get('/inventory/price-movements', requirePermission('inventory.view'), asyncHandler(inventory.listPriceMovements));
 router.post('/inventory/adjust', requirePermission('inventory.adjust'), validate(adjustStockSchema), asyncHandler(inventory.adjustStock));
 
 router.get('/stock-opnames', requirePermission('stock_opname.view'), asyncHandler(inventory.listOpnames));

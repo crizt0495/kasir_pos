@@ -64,6 +64,7 @@ export const suppliersApi = {
 export const inventoryApi = {
   list: (params) => api.get('/inventory', { params }).then((r) => r.data),
   movements: (params) => api.get('/inventory/movements', { params }).then((r) => r.data),
+  priceMovements: (params) => api.get('/inventory/price-movements', { params }).then((r) => r.data),
   adjust: (payload) => api.post('/inventory/adjust', payload).then((r) => r.data),
   opnames: (params) => api.get('/stock-opnames', { params }).then((r) => r.data),
   opname: (id) => api.get(`/stock-opnames/${id}`).then((r) => r.data),

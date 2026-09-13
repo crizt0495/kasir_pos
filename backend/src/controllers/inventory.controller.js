@@ -99,6 +99,51 @@ export const listMovements = asyncHandler(async (req, res) => {
 });
 
 // ============================================================
+// PERGERAKAN HARGA
+// ============================================================
+export const listPriceMovements = asyncHandler(async (req, res) => {
+  const { page, pageSize } = getPagination(req.query, 20);
+  const { price_type, product_id } = req.query;
+  const q = safeSearch(req.query.search);
+  const range = dateRange(req.query.from, req.query.to);
+
+  // Cari product_id berdasarkan nama produk ATAU username user pengubah.
+  // `.or()` menangani keduanya sekaligus (produk ∪ nama user).
+  let searchFilter = null;
+  if (q) {
+    const { data: matched } = await supabase
+      .from('products')
+      .select('id')
+      .or(`name.ilike.%${q}%,sku.ilike.%${q}%,barcode.ilike.%${q}%`)
+      .limit(100);
+    const ids = (matched || []).map((p) => p.id);
+    const parts = [];
+    if (ids.length) parts.push(`product_id.in.(${ids.join(',')})`);
+    parts.push(`changed_by_name.ilike.%${q}%`);
+    searchFilter = parts.join(',');
+  }
+
+  const result = await fetchPage({
+    buildQuery: (select, opts) => {
+      let query = supabase.from('price_movements').select(select, opts);
+      if (product_id) query = query.eq('product_id', product_id);
+      if (price_type) query = query.eq('price_type', price_type);
+      if (range.gte) query = query.gte('created_at', range.gte);
+      if (range.lte) query = query.lte('created_at', range.lte);
+      if (searchFilter) query = query.or(searchFilter);
+      return query;
+    },
+    select: '*, product:products(id, name, sku)',
+    signature: countSignature('price_movements', [price_type, product_id, req.query.from, req.query.to, q]),
+    page,
+    pageSize,
+    orderBy: 'created_at',
+    ascending: false,
+  });
+  return ok(res, result);
+});
+
+// ============================================================
 // PENYESUAIAN STOK
 // ============================================================
 export const adjustStock = asyncHandler(async (req, res) => {
