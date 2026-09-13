@@ -800,7 +800,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
   useEffect(() => {
     if (open) {
       setMethod('CASH');
-      setPaid('');
+      setPaid(String(totals.total));
       setNotes('');
       setError(null);
       const d = new Date();
@@ -816,6 +816,11 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
   const canSubmit = isCash
     ? (paidNum >= totals.total || canRecordDebt)
     : (totals.total > 0);
+
+  const handleSelectMethod = (m) => {
+    setMethod(m);
+    if (m === 'CASH') setPaid(String(totals.total));
+  };
 
   const submit = async () => {
     if (isCash) {
@@ -866,15 +871,20 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
             <Button variant="secondary" onClick={onClose} disabled={submitting}>
               Batal
             </Button>
-            <Button
-              onClick={submit}
-              loading={submitting}
-              disabled={!canSubmit}
-              className="px-6"
-            >
-              <Banknote className="h-5 w-5" />
-              {isCash && canRecordDebt ? `Bayar ${formatRupiah(paidNum)} · Hutang ${formatRupiah(debtAmount)}` : 'Proses Pembayaran'}
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              <Button
+                onClick={submit}
+                loading={submitting}
+                disabled={!canSubmit}
+                className="px-6"
+              >
+                <Banknote className="h-5 w-5" />
+                {isCash && canRecordDebt ? `Bayar ${formatRupiah(paidNum)} · Hutang ${formatRupiah(debtAmount)}` : 'Proses Pembayaran'}
+              </Button>
+              {isCash && !canSubmit && (
+                <p className="text-xs font-medium text-danger-600">Mohon isi Jumlah Bayar terlebih dahulu</p>
+              )}
+            </div>
           </div>
         </div>
       }
@@ -924,7 +934,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
             {paymentMethods.map((m) => (
               <button
                 key={m}
-                onClick={() => setMethod(m)}
+                onClick={() => handleSelectMethod(m)}
                 className={`flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 px-3 py-3 text-sm font-medium transition-all duration-200 ${
                   method === m
                     ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-200'
