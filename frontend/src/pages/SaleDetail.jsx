@@ -13,12 +13,14 @@ import { Field, Input, Textarea } from '../components/ui/Form.jsx';
 import { StatusBadge, Skeleton, ErrorState, EmptyState } from '../components/ui/Feedback.jsx';
 import { formatRupiah, formatDateTime, formatQty, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
+import { usePrinterConnect, DEFAULT_CONNECT_CONFIG } from '../context/PrinterConnectProvider.jsx';
 
 export default function SaleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { can } = usePermission();
   const bluetooth = useBluetoothPrinter();
+  const { openConnectModal } = usePrinterConnect();
   const [showRefund, setShowRefund] = useState(false);
   const [refundItems, setRefundItems] = useState({});
   const [reason, setReason] = useState('');
@@ -126,7 +128,7 @@ export default function SaleDetail() {
     }
   };
 
-  const printReceipt = async () => {
+  const reprintStruk = async () => {
     if (!s) return;
     try {
       toast.info('Mencetak struk...');
@@ -134,8 +136,31 @@ export default function SaleDetail() {
       await bluetooth.printStruk(s, settingsRes.data?.store, settingsRes.data?.pos);
       toast.success('Struk berhasil dicetak');
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Gagal cetak struk'));
+      if (error?.response) {
+        toast.error(getErrorMessage(error, 'Gagal memuat data struk'));
+        return;
+      }
+      openConnectModal({
+        ...DEFAULT_CONNECT_CONFIG,
+        onConnected: () => reprintStruk(),
+      });
     }
+  };
+
+  const printReceipt = async () => {
+    if (!s) return;
+    if (!bluetooth.supported) {
+      toast.error('Browser tidak mendukung Web Bluetooth (butuh Chrome/Edge via HTTPS)');
+      return;
+    }
+    if (!bluetooth.isConnected) {
+      openConnectModal({
+        ...DEFAULT_CONNECT_CONFIG,
+        onConnected: () => reprintStruk(),
+      });
+      return;
+    }
+    await reprintStruk();
   };
 
   return (

@@ -28,7 +28,11 @@ export function PrinterConnectProvider({ children }) {
         title={state.title}
         message={state.message}
         connectLabel={state.connectLabel}
-        onClose={closeModal}
+        onClose={() => {
+          const onClose = state.onClose;
+          closeModal();
+          onClose?.();
+        }}
         onConnected={() => {
           const onConnected = state.onConnected;
           closeModal();

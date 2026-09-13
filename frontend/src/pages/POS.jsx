@@ -197,11 +197,13 @@ export default function POS() {
         bluetooth
           .printStruk(res.data.sale, settings?.store, settings?.pos)
           .catch(() => {
+            setShowReceipt(false);
             pendingPrintRef.current = { sale: res.data.sale, store: settings?.store, pos: settings?.pos };
             openConnectModal({
               title: 'Printer Tidak Terhubung',
               message: 'Gagal mencetak struk. Silakan aktifkan Bluetooth dan pilih printer thermal Anda.',
               connectLabel: 'Hubungkan & Cetak Ulang',
+              onClose: () => setShowReceipt(true),
               onConnected: async () => {
                 const data = pendingPrintRef.current;
                 pendingPrintRef.current = null;
