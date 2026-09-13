@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bluetooth, Eye, Printer } from 'lucide-react';
+import { Eye, Printer } from 'lucide-react';
 import { salesApi, settingsApi, usersApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { useDebounce } from '../hooks/useDebounce.js';
@@ -9,11 +9,10 @@ import { toast } from '../stores/uiStore.js';
 import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
 import { Field, Input, Select } from '../components/ui/Form.jsx';
 import { StatusBadge } from '../components/ui/Feedback.jsx';
-import { Modal } from '../components/ui/Modal.jsx';
-import { Button } from '../components/ui/Button.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatRupiah, formatDateTime, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
+import PrinterConnectModal from '../components/pos/PrinterConnectModal.jsx';
 import { getErrorMessage } from '../api/client.js';
 
 export default function Sales() {
@@ -32,7 +31,6 @@ export default function Sales() {
   const [sort, setSort] = useState({ key: 'created_at', order: 'desc' });
   const [printerOpen, setPrinterOpen] = useState(false);
   const [pendingSale, setPendingSale] = useState(null);
-  const [connecting, setConnecting] = useState(false);
 
   // Dropdown kasir hanya dimuat bila user punya izin melihat daftar user
   const users = useApi(
@@ -61,15 +59,10 @@ export default function Sales() {
     setPage(1);
   };
 
-  const performPrint = async (sale) => {
-    try {
-      toast.info('Mencetak struk ulang...');
-      const [saleRes, settingsRes] = await Promise.all([salesApi.get(sale.id), settingsApi.get()]);
-      await bluetooth.printStruk(saleRes.data, settingsRes.data?.store, settingsRes.data?.pos);
-      toast.success('Struk berhasil dicetak ulang');
-    } catch (err) {
-      toast.error(getErrorMessage(err, 'Gagal cetak ulang struk'));
-    }
+  const fetchAndPrint = async (sale) => {
+    toast.info('Mencetak struk ulang...');
+    const [saleRes, settingsRes] = await Promise.all([salesApi.get(sale.id), settingsApi.get()]);
+    await bluetooth.printStruk(saleRes.data, settingsRes.data?.store, settingsRes.data?.pos);
   };
 
   const printReceipt = async (sale) => {
@@ -78,31 +71,34 @@ export default function Sales() {
       return;
     }
     if (bluetooth.isConnected) {
-      await performPrint(sale);
+      try {
+        await fetchAndPrint(sale);
+        toast.success('Struk berhasil dicetak ulang');
+      } catch (err) {
+        if (err?.response) {
+          toast.error(getErrorMessage(err, 'Gagal memuat data struk'));
+          return;
+        }
+        setPendingSale(sale);
+        setPrinterOpen(true);
+      }
       return;
     }
     setPendingSale(sale);
     setPrinterOpen(true);
   };
 
-  const closePrinterModal = () => {
-    if (connecting) return;
-    setPrinterOpen(false);
-    setPendingSale(null);
-  };
-
-  const handleConnectPrinter = async () => {
+  const handleConnected = async () => {
     const sale = pendingSale;
+    setPendingSale(null);
+    setPrinterOpen(false);
+    if (!sale) return;
     try {
-      setConnecting(true);
-      await bluetooth.connect();
-      setPrinterOpen(false);
-      setPendingSale(null);
-      await performPrint(sale);
-    } catch {
-      toast.error('Gagal terhubung ke printer. Silakan cek kembali.');
-    } finally {
-      setConnecting(false);
+      toast.info('Mencetak struk ulang...');
+      await fetchAndPrint(sale);
+      toast.success('Struk berhasil dicetak ulang');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Gagal cetak ulang struk'));
     }
   };
 
@@ -208,36 +204,11 @@ export default function Sales() {
         }
       />
 
-      <Modal
+      <PrinterConnectModal
         open={printerOpen}
-        onClose={closePrinterModal}
-        title="Hubungkan Printer"
-        size="sm"
-        footer={
-          <>
-            <Button variant="secondary" onClick={closePrinterModal} disabled={connecting}>
-              Batal
-            </Button>
-            <Button variant="primary" icon={Bluetooth} onClick={handleConnectPrinter} loading={connecting}>
-              Hubungkan
-            </Button>
-          </>
-        }
-      >
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 rounded-lg border-2 border-black bg-primary-100 p-2 text-primary-600">
-            <Printer className="h-5 w-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-slate-700">
-              Tidak ada printer tersimpan. Silakan aktifkan Bluetooth dan pilih printer thermal Anda (58mm / 80mm).
-            </p>
-            <p className="mt-2 text-xs text-slate-500">
-              Saat menekan "Hubungkan", daftar perangkat Bluetooth yang tersedia akan muncul dari dialog sistem. Printer yang dipilih akan disimpan sebagai printer default.
-            </p>
-          </div>
-        </div>
-      </Modal>
+        onClose={() => setPrinterOpen(false)}
+        onConnected={handleConnected}
+      />
     </div>
   );
 }
