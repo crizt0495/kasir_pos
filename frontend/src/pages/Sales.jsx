@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Printer } from 'lucide-react';
 import { salesApi, settingsApi, usersApi } from '../api/index.js';
@@ -12,7 +12,7 @@ import { StatusBadge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatRupiah, formatDateTime, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
-import PrinterConnectModal from '../components/pos/PrinterConnectModal.jsx';
+import { usePrinterConnect, DEFAULT_CONNECT_CONFIG } from '../context/PrinterConnectProvider.jsx';
 import { getErrorMessage } from '../api/client.js';
 
 export default function Sales() {
@@ -29,8 +29,7 @@ export default function Sales() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [sort, setSort] = useState({ key: 'created_at', order: 'desc' });
-  const [printerOpen, setPrinterOpen] = useState(false);
-  const [pendingSale, setPendingSale] = useState(null);
+  const pendingSaleRef = useRef(null);
 
   // Dropdown kasir hanya dimuat bila user punya izin melihat daftar user
   const users = useApi(
@@ -59,10 +58,31 @@ export default function Sales() {
     setPage(1);
   };
 
-  const fetchAndPrint = async (sale) => {
-    toast.info('Mencetak struk ulang...');
-    const [saleRes, settingsRes] = await Promise.all([salesApi.get(sale.id), settingsApi.get()]);
-    await bluetooth.printStruk(saleRes.data, settingsRes.data?.store, settingsRes.data?.pos);
+  const openReprintModal = (sale) => {
+    pendingSaleRef.current = sale;
+    openConnectModal({
+      ...DEFAULT_CONNECT_CONFIG,
+      onConnected: () => reprintSale(pendingSaleRef.current),
+    });
+  };
+
+  const reprintSale = async (sale) => {
+    if (!sale) return;
+    try {
+      toast.info('Mencetak struk ulang...');
+      const [saleRes, settingsRes] = await Promise.all([salesApi.get(sale.id), settingsApi.get()]);
+      await bluetooth.printStruk(saleRes.data, settingsRes.data?.store, settingsRes.data?.pos);
+      toast.success('Struk berhasil dicetak ulang');
+    } catch (err) {
+      if (err?.response) {
+        toast.error(getErrorMessage(err, 'Gagal memuat data struk'));
+        return;
+      }
+      toast.error(getErrorMessage(err, 'Gagal cetak ulang struk'), {
+        label: 'Hubungkan Printer',
+        onClick: () => openReprintModal(sale),
+      });
+    }
   };
 
   const printReceipt = async (sale) => {
@@ -71,35 +91,10 @@ export default function Sales() {
       return;
     }
     if (bluetooth.isConnected) {
-      try {
-        await fetchAndPrint(sale);
-        toast.success('Struk berhasil dicetak ulang');
-      } catch (err) {
-        if (err?.response) {
-          toast.error(getErrorMessage(err, 'Gagal memuat data struk'));
-          return;
-        }
-        setPendingSale(sale);
-        setPrinterOpen(true);
-      }
+      await reprintSale(sale);
       return;
     }
-    setPendingSale(sale);
-    setPrinterOpen(true);
-  };
-
-  const handleConnected = async () => {
-    const sale = pendingSale;
-    setPendingSale(null);
-    setPrinterOpen(false);
-    if (!sale) return;
-    try {
-      toast.info('Mencetak struk ulang...');
-      await fetchAndPrint(sale);
-      toast.success('Struk berhasil dicetak ulang');
-    } catch (err) {
-      toast.error(getErrorMessage(err, 'Gagal cetak ulang struk'));
-    }
+    openReprintModal(sale);
   };
 
   const d = list.data;
@@ -202,12 +197,6 @@ export default function Sales() {
             </div>
           </>
         }
-      />
-
-      <PrinterConnectModal
-        open={printerOpen}
-        onClose={() => setPrinterOpen(false)}
-        onConnected={handleConnected}
       />
     </div>
   );

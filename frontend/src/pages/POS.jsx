@@ -18,9 +18,9 @@ import CurrencyInput from '../components/ui/CurrencyInput.jsx';
 import { Skeleton, EmptyState, ErrorState, Badge } from '../components/ui/Feedback.jsx';
 import BarcodeScanner from '../components/ui/BarcodeScanner.jsx';
 import ReceiptModal from '../components/pos/ReceiptModal.jsx';
-import PrinterConnectModal from '../components/pos/PrinterConnectModal.jsx';
 import ProductImage from '../components/ProductImage.jsx';
 import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
+import { usePrinterConnect } from '../context/PrinterConnectProvider.jsx';
 
 const PAYMENT_METHODS = ['CASH', 'QRIS', 'DEBIT', 'CREDIT', 'TRANSFER', 'E_WALLET'];
 
@@ -45,11 +45,11 @@ export default function POS() {
   const [sessionId, setSessionId] = useState(null);
   const [confirmClear, setConfirmClear] = useState(false);
   const [debtStats, setDebtStats] = useState(null);
-  const [printerModalOpen, setPrinterModalOpen] = useState(false);
-  const [pendingPrint, setPendingPrint] = useState(null);
+  const pendingPrintRef = useRef(null);
   const searchRef = useRef(null);
   const barcodeRef = useRef(null);
   const bluetooth = useBluetoothPrinter();
+  const { openConnectModal } = usePrinterConnect();
 
   const products = useApi(
     () => productsApi.list({ search: debouncedSearch, category_id: categoryId || undefined, pageSize: 100, sort: 'name' }).then((r) => r.data),
@@ -197,8 +197,23 @@ export default function POS() {
         bluetooth
           .printStruk(res.data.sale, settings?.store, settings?.pos)
           .catch(() => {
-            setPendingPrint({ sale: res.data.sale, store: settings?.store, pos: settings?.pos });
-            setPrinterModalOpen(true);
+            pendingPrintRef.current = { sale: res.data.sale, store: settings?.store, pos: settings?.pos };
+            openConnectModal({
+              title: 'Printer Tidak Terhubung',
+              message: 'Gagal mencetak struk. Silakan aktifkan Bluetooth dan pilih printer thermal Anda.',
+              connectLabel: 'Hubungkan & Cetak Ulang',
+              onConnected: async () => {
+                const data = pendingPrintRef.current;
+                pendingPrintRef.current = null;
+                if (!data) return;
+                try {
+                  await bluetooth.printStruk(data.sale, data.store, data.pos);
+                  toast.success('Struk berhasil dicetak');
+                } catch {
+                  toast.error('Gagal mencetak struk. Silakan coba lagi.');
+                }
+              },
+            });
           });
       }
     } catch (error) {
@@ -763,24 +778,6 @@ export default function POS() {
       />
 
       <ReceiptModal open={showReceipt} onClose={() => setShowReceipt(false)} sale={lastSale} settings={settings} />
-
-      <PrinterConnectModal
-        open={printerModalOpen}
-        onClose={() => { setPrinterModalOpen(false); setPendingPrint(null); }}
-        message="Koneksi ke printer gagal. Silakan aktifkan Bluetooth dan pilih printer Anda."
-        onConnected={async () => {
-          const data = pendingPrint;
-          setPrinterModalOpen(false);
-          setPendingPrint(null);
-          if (!data) return;
-          try {
-            await bluetooth.printStruk(data.sale, data.store, data.pos);
-            toast.success('Struk berhasil dicetak');
-          } catch {
-            toast.error('Gagal mencetak struk. Silakan coba lagi.');
-          }
-        }}
-      />
 
       <BarcodeScanner
         open={scannerOpen}

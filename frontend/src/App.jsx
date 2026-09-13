@@ -5,6 +5,7 @@ import { RequireAuth, RequirePermission } from './components/ProtectedRoute.jsx'
 import { landingPath } from './utils/landing.js';
 import AppLayout from './components/layout/AppLayout.jsx';
 import { Toaster, Skeleton } from './components/ui/Feedback.jsx';
+import { PrinterConnectProvider } from './context/PrinterConnectProvider.jsx';
 
 // Lazy loading + code splitting
 const Login = lazy(() => import('./pages/Login.jsx'));
@@ -142,8 +143,10 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <AppRoutes />
-      <Toaster />
+      <PrinterConnectProvider>
+        <AppRoutes />
+        <Toaster />
+      </PrinterConnectProvider>
     </BrowserRouter>
   );
 }

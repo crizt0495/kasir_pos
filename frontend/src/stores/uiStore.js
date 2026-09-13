@@ -7,19 +7,20 @@ export const useUiStore = create((set) => ({
   globalSearchOpen: false,
   setGlobalSearchOpen: (open) => set({ globalSearchOpen: open }),
 
-  pushToast: (message, type = 'success') => {
+  pushToast: (message, type = 'success', action) => {
     const id = ++toastId;
-    set((state) => ({ toasts: [...state.toasts, { id, message, type }] }));
+    const timeout = action ? 10000 : 4000;
+    set((state) => ({ toasts: [...state.toasts, { id, message, type, action }] }));
     setTimeout(() => {
       set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
-    }, 4000);
+    }, timeout);
   },
 
   removeToast: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 }));
 
 export const toast = {
-  success: (message) => useUiStore.getState().pushToast(message, 'success'),
-  error: (message) => useUiStore.getState().pushToast(message, 'error'),
-  info: (message) => useUiStore.getState().pushToast(message, 'info'),
+  success: (message, action) => useUiStore.getState().pushToast(message, 'success', action),
+  error: (message, action) => useUiStore.getState().pushToast(message, 'error', action),
+  info: (message, action) => useUiStore.getState().pushToast(message, 'info', action),
 };

@@ -240,6 +240,17 @@ export function Toaster() {
             {icons[t.type]}
           </span>
           <p className="flex-1 pt-0.5 text-sm font-bold text-slate-800">{t.message}</p>
+          {t.action && (
+            <button
+              className="flex-shrink-0 rounded-md border-2 border-black bg-gradient-to-b from-primary-500 to-primary-600 px-2.5 py-1 text-xs font-bold text-white hover:brightness-110 active:translate-x-[1px] active:translate-y-[1px] transition-all duration-100"
+              onClick={() => {
+                t.action.onClick?.();
+                remove(t.id);
+              }}
+            >
+              {t.action.label}
+            </button>
+          )}
           <button
             className="flex-shrink-0 rounded-md border-2 border-black bg-white p-1 text-slate-400 hover:bg-slate-100 active:translate-x-[1px] active:translate-y-[1px] transition-all duration-100"
             onClick={() => remove(t.id)}

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Save, Store, Settings as SettingsIcon, Receipt, Bluetooth, BluetoothConnected, Printer, Unplug, Percent, Boxes, UserCog, AlertTriangle, Bell } from 'lucide-react';
+import { Save, Store, Settings as SettingsIcon, Receipt, Search, Bluetooth, BluetoothConnected, Printer, Unplug, Percent, Boxes, UserCog, AlertTriangle, Bell } from 'lucide-react';
 import { settingsApi, notificationsApi } from '../api/index.js';
 import { subscribePush } from '../components/layout/NotificationsBell';
 import { useApi } from '../hooks/useApi.js';
 import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
-import PrinterConnectModal from '../components/pos/PrinterConnectModal.jsx';
+import { usePrinterConnect, DEFAULT_CONNECT_CONFIG } from '../context/PrinterConnectProvider.jsx';
 import { settingsSchema } from '../schemas/index.js';
 import { validateSchema } from '../utils/validation.js';
 import { toast } from '../stores/uiStore.js';
@@ -32,8 +32,9 @@ export default function Settings() {
   const [testSending, setTestSending] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
   const [pushStatus, setPushStatus] = useState(null); // null | 'subscribed' | 'denied' | 'vapid-missing'
-  const [printerModalOpen, setPrinterModalOpen] = useState(false);
+  const [testingPrint, setTestingPrint] = useState(false);
   const bluetooth = useBluetoothPrinter();
+  const { openConnectModal } = usePrinterConnect();
 
   const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 
@@ -51,6 +52,36 @@ export default function Settings() {
   };
 
   useEffect(() => { checkPushStatus(); }, []);
+
+  const handleTestPrint = async () => {
+    if (!bluetooth.isConnected) return;
+    setTestingPrint(true);
+    try {
+      await bluetooth.printStruk(
+        {
+          invoice_number: `TEST-${Date.now().toString().slice(-6)}`,
+          created_at: new Date().toISOString(),
+          cashier: { username: 'Admin' },
+          customer: null,
+          payment_method: 'cash',
+          items: [{ product: { name: 'Produk Uji Cetak' }, quantity: 2, price: 15000, discount: 0, subtotal: 30000 }],
+          subtotal: 30000,
+          discount: 0,
+          tax: 0,
+          additional_cost: 0,
+          total: 30000,
+          payments: [{ cash_received: 30000, change_amount: 0 }],
+        },
+        settings.data?.store,
+        settings.data?.pos
+      );
+      toast.success('Struk test berhasil dikirim ke printer');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Gagal cetak struk test'));
+    } finally {
+      setTestingPrint(false);
+    }
+  };
 
   const s = settings.data || {};
 
@@ -257,8 +288,8 @@ export default function Settings() {
       )}
 
       {tab === 'printer' && (
-        <Card title={<span className="flex items-center gap-2"><Printer className="h-4 w-4" /> Pengaturan Printer Thermal</span>} bodyClassName="p-5">
-          <div className="space-y-5">
+        <div className="space-y-5">
+          <Card title={<span className="flex items-center gap-2"><Bluetooth className="h-4 w-4" /> Status Koneksi</span>} bodyClassName="p-5">
             <div className="flex items-center gap-3 rounded-lg border-2 border-black bg-white p-4">
               {bluetooth.isConnected ? (
                 <BluetoothConnected className="h-8 w-8 shrink-0 text-success-600" aria-hidden="true" />
@@ -278,38 +309,40 @@ export default function Settings() {
                         : 'Belum ada printer terhubung'}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {bluetooth.supported
-                    ? 'Setelah pairing pertama, printer otomatis tersambung saat mencetak struk.'
-                    : 'Web Bluetooth tidak didukung — butuh Chrome/Edge (desktop/Android) dengan koneksi HTTPS.'}
+                  {bluetooth.isConnected
+                    ? 'Printer siap digunakan untuk mencetak struk'
+                    : bluetooth.supported
+                      ? 'Setelah pairing pertama, printer otomatis tersambung saat mencetak struk.'
+                      : 'Web Bluetooth tidak didukung — butuh Chrome/Edge (desktop/Android) dengan koneksi HTTPS.'}
                 </p>
               </div>
             </div>
+          </Card>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <Button icon={Bluetooth} disabled={!bluetooth.supported} onClick={() => setPrinterModalOpen(true)}>
-                Cari & Hubungkan Printer Bluetooth
-              </Button>
-              {(bluetooth.isConnected || bluetooth.hasStoredDevice) && (
-                <Button variant="secondary" icon={Unplug} onClick={async () => {
-                  await bluetooth.disconnect();
-                  toast.info('Printer dilupakan — silakan hubungkan kembali saat mencetak');
-                }}>
-                  Lupakan Printer
-                </Button>
-              )}
-            </div>
+          <Card title={<span className="flex items-center gap-2"><Search className="h-4 w-4" /> Cari Printer</span>} bodyClassName="p-5">
+            <p className="mb-4 text-sm text-slate-600">Scan perangkat Bluetooth di sekitar, lalu pilih printer thermal Anda (58mm / 80mm). Printer yang dipilih disimpan otomatis sebagai printer default.</p>
+            <Button icon={Bluetooth} disabled={!bluetooth.supported} onClick={() => openConnectModal({ ...DEFAULT_CONNECT_CONFIG, title: 'Cari & Hubungkan Printer', connectLabel: 'Hubungkan', onConnected: () => toast.success('Printer Bluetooth terhubung') })}>
+              Scan & Hubungkan Printer Bluetooth
+            </Button>
+          </Card>
 
-            <div className="rounded-lg border-2 border-black bg-white p-4 text-xs text-slate-500">
-              <p className="font-medium text-slate-600">Cara penggunaan:</p>
-              <ul className="mt-1.5 list-disc space-y-1 pl-4">
-                <li>Pastikan printer thermal menyala & dalam mode Bluetooth (pairing).</li>
-                <li>Klik <b>Cari & Hubungkan Printer Bluetooth</b>, lalu pilih printer dari dialog browser. Printer menjadi printer default.</li>
-                <li>Setelah itu, printer akan <b>otomatis terhubung</b> setiap kali Anda mencetak struk.</li>
-                <li>Jika cetak gagal di POS/Penjualan, popup <b>Hubungkan Printer</b> akan muncul otomatis untuk connect ulang.</li>
-              </ul>
-            </div>
-          </div>
-        </Card>
+          <Card title={<span className="flex items-center gap-2"><Printer className="h-4 w-4" /> Test Print</span>} bodyClassName="p-5">
+            <p className="mb-4 text-sm text-slate-600">Cetak struk uji untuk memastikan printer sudah terpasang dengan baik.</p>
+            <Button icon={Printer} disabled={!bluetooth.isConnected} loading={testingPrint} onClick={handleTestPrint}>
+              Cetak Struk Test
+            </Button>
+          </Card>
+
+          <Card title={<span className="flex items-center gap-2"><Unplug className="h-4 w-4" /> Lupakan Printer</span>} bodyClassName="p-5">
+            <p className="mb-4 text-sm text-slate-600">Hapus koneksi printer Bluetooth yang tersimpan. Anda tetap bisa menghubungkan ulang kapan saja.</p>
+            <Button variant="danger" icon={Unplug} disabled={!bluetooth.isConnected && !bluetooth.hasStoredDevice} onClick={async () => {
+              await bluetooth.disconnect();
+              toast.info('Koneksi printer dihapus — silakan hubungkan kembali saat mencetak');
+            }}>
+              Hapus Koneksi Printer
+            </Button>
+          </Card>
+        </div>
       )}
 
       {tab === 'session' && (
@@ -417,12 +450,6 @@ export default function Settings() {
           </div>
         </Card>
       )}
-
-      <PrinterConnectModal
-        open={printerModalOpen}
-        onClose={() => setPrinterModalOpen(false)}
-        onConnected={() => toast.success('Printer Bluetooth terhubung')}
-      />
     </div>
   );
 }

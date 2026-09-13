@@ -10,7 +10,7 @@ import { Button } from '../ui/Button.jsx';
  * Membuka dialog pairing Bluetooth peramban; hasilnya disimpan otomatis
  * sebagai printer default di IndexedDB. onConnected dipanggil setelah sukses.
  */
-export default function PrinterConnectModal({ open, onClose, message, onConnected }) {
+export default function PrinterConnectModal({ open, onClose, title = 'Hubungkan Printer', message, connectLabel = 'Hubungkan', onConnected }) {
   const bluetooth = useBluetoothPrinter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -48,7 +48,7 @@ export default function PrinterConnectModal({ open, onClose, message, onConnecte
     <Modal
       open={open}
       onClose={handleClose}
-      title="Hubungkan Printer"
+      title={title}
       size="sm"
       footer={
         <>
@@ -56,7 +56,7 @@ export default function PrinterConnectModal({ open, onClose, message, onConnecte
             Batal
           </Button>
           <Button variant="primary" icon={Bluetooth} onClick={handleConnect} loading={busy}>
-            Hubungkan
+            {connectLabel}
           </Button>
         </>
       }
