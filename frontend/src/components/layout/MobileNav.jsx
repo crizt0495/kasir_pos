@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, ReceiptText, Settings as SettingsIcon,
   MoreHorizontal, X, Tags, Users, Truck, Boxes, ArrowLeftRight, ClipboardList,
   ShoppingBag, Wallet, PiggyBank, BarChart3, ShieldCheck, UserCog, KeyRound,
-  ScrollText, HandCoins, BookUser,
+  ScrollText, HandCoins, BookUser, Coins,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore.js';
 
@@ -29,6 +29,7 @@ const MORE_ITEMS = [
   { section: 'Inventory', items: [
     { label: 'Stok', to: '/inventory', icon: Boxes, perm: 'inventory.view' },
     { label: 'Pergerakan Stok', to: '/inventory/movements', icon: ArrowLeftRight, perm: 'inventory.view' },
+    { label: 'Pergerakan Harga', to: '/inventory/price-movements', icon: Coins, perm: 'inventory.view' },
     { label: 'Stock Opname', to: '/inventory/opname', icon: ClipboardList, perm: 'stock_opname.view' },
   ]},
   { section: 'Kas', items: [

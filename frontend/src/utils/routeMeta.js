@@ -7,6 +7,7 @@ export const PAGE_TITLES = {
   '/suppliers': 'Supplier',
   '/inventory': 'Stok',
   '/inventory/movements': 'Pergerakan Stok',
+  '/inventory/price-movements': 'Pergerakan Harga',
   '/inventory/opname': 'Stock Opname',
   '/purchases': 'Pembelian',
   '/sales': 'Penjualan',
