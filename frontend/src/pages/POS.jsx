@@ -29,7 +29,6 @@ export default function POS() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [categoryId, setCategoryId] = useState('');
-  const [barcode, setBarcode] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showHeld, setShowHeld] = useState(false);
@@ -47,7 +46,6 @@ export default function POS() {
   const [debtStats, setDebtStats] = useState(null);
   const pendingPrintRef = useRef(null);
   const searchRef = useRef(null);
-  const barcodeRef = useRef(null);
   const bluetooth = useBluetoothPrinter();
   const { openConnectModal } = usePrinterConnect();
 
@@ -112,26 +110,30 @@ export default function POS() {
     [cart.items, cart.discount, taxAmount, additionalCost]
   );
 
-  // Keyboard shortcuts: F2 search, F4 customer, F8 payment
+  // Keyboard shortcuts: F2/F3 fokus kolom pencarian, F4 pelanggan, F8 bayar, +/- ubah qty
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === 'F2') {
+      if (e.key === 'F2' || e.key === 'F3') {
         e.preventDefault();
         searchRef.current?.focus();
-      } else if (e.key === 'F3') {
-        e.preventDefault();
-        barcodeRef.current?.focus();
       } else if (e.key === 'F4') {
         e.preventDefault();
         setShowCustomer(true);
       } else if (e.key === 'F8') {
         e.preventDefault();
-        if (cart.items.length) setShowCheckout(true);
+        const items = useCartStore.getState().items;
+        if (items.length) setShowCheckout(true);
+      } else if ((e.key === '+' || e.key === '=') && !(e.target instanceof HTMLElement && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.isContentEditable))) {
+        const last = useCartStore.getState().items[useCartStore.getState().items.length - 1];
+        if (last) useCartStore.getState().increment(last.product.id);
+      } else if (e.key === '-' && !(e.target instanceof HTMLElement && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.isContentEditable))) {
+        const last = useCartStore.getState().items[useCartStore.getState().items.length - 1];
+        if (last) useCartStore.getState().decrement(last.product.id);
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [cart.items.length]);
+  }, []);
 
   const addProductByCode = useCallback(async (code) => {
     if (!code) return;
@@ -146,13 +148,9 @@ export default function POS() {
     } catch {
       toast.error('Produk tidak ditemukan');
     }
-    setBarcode('');
-    barcodeRef.current?.focus();
+    setSearch('');
+    searchRef.current?.focus();
   }, [cart]);
-
-  const handleBarcode = useCallback(() => {
-    addProductByCode(barcode.trim());
-  }, [barcode, addProductByCode]);
 
   const handleScan = useCallback((code) => {
     setScannerOpen(false);
@@ -231,45 +229,33 @@ export default function POS() {
       {/* ================= PRODUCTS SECTION ================= */}
       <div className="flex min-w-0 flex-1 flex-col gap-4 rounded-xl border-2 border-black bg-white p-4 shadow-sm xl:p-5">
         <div className="space-y-3">
-          {/* Search and Barcode Section */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <div className="flex-1 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-3">
-              <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  ref={searchRef}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Cari produk (F2)..."
-                  className="w-full rounded-md border-2 border-black bg-white py-2.5 pl-10 pr-4 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
-                />
-              </div>
-              <div className="relative">
-                <ScanLine className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  ref={barcodeRef}
-                  value={barcode}
-                  onChange={(e) => setBarcode(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleBarcode()}
-                  placeholder="Scan barcode (F3)..."
-                  className="w-full rounded-md border-2 border-black bg-white py-2.5 pl-10 pr-11 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 sm:w-56"
-                />
-                <button
-                  type="button"
-                  onClick={() => setScannerOpen(true)}
-                  title="Scan barcode (kamera)"
-                  aria-label="Scan barcode dengan kamera"
-                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600"
-                >
-                  <Camera className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-            <div className="hidden shrink-0 items-center gap-3 text-xs text-slate-500 lg:flex">
-              <span className="flex items-center gap-1.5"><kbd className="kbd">F2</kbd> Cari</span>
-              <span className="flex items-center gap-1.5"><kbd className="kbd">F3</kbd> Barcode</span>
-              <span className="flex items-center gap-1.5"><kbd className="kbd">F4</kbd> Pelanggan</span>
-              <span className="flex items-center gap-1.5"><kbd className="kbd">F8</kbd> Bayar</span>
+          {/* Search & Scan Barcode — satu kolom */}
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+            <input
+              ref={searchRef}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && /^[0-9]+$/.test(search.trim())) {
+                  addProductByCode(search.trim());
+                }
+              }}
+              placeholder="Cari produk atau Scan Barcode (F2)..."
+              aria-label="Cari produk atau scan barcode"
+              className="w-full rounded-lg border-2 border-black bg-white py-3 pl-11 pr-12 text-base shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
+            />
+            <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-0.5">
+              <ScanLine className="h-5 w-5 text-slate-400" aria-hidden="true" />
+              <button
+                type="button"
+                onClick={() => setScannerOpen(true)}
+                title="Scan barcode (kamera)"
+                aria-label="Scan barcode dengan kamera"
+                className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600"
+              >
+                <Camera className="h-4 w-4" />
+              </button>
             </div>
           </div>
 
@@ -447,6 +433,15 @@ export default function POS() {
               );
             })
           )}
+        </div>
+
+        {/* Info shortcut — di pojok bawah area produk, tidak menutupi grid */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t-2 border-black pt-2 text-xs text-slate-500">
+          <span className="font-semibold text-slate-600">Shortcut:</span>
+          <span className="flex items-center gap-1.5"><kbd className="kbd">F2</kbd> Cari / Scan</span>
+          <span className="flex items-center gap-1.5"><kbd className="kbd">F4</kbd> Pelanggan</span>
+          <span className="flex items-center gap-1.5"><kbd className="kbd">F8</kbd> Bayar</span>
+          <span className="flex items-center gap-1.5"><kbd className="kbd">-</kbd>/<kbd className="kbd">+</kbd> Ubah Qty</span>
         </div>
       </div>
 
