@@ -86,13 +86,16 @@ function solidLine(width) {
 }
 
 /**
- * Kolom angka item (Qty / Harga / Subtotal) — semuanya rata kanan.
- * Subtotal selalu mentok ke tepi kanan; Qty & Harga mengikuti di kirinya.
+ * Kolom angka item (Qty / Harga / Subtotal) — semua rata kanan ke tepi
+ * masing-masing. Subtotal dijamin mentok ke tepi kanan kertas; Harga dan
+ * Qty mengikuti di kirinya dengan jeda 1 spasi agar nilai yang lebih lebar
+ * (mis. 12.500.000) tidak pernah bertabrakan dengan kolom sebelahnya.
  */
 function numberColumns(width, showHarga) {
   const subtotalRight = width - 1;
-  const hargaRight = showHarga ? subtotalRight - 10 : -1;
-  const qtyRight = showHarga ? hargaRight - 8 : subtotalRight - 12;
+  const subtotalLeft = subtotalRight - 11;
+  const hargaRight = subtotalLeft - 2;
+  const qtyRight = showHarga ? hargaRight - 11 : subtotalLeft - 1;
   return { qtyRight, hargaRight, subtotalRight };
 }
 
