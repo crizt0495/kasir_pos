@@ -13,6 +13,7 @@ import { Button } from '../ui/Button.jsx';
 export function Topbar({ onMenuClick }) {
   const user = useAuthStore((s) => s.user);
   const clear = useAuthStore((s) => s.clear);
+  const canDashboard = useAuthStore((s) => s.can)('dashboard.view');
   const setGlobalSearchOpen = useUiStore((s) => s.setGlobalSearchOpen);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -69,10 +70,14 @@ export function Topbar({ onMenuClick }) {
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-3">
           <nav className="flex items-center gap-1 text-sm" aria-label="Breadcrumb">
-            <Link to="/dashboard" className="font-bold text-slate-500 hover:text-slate-900 transition-colors">
-              Beranda
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" aria-hidden="true" />
+            {canDashboard && (
+              <>
+                <Link to="/dashboard" className="font-bold text-slate-500 hover:text-slate-900 transition-colors">
+                  Beranda
+                </Link>
+                <ChevronRight className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" aria-hidden="true" />
+              </>
+            )}
             <span className="font-extrabold text-slate-800 uppercase tracking-wide truncate max-w-[200px]">{title}</span>
           </nav>
         </div>
