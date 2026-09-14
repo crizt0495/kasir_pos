@@ -206,6 +206,25 @@ export const getOpname = asyncHandler(async (req, res) => {
 export const createOpname = asyncHandler(async (req, res) => {
   const { opname_date, notes, items } = req.body;
 
+  // Gabungkan produk duplikat sebelum insert agar aman dari unique constraint
+  const merge = new Map();
+  for (const i of items || []) {
+    const k = i.product_id;
+    if (!merge.has(k)) {
+      merge.set(k, {
+        product_id: k,
+        system_stock: Number(i.system_stock) || 0,
+        physical_stock: Number(i.physical_stock) || 0,
+        reason: i.reason || null,
+      });
+    } else {
+      const prev = merge.get(k);
+      prev.physical_stock += Number(i.physical_stock) || 0;
+      if (!prev.reason && i.reason) prev.reason = i.reason;
+    }
+  }
+  const mergedItems = Array.from(merge.values());
+
   const { data: opname, error } = await supabase
     .from('stock_opnames')
     .insert({ opname_date, notes, created_by: req.user.id, updated_by: req.user.id })
@@ -214,7 +233,7 @@ export const createOpname = asyncHandler(async (req, res) => {
   if (error) throw error;
 
   const { error: itemErr } = await supabase.from('stock_opname_items').insert(
-    items.map((i) => ({
+    mergedItems.map((i) => ({
       opname_id: opname.id,
       product_id: i.product_id,
       system_stock: i.system_stock,
@@ -232,7 +251,7 @@ export const createOpname = asyncHandler(async (req, res) => {
     action: 'STOCK_OPNAME_CREATED',
     module: 'stock_opname',
     recordId: opname.id,
-    newData: { item_count: items.length },
+newData: { item_count: mergedItems.length },
     req,
   });
   return created(res, { id: opname.id }, 'Stock opname berhasil dibuat');
