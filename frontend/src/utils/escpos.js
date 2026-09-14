@@ -161,10 +161,11 @@ function itemValueRow(unit, qty, price, subtotal, showHarga, cols) {
   return buf.join('');
 }
 
-/** Baris total qty & total nilai (tanpa label), rata kanan ke kolom Qty/Subtotal. */
+/** Baris total qty (rata kiri mentok) & total nilai (rata kanan mentok). */
 function totalRow(qty, subtotal, cols) {
   const buf = new Array(cols.width).fill(' ');
-  putRight(buf, qty, cols.qtyRight);
+  const q = sanitize(String(qty));
+  for (let i = 0; i < q.length; i += 1) buf[i] = q[i];
   putRight(buf, subtotal, cols.subtotalRight);
   return buf.join('');
 }

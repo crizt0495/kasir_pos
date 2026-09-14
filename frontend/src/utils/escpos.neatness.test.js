@@ -54,7 +54,7 @@ describe('scoreReceiptLayout', () => {
     const texts = layout.lines.map((l) => l.text);
     // Total qty = 2 + 1 + 3 = 6 ditampilkan di kolom bawah (tanpa JUMLAH ITEM)
     expect(texts.some((t) => /^JUMLAH ITEM/.test(t))).toBe(false);
-    expect(texts.some((t) => /^\s{4,}6\s+118\.500$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^6\s+118\.500$/.test(t))).toBe(true);
     // Baris nilai satuan: QtySatuan rata kiri, Harga tengah, Subtotal rata kanan
     expect(texts.some((t) => /^3gr\s+15\.500\s+46\.500$/.test(t))).toBe(true);
     expect(texts.some((t) => /^2\s+27\.000\s+54\.000$/.test(t))).toBe(true);

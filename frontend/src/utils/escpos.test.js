@@ -138,7 +138,7 @@ describe('buildReceiptLayout', () => {
     expect(texts.some((t) => /^JUMLAH ITEM/.test(t))).toBe(false);
     expect(texts.some((t) => /^Subtotal/.test(t))).toBe(false);
     // Total qty 3 di kolom Qty + total subtotal 34.000 di kolom Subtotal
-    expect(texts.some((t) => /^\s{4,}3\s+34\.000$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^3\s+34\.000$/.test(t))).toBe(true);
     // TOTAL + TUNAI + KEMBALI pakai spasi, nominal rata kanan
     expect(texts.some((t) => /^TOTAL {2,}Rp 34\.000$/.test(t))).toBe(true);
     expect(texts.some((t) => /^TUNAI {2,}Rp 50\.000$/.test(t))).toBe(true);
