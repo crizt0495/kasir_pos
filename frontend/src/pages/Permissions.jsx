@@ -8,6 +8,7 @@ import { getErrorMessage } from '../api/client.js';
 import { Card } from '../components/ui/DataTable.jsx';
 import { Skeleton, ErrorState } from '../components/ui/Feedback.jsx';
 import { Button } from '../components/ui/Button.jsx';
+import { Switch } from '../components/ui/Form.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 
 export default function Permissions() {
@@ -143,17 +144,10 @@ function PermissionGroup({ module, perms, roles, roleSets, editable, saving, onT
             return (
               <td key={r.id} className="px-3 py-2.5 text-center">
                 <div className="flex justify-center">
-                  <input
-                    type="checkbox"
-                    role="switch"
+                  <Switch
                     checked={checked}
                     disabled={disabled}
                     onChange={() => onToggle(r, p.code)}
-                    className="relative h-5 w-9 shrink-0 cursor-pointer appearance-none rounded-full border-2 border-slate-300 bg-slate-200 transition-colors duration-150 ease-out
-                      after:absolute after:left-[3px] after:top-1/2 after:h-3.5 after:w-3.5 after:-translate-y-1/2 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:duration-150 after:ease-out
-                      checked:border-primary-600 checked:bg-primary-600 checked:after:translate-x-[14px]
-                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2
-                      disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label={`${p.name} untuk ${r.name}`}
                     title={`${r.name}: ${p.name}`}
                   />

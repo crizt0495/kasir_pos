@@ -123,17 +123,25 @@ export const RadioGroup = forwardRef(function RadioGroup({ label, options, error
 export const Switch = forwardRef(function Switch({ label, id, className = '', ...props }, ref) {
   const switchId = id || `switch-${Math.random().toString(36).slice(2, 9)}`;
   return (
-    <label className={`inline-flex items-center gap-3 cursor-pointer ${className}`}>
+    <label className={`relative inline-flex items-center gap-3 cursor-pointer select-none ${className}`}>
       <input
         ref={ref}
         type="checkbox"
         id={switchId}
         role="switch"
-        className="h-6 w-11 rounded-lg border-2 border-black bg-white appearance-none cursor-pointer transition-all duration-100 ease
-          checked:bg-primary-500 checked:border-primary-500 checked:translate-x-5
-          focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1
-          disabled:opacity-50 disabled:cursor-not-allowed"
+        className="peer sr-only"
         {...props}
+      />
+      <span
+        aria-hidden="true"
+        className="block h-6 w-11 rounded-lg border-2 border-black bg-white transition-colors duration-100 ease
+          peer-checked:border-primary-500 peer-checked:bg-primary-500
+          peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500 peer-focus-visible:ring-offset-1
+          peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
+      />
+      <span
+        aria-hidden="true"
+        className="absolute left-[3px] top-1/2 h-4 w-4 -translate-y-1/2 rounded-md border border-black/20 bg-white shadow-sm transition-transform duration-100 ease peer-checked:translate-x-[20px]"
       />
       {label && <span className="text-sm font-bold text-slate-800">{label}</span>}
     </label>
