@@ -54,11 +54,14 @@ describe('scoreReceiptLayout', () => {
     const texts = layout.lines.map((l) => l.text);
     // JUMLAH ITEM = 2 + 1 + 3 = 6
     expect(texts.some((t) => /^JUMLAH ITEM\s*:\s*6$/.test(t))).toBe(true);
-    // Baris nilai item pakai format Qty / Harga / Subtotal (rata kanan)
-    expect(texts.some((t) => /^\s+\d+\s+27\.000\s+54\.000$/.test(t))).toBe(true);
-    // Semua baris nilai (diawali spasi, diakhiri angka) panjang penuh
+    // Satu baris per item: nama kiri, qty & subtotal rata kanan (2 x 27.000 = 54.000)
+    expect(texts.some((t) => /^\S.*?\s+\d+\s+\S*54\.000$/.test(t))).toBe(true);
+    // Detail harga satuan muncul sebagai baris pendukung
+    expect(texts.some((t) => t.trim() === '@ 27.000')).toBe(true);
+    // Semua baris utama item (nama + qty + subtotal) panjang penuh & subtotal mentok kanan
+    const itemRowPattern = /^[A-Za-z][\w .,'-]*\s+\d{1,3}\s+\d{1,3}(\.\d{3})+$/;
     for (const t of texts) {
-      if (/^\s{4,}/.test(t) && /\d$/.test(t)) {
+      if (itemRowPattern.test(t)) {
         expect(t.length).toBe(32);
         expect(t.endsWith(' ')).toBe(false);
       }
@@ -103,7 +106,7 @@ describe('encodeLinesToBytes — tidak dobel center', () => {
     const encoded = new TextDecoder().decode(bytes);
     const texts = layout.lines.map((l) => l.text);
     expect(encoded).toContain('Item');
-    expect(encoded).toContain('Kopi Susu Gula Aren');
+    expect(encoded).toContain('Kopi Susu Gula');
     expect(encoded).toContain('JUMLAH ITEM');
     expect(encoded).toContain('TOTAL');
     expect(encoded).toContain('Terima kasih');

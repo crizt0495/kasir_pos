@@ -66,57 +66,66 @@ describe('buildReceiptLayout', () => {
     }
   });
 
-  it('header item menampilkan kolom Qty, Harga, dan Subtotal (4 kolom)', () => {
+  it('header item menampilkan kolom Item, Qty, dan Subtotal', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
     const header = layout.lines.find((l) => l.style === 'bold' && /^Item/.test(l.text));
     expect(header.text.startsWith('Item')).toBe(true);
     expect(header.text).toContain('Qty');
-    expect(header.text).toContain('Harga');
     expect(header.text.endsWith('Subtotal')).toBe(true);
+    expect(header.text).not.toContain('Harga');
+    expect(header.text.length).toBe(32);
   });
 
-  it('nama produk di baris sendiri (bold), qty/harga/subtotal di baris nilai rata kanan', () => {
+  it('item satu baris lurus: nama kiri + qty/subtotal rata kanan sejajar header', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
     const texts = layout.lines.map((l) => l.text);
+    const header = layout.lines.find((l) => l.style === 'bold' && /^Item/.test(l.text));
+
     // Tidak ada lagi qty inline ("2x Nama")
     expect(texts.some((t) => /^\d+x /.test(t))).toBe(false);
-    // Nama produk muncul sebagai baris bold tersendiri
-    const nameLine = layout.lines.find((l) => l.style === 'bold' && l.text === 'Madu TJ');
-    expect(nameLine).toBeTruthy();
-    // Baris nilai: Qty 2, Harga 10.000, Subtotal 20.000 — rata kanan
-    const valueRow = texts.find((t) => /^\s+\d+\s+10\.000\s+20\.000$/.test(t));
-    expect(valueRow).toBeTruthy();
-    expect(valueRow.endsWith('20.000')).toBe(true);
-    expect(valueRow.length).toBe(32);
+    // Satu baris per item: nama + qty + subtotal
+    const mainRow = texts.find((t) => /^Madu TJ\s+\d+\s+20\.000$/.test(t));
+    expect(mainRow).toBeTruthy();
+    expect(mainRow.endsWith('20.000')).toBe(true);
+    expect(mainRow.length).toBe(32);
+    // Qty & Subtotal semua item rata kanan ke kolom yang sama dengan header
+    const itemRowPattern = /^[A-Za-z][\w .,'-]*\s+\d{1,3}\s+\d{1,3}(\.\d{3})+$/;
+    for (const t of texts) {
+      if (itemRowPattern.test(t)) {
+        const subtotal = t.match(/\d{1,3}(\.\d{3})+$/)[0];
+        expect(t.endsWith('20.000') || t.endsWith('14.000')).toBe(true);
+        expect(t.lastIndexOf(subtotal) + subtotal.length).toBe(
+          header.text.lastIndexOf('Subtotal') + 'Subtotal'.length
+        );
+      }
+    }
   });
 
-  it('menampilkan baris satuan/varian di bawah nama produk', () => {
+  it('harga satuan dirender sebagai baris detail (@ harga) di bawah item', () => {
     const sale = {
       ...baseSale,
       items: [{ ...baseSale.items[0], product: { name: 'Kopi Kapal Api', unit: { name: 'Gram', short_name: 'gr' } } }],
     };
     const layout = buildReceiptLayout({ sale, store: baseStore, pos: pos58 });
     const texts = layout.lines.map((l) => l.text);
-    const nameIdx = texts.indexOf('Kopi Kapal Api');
-    expect(nameIdx).toBeGreaterThan(-1);
-    expect(texts[nameIdx + 1]).toBe('gr');
-    expect(texts[nameIdx + 2]).toMatch(/^\s+\d+\s+10\.000\s+20\.000$/);
+    // Satuan tidak lagi tercetak sebagai baris terpisah
+    expect(texts.some((t) => t.trim() === 'gr')).toBe(false);
+    // Baris utama masih satu baris lurus dengan subtotal
+    expect(texts.some((t) => /^Kopi Kapal Api\s+\d+\s+20\.000$/.test(t))).toBe(true);
+    // Detail harga satuan muncul di bawahnya
+    expect(texts.some((t) => t.trim() === '@ 10.000')).toBe(true);
   });
 
-  it('diskon item dirender sebagai catatan di bawah baris nilai item', () => {
+  it('diskon item dirender sebagai catatan di bawah baris detail harga', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
     const texts = layout.lines.map((l) => l.text);
     const discIdx = texts.findIndex((t) => t.includes('disc'));
     expect(discIdx).toBeGreaterThan(-1);
-    expect(texts[discIdx].trim().startsWith('(')).toBe(true);
-    // Baris nilai item tepat di atasnya: subtotal 14.000 mentok kanan
-    const valueRow = texts[discIdx - 1];
-    expect(valueRow.endsWith('14.000')).toBe(true);
-    expect(valueRow.length).toBe(32);
-    // Nama produk (bold) ada di atas baris nilai
-    const nameRow = layout.lines[discIdx - 2];
-    expect(nameRow.text).toBe('Mie Sedap');
-    expect(nameRow.style).toBe('bold');
+    expect(texts[discIdx].trim().replace(/\u00a0/g, ' ')).toBe('disc -Rp 1.000');
+    // Baris detail harga tepat di atasnya, lalu baris utama item (subtotal mentok kanan)
+    expect(texts[discIdx - 1].trim()).toBe('@ 15.000');
+    expect(texts[discIdx - 2].endsWith('14.000')).toBe(true);
+    expect(texts[discIdx - 2].length).toBe(32);
   });
 
   it('baris bawah memakai JUMLAH ITEM (bukan Subtotal)', () => {

@@ -86,17 +86,19 @@ function solidLine(width) {
 }
 
 /**
- * Kolom angka item (Qty / Harga / Subtotal) — semua rata kanan ke tepi
- * masing-masing. Subtotal dijamin mentok ke tepi kanan kertas; Harga dan
- * Qty mengikuti di kirinya dengan jeda 1 spasi agar nilai yang lebih lebar
- * (mis. 12.500.000) tidak pernah bertabrakan dengan kolom sebelahnya.
+ * Kolom item: satu baris per item — nama produk di kiri, Qty & Subtotal
+ * di dua kolom tersendiri yang rata kanan. Subtotal dijamin mentok ke tepi
+ * kanan kertas; Qty mengikuti di kirinya dengan jeda spasi sehingga semua
+ * baris transaksi selalu lurus sejajar.
  */
-function numberColumns(width, showHarga) {
+function itemColumns(width) {
+  const subtotalWidth = width >= 48 ? 11 : 10;
+  const qtyWidth = width >= 48 ? 5 : 4;
   const subtotalRight = width - 1;
-  const subtotalLeft = subtotalRight - 11;
-  const hargaRight = subtotalLeft - 2;
-  const qtyRight = showHarga ? hargaRight - 11 : subtotalLeft - 1;
-  return { qtyRight, hargaRight, subtotalRight };
+  const subtotalLeft = subtotalRight - subtotalWidth + 1;
+  const qtyRight = subtotalLeft - 2;
+  const itemWidth = qtyRight - qtyWidth - 2;
+  return { qtyRight, subtotalRight, itemWidth };
 }
 
 /** Tulis teks rata kanan ke buffer (berakhir tepat di kolom `right`). */
@@ -108,22 +110,21 @@ function putRight(buf, text, right) {
   return buf;
 }
 
-/** Header kolom item: "Item" (kiri) + Qty/Harga/Subtotal (rata kanan). */
-function itemHeader(width, cols, showHarga) {
+/** Header kolom item: "Item" (kiri) + Qty/Subtotal (rata kanan). */
+function itemHeader(width, cols) {
   const buf = new Array(width).fill(' ');
   for (let i = 0; i < 'Item'.length; i += 1) buf[i] = 'Item'[i];
   putRight(buf, 'Qty', cols.qtyRight);
-  if (showHarga) putRight(buf, 'Harga', cols.hargaRight);
   putRight(buf, 'Subtotal', cols.subtotalRight);
   return buf.join('');
 }
 
-/** Baris nilai item (qty / harga satuan / subtotal) rata kanan. */
-function itemValueRow(width, cols, showHarga, qty, harga, subtotal) {
-  const buf = new Array(width).fill(' ');
-  putRight(buf, formatQty(Number(qty) || 0), cols.qtyRight);
-  if (showHarga) putRight(buf, formatNumber(harga), cols.hargaRight);
-  putRight(buf, formatNumber(subtotal), cols.subtotalRight);
+/** Baris utama item: nama produk (kiri) + Qty/Subtotal (rata kanan). */
+function itemRow(name, qty, subtotal, cols) {
+  const buf = new Array(cols.width).fill(' ');
+  for (let k = 0; k < name.length; k += 1) buf[k] = name[k];
+  putRight(buf, qty, cols.qtyRight);
+  putRight(buf, subtotal, cols.subtotalRight);
   return buf.join('');
 }
 
@@ -160,23 +161,24 @@ export function buildReceiptLayout({ sale, store, pos }) {
   push(dashed(width));
 
   // ---------- Item ----------
-  // Nama produk (bold) di baris sendiri; baris berikutnya memuat kolom
-  // Qty / Harga Satuan / Subtotal rata kanan (atan "Tampilkan Harga
-  // Satuan" dimatikan, kolom Harga dihilangkan).
+  // Satu baris per item: nama (kiri) + Qty & Subtotal (kolom tetap rata
+  // kanan). Nama panjang dibungkus ke bawah; angka tetap di baris pertama
+  // agar semua kolom Qty/Subtotal lurus sejajar. Harga satuan & diskon
+  // ditampilkan sebagai baris detail di bawahnya.
   const showHarga = pos?.show_unit_price !== false;
-  const itemCols = numberColumns(width, showHarga);
-  push(itemHeader(width, itemCols, showHarga), { style: 'bold' });
+  const cols = { width, ...itemColumns(width) };
+  push(itemHeader(width, cols), { style: 'bold' });
   push(dashed(width));
 
   for (const it of sale?.items || []) {
     const name = it.product?.name || 'Produk';
-    const unitLabel = it.product?.unit?.short_name || it.product?.unit?.name;
-    for (const t of wrap(name, width)) push(t, { style: 'bold' });
-    if (unitLabel) push(sanitize(unitLabel));
-    push(itemValueRow(width, itemCols, showHarga, it.quantity, it.price, it.subtotal));
-    if (Number(it.discount) > 0) {
-      push(`  (disc -${formatRupiah(it.discount)})`);
-    }
+    const qty = formatQty(Number(it.quantity) || 0);
+    const subtotal = formatNumber(it.subtotal);
+    wrap(name, cols.itemWidth).forEach((t, i) => {
+      push(i === 0 ? itemRow(t, qty, subtotal, cols) : t);
+    });
+    if (showHarga) push(`  @ ${formatNumber(it.price)}`);
+    if (Number(it.discount) > 0) push(`  disc -${formatRupiah(it.discount)}`);
   }
   push(dashed(width));
 
