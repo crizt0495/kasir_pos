@@ -42,26 +42,28 @@ describe('scoreReceiptLayout', () => {
     expect(colons[0]).toBe(10);
   });
 
-  it('header kolom item rata kanan sampai tepi kolom (Subtotal di ujung)', () => {
-    const layout = buildReceiptLayout({ sale: baseSale, store, pos: pos58 });
+  it('header kolom item hanya di mode tanpa satuan (Subtotal di ujung kanan)', () => {
+    const layout = buildReceiptLayout({ sale: baseSale, store, pos: { ...pos58, show_satuan: false } });
     const header = layout.lines.find((l) => l.style === 'bold' && /^Item/.test(l.text));
     expect(header.text.endsWith('Subtotal')).toBe(true);
     expect(header.text.length).toBe(32);
   });
 
-  it('baris nilai item & ringkasan berada di posisi yang rapi (mentok kanan + titik dua)', () => {
+  it('baris nilai item & ringkasan rapi (2 baris per produk + total qty di bawah)', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store, pos: pos58 });
     const texts = layout.lines.map((l) => l.text);
-    // JUMLAH ITEM = 2 + 1 + 3 = 6
-    expect(texts.some((t) => /^JUMLAH ITEM\s*:\s*6$/.test(t))).toBe(true);
-    // Satu baris per item: nama kiri, qty & subtotal rata kanan (2 x 27.000 = 54.000)
-    expect(texts.some((t) => /^\S.*?\s+\d+\s+\S*54\.000$/.test(t))).toBe(true);
-    // Detail harga satuan muncul sebagai baris pendukung
-    expect(texts.some((t) => t.trim() === '@ 27.000')).toBe(true);
-    // Semua baris utama item (nama + qty + subtotal) panjang penuh & subtotal mentok kanan
-    const itemRowPattern = /^[A-Za-z][\w .,'-]*\s+\d{1,3}\s+\d{1,3}(\.\d{3})+$/;
+    // Total qty = 2 + 1 + 3 = 6 ditampilkan di kolom bawah (tanpa JUMLAH ITEM)
+    expect(texts.some((t) => /^JUMLAH ITEM/.test(t))).toBe(false);
+    expect(texts.some((t) => /^\s{4,}6\s+118\.500$/.test(t))).toBe(true);
+    // Baris nilai satuan: "satuan kiri, qty/harga/subtotal rata kanan"
+    expect(texts.some((t) => /^gr\s+\d+\s+15\.500\s+46\.500$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^\s{4,}2\s+27\.000\s+54\.000$/.test(t))).toBe(true);
+    // Tidak ada lagi baris detail "@ harga" (harga kini satu kolom nilai)
+    expect(texts.some((t) => t.trim() === '@ 27.000')).toBe(false);
+    // Semua baris nilai item diakhiri angka, mentok kanan, panjang penuh
+    const valueRowPattern = /^\s{4,}.*\d{1,3}(\.\d{3})+$/;
     for (const t of texts) {
-      if (itemRowPattern.test(t)) {
+      if (valueRowPattern.test(t) && /\d$/.test(t)) {
         expect(t.length).toBe(32);
         expect(t.endsWith(' ')).toBe(false);
       }
@@ -105,9 +107,8 @@ describe('encodeLinesToBytes — tidak dobel center', () => {
     const bytes = encodeLinesToBytes(layout);
     const encoded = new TextDecoder().decode(bytes);
     const texts = layout.lines.map((l) => l.text);
-    expect(encoded).toContain('Item');
     expect(encoded).toContain('Kopi Susu Gula');
-    expect(encoded).toContain('JUMLAH ITEM');
+    expect(encoded).toContain('Roti Bakar');
     expect(encoded).toContain('TOTAL');
     expect(encoded).toContain('Terima kasih');
     expect(texts.every((t) => t.length <= layout.width)).toBe(true);

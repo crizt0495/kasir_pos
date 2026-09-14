@@ -92,13 +92,25 @@ function solidLine(width) {
  * baris transaksi selalu lurus sejajar.
  */
 function itemColumns(width) {
+  const subtotalWidth = width >= 48 ? 11 : 9;
+  const priceWidth = subtotalWidth;
+  const qtyWidth = width >= 48 ? 5 : 3;
+  const gap = 2;
+  const subtotalRight = width - 1;
+  const subtotalLeft = subtotalRight - subtotalWidth + 1;
+  const priceRight = subtotalLeft - gap;
+  const qtyRight = priceRight - priceWidth - gap;
+  return { qtyRight, priceRight, subtotalRight, width };
+}
+
+function fallbackColumns(width) {
   const subtotalWidth = width >= 48 ? 11 : 10;
   const qtyWidth = width >= 48 ? 5 : 4;
   const subtotalRight = width - 1;
   const subtotalLeft = subtotalRight - subtotalWidth + 1;
   const qtyRight = subtotalLeft - 2;
   const itemWidth = qtyRight - qtyWidth - 2;
-  return { qtyRight, subtotalRight, itemWidth };
+  return { qtyRight, subtotalRight, itemWidth, width };
 }
 
 /** Tulis teks rata kanan ke buffer (berakhir tepat di kolom `right`). */
@@ -119,10 +131,28 @@ function itemHeader(width, cols) {
   return buf.join('');
 }
 
-/** Baris utama item: nama produk (kiri) + Qty/Subtotal (rata kanan). */
+/** Baris utama item (mode tanpa satuan): nama produk di kiri, Qty & Subtotal di kanan. */
 function itemRow(name, qty, subtotal, cols) {
   const buf = new Array(cols.width).fill(' ');
   for (let k = 0; k < name.length; k += 1) buf[k] = name[k];
+  putRight(buf, qty, cols.qtyRight);
+  putRight(buf, subtotal, cols.subtotalRight);
+  return buf.join('');
+}
+
+/** Baris nilai item (mode satuan): satuan di kiri, Qty/Harga/Subtotal rata kanan. */
+function itemValueRow(unit, qty, price, subtotal, showHarga, cols) {
+  const buf = new Array(cols.width).fill(' ');
+  for (let k = 0; k < unit.length; k += 1) buf[k] = unit[k];
+  putRight(buf, qty, cols.qtyRight);
+  if (showHarga) putRight(buf, price, cols.priceRight);
+  putRight(buf, subtotal, cols.subtotalRight);
+  return buf.join('');
+}
+
+/** Baris total qty & total nilai (tanpa label), rata kanan ke kolom Qty/Subtotal. */
+function totalRow(qty, subtotal, cols) {
+  const buf = new Array(cols.width).fill(' ');
   putRight(buf, qty, cols.qtyRight);
   putRight(buf, subtotal, cols.subtotalRight);
   return buf.join('');
@@ -161,30 +191,38 @@ export function buildReceiptLayout({ sale, store, pos }) {
   push(dashed(width));
 
   // ---------- Item ----------
-  // Satu baris per item: nama (kiri) + Qty & Subtotal (kolom tetap rata
-  // kanan). Nama panjang dibungkus ke bawah; angka tetap di baris pertama
-  // agar semua kolom Qty/Subtotal lurus sejajar. Harga satuan & diskon
-  // ditampilkan sebagai baris detail di bawahnya.
+  // Mode satuan (default): 2 baris per produk — nama rata kiri memakai lebar
+  // penuh, lalu baris nilai "Satuan | Qty | Harga | Subtotal" rata kanan di
+  // kolom tetap. Mode tanpa satuan (show_satuan=false): satu baris nama +
+  // Qty/Subtotal (dengan header kolom) — sama dengan layout lama.
+  const showSatuan = pos?.show_satuan !== false;
   const showHarga = pos?.show_unit_price !== false;
-  const cols = { width, ...itemColumns(width) };
-  push(itemHeader(width, cols), { style: 'bold' });
+  const cols = showSatuan ? itemColumns(width) : fallbackColumns(width);
+  if (!showSatuan) push(itemHeader(width, cols), { style: 'bold' });
   push(dashed(width));
 
   for (const it of sale?.items || []) {
     const name = it.product?.name || 'Produk';
     const qty = formatQty(Number(it.quantity) || 0);
     const subtotal = formatNumber(it.subtotal);
-    wrap(name, cols.itemWidth).forEach((t, i) => {
-      push(i === 0 ? itemRow(t, qty, subtotal, cols) : t);
-    });
-    if (showHarga) push(`  @ ${formatNumber(it.price)}`);
+    const unit = sanitize(it.product?.unit?.short_name || '');
+    if (showSatuan) {
+      wrap(name, width).forEach((t) => push(t));
+      push(itemValueRow(unit, qty, formatNumber(it.price), subtotal, showHarga, cols));
+    } else {
+      const nameLines = wrap(name, cols.itemWidth);
+      nameLines.forEach((t, i) => push(i === 0 ? itemRow(t, qty, subtotal, cols) : t));
+      if (showHarga) push(`  @ ${formatNumber(it.price)}`);
+    }
     if (Number(it.discount) > 0) push(`  disc -${formatRupiah(it.discount)}`);
   }
   push(dashed(width));
 
   // ---------- Rangkuman ----------
   const totalQty = (sale?.items || []).reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
-  info('JUMLAH ITEM', formatQty(totalQty));
+  const subtotalSum = (sale?.items || []).reduce((sum, it) => sum + (Number(it.subtotal) || 0), 0);
+  push(totalRow(formatQty(totalQty), formatNumber(subtotalSum), cols));
+  push(dashed(width));
   if (Number(sale?.discount) > 0) info('Diskon', `-${formatRupiah(sale?.discount)}`);
   if (Number(sale?.tax) > 0) info('Pajak', formatRupiah(sale?.tax));
   if (Number(sale?.additional_cost) > 0) info('Biaya Lain', formatRupiah(sale?.additional_cost));

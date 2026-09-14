@@ -97,6 +97,7 @@ export default function Settings() {
         receipt_width: '58mm',
         print_method: 'bluetooth',
         show_unit_price: true,
+        show_satuan: true,
         show_footer_nota: true,
         footer_nota: 'Terima kasih atas kunjungan Anda!',
         ...(s.pos || {}),
@@ -357,6 +358,15 @@ export default function Settings() {
                 Saat aktif, setiap item struk menampilkan kolom Qty, Harga Satuan, dan Subtotal
                 (contoh: <code className="rounded bg-slate-100 px-1">1 x 150.000 = 150.000</code>).
                 Saat tidak aktif, kolom harga satuan disembunyikan.
+              </p>
+              <Checkbox
+                label="Tampilkan Satuan di Struk"
+                checked={form.pos.show_satuan !== false}
+                onChange={(e) => update('pos', { show_satuan: e.target.checked })}
+              />
+              <p className="text-xs text-slate-400">
+                Saat aktif, setiap produk dicetak 2 baris: baris pertama nama produk, baris kedua
+                Satuan, Qty, Harga, dan Subtotal dengan kolom rata kanan yang lurus.
               </p>
               <Checkbox
                 label="Tampilkan Footer Nota"

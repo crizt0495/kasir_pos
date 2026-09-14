@@ -66,8 +66,8 @@ describe('buildReceiptLayout', () => {
     }
   });
 
-  it('header item menampilkan kolom Item, Qty, dan Subtotal', () => {
-    const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
+  it('header kolom Item/Qty/Subtotal muncul saat show_satuan=false (mode satu baris)', () => {
+    const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: { ...pos58, show_satuan: false } });
     const header = layout.lines.find((l) => l.style === 'bold' && /^Item/.test(l.text));
     expect(header.text.startsWith('Item')).toBe(true);
     expect(header.text).toContain('Qty');
@@ -76,8 +76,17 @@ describe('buildReceiptLayout', () => {
     expect(header.text.length).toBe(32);
   });
 
-  it('item satu baris lurus: nama kiri + qty/subtotal rata kanan sejajar header', () => {
+  it('mode satuan: tidak ada header kolom, setiap produk 2 baris (nama lalu nilai kolom)', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
+    const texts = layout.lines.map((l) => l.text);
+    expect(texts.some((t) => /^Item\s/.test(t))).toBe(false);
+    expect(texts.some((t) => t.trim() === 'Madu TJ')).toBe(true);
+    expect(texts.some((t) => /^\s{4,}2\s+10\.000\s+20\.000$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^\s{4,}1\s+15\.000\s+14\.000$/.test(t))).toBe(true);
+  });
+
+  it('item satu baris lurus saat show_satuan=false (nama kiri + qty/subtotal rata kanan)', () => {
+    const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: { ...pos58, show_satuan: false } });
     const texts = layout.lines.map((l) => l.text);
     const header = layout.lines.find((l) => l.style === 'bold' && /^Item/.test(l.text));
 
@@ -101,40 +110,35 @@ describe('buildReceiptLayout', () => {
     }
   });
 
-  it('harga satuan dirender sebagai baris detail (@ harga) di bawah item', () => {
+  it('satuan & harga tampil sebagai kolom pada baris nilai saat show_satuan aktif', () => {
     const sale = {
       ...baseSale,
       items: [{ ...baseSale.items[0], product: { name: 'Kopi Kapal Api', unit: { name: 'Gram', short_name: 'gr' } } }],
     };
     const layout = buildReceiptLayout({ sale, store: baseStore, pos: pos58 });
     const texts = layout.lines.map((l) => l.text);
-    // Satuan tidak lagi tercetak sebagai baris terpisah
-    expect(texts.some((t) => t.trim() === 'gr')).toBe(false);
-    // Baris utama masih satu baris lurus dengan subtotal
-    expect(texts.some((t) => /^Kopi Kapal Api\s+\d+\s+20\.000$/.test(t))).toBe(true);
-    // Detail harga satuan muncul di bawahnya
-    expect(texts.some((t) => t.trim() === '@ 10.000')).toBe(true);
+    expect(texts.some((t) => /^gr\s+\d+\s+10\.000\s+20\.000$/.test(t))).toBe(true);
+    expect(texts.some((t) => t.trim() === '@ 10.000')).toBe(false);
   });
 
-  it('diskon item dirender sebagai catatan di bawah baris detail harga', () => {
+  it('diskon item dirender sebagai catatan di bawah baris nilai satuan', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
     const texts = layout.lines.map((l) => l.text);
     const discIdx = texts.findIndex((t) => t.includes('disc'));
     expect(discIdx).toBeGreaterThan(-1);
     expect(texts[discIdx].trim().replace(/\u00a0/g, ' ')).toBe('disc -Rp 1.000');
-    // Baris detail harga tepat di atasnya, lalu baris utama item (subtotal mentok kanan)
-    expect(texts[discIdx - 1].trim()).toBe('@ 15.000');
-    expect(texts[discIdx - 2].endsWith('14.000')).toBe(true);
-    expect(texts[discIdx - 2].length).toBe(32);
+    // Baris nilai item tepat di atasnya (subtotal mentok kanan)
+    expect(texts[discIdx - 1].endsWith('14.000')).toBe(true);
+    expect(texts[discIdx - 1].length).toBe(32);
   });
 
-  it('baris bawah memakai JUMLAH ITEM (bukan Subtotal)', () => {
+  it('total qty & total nilai di baris bawah kolom (tanpa label JUMLAH ITEM)', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
     const texts = layout.lines.map((l) => l.text);
-    // Tidak ada lagi baris yang diawali "Subtotal" (label bawah dihapus)
+    expect(texts.some((t) => /^JUMLAH ITEM/.test(t))).toBe(false);
     expect(texts.some((t) => /^Subtotal/.test(t))).toBe(false);
-    // JUMLAH ITEM : 3 (total qty 2 + 1)
-    expect(texts.some((t) => /^JUMLAH ITEM\s*:\s*3$/.test(t))).toBe(true);
+    // Total qty 3 di kolom Qty + total subtotal 34.000 di kolom Subtotal
+    expect(texts.some((t) => /^\s{4,}3\s+34\.000$/.test(t))).toBe(true);
     // TOTAL tetap ada (dengan titik dua)
     expect(texts.some((t) => /^TOTAL\s*:\s*Rp 34.000$/.test(t))).toBe(true);
   });
@@ -187,19 +191,20 @@ describe('buildReceiptLayout', () => {
     expect(texts.some((t) => t.includes('dikembalikan'))).toBe(false);
   });
 
-  it('show_unit_price=false menghilangkan kolom Harga (tetap Item/Qty/Subtotal)', () => {
+  it('show_unit_price=false menghilangkan kolom Harga pada baris nilai satuan', () => {
     const layout = buildReceiptLayout({
       sale: baseSale,
       store: baseStore,
       pos: { ...pos58, show_unit_price: false },
     });
-    const header = layout.lines.find((l) => l.style === 'bold' && /^Item/.test(l.text));
-    expect(header.text).not.toContain('Harga');
-    expect(header.text).toContain('Qty');
-    expect(header.text.endsWith('Subtotal')).toBe(true);
-    // Baris nilai tetap memuat subtotal mentok kanan
-    const valueRows = layout.lines.map((l) => l.text).filter((t) => /^\s{4,}\d/.test(t) && /\d$/.test(t));
-    expect(valueRows.every((t) => t.endsWith('20.000') || t.endsWith('14.000'))).toBe(true);
+    const texts = layout.lines.map((l) => l.text);
+    // Tidak ada header kolom dan tidak ada harga satuan tercetak
+    expect(texts.some((t) => /^Item\s/.test(t))).toBe(false);
+    expect(texts.some((t) => /10\.000/.test(t))).toBe(false);
+    // Baris nilai tetap memuat qty + subtotal mentok kanan
+    const valueRows = texts.filter((t) => t.endsWith('20.000') || t.endsWith('14.000'));
+    expect(valueRows.length).toBe(2);
+    expect(valueRows.every((t) => t.length === 32)).toBe(true);
   });
 
   it('garis solid (=) muncul sebelum TOTAL', () => {
@@ -224,7 +229,8 @@ describe('encodeLinesToBytes / buildEscPosReceipt', () => {
     expect(text).toContain('TOKO ANDI');
     expect(text).toContain('INV-20260910-000001');
     expect(text).toContain('Terima kasih');
-    expect(text).toContain('JUMLAH ITEM');
+    expect(text).toContain('Madu TJ');
+    expect(text).toContain('34.000');
   });
   it('mengunci font standar (ESC M 0) + ukuran normal (GS ! 0) di awal stream', () => {
     const bytes = buildEscPosReceipt({ sale: baseSale, store: baseStore, pos: pos58 });
