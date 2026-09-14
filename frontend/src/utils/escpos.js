@@ -94,13 +94,13 @@ function solidLine(width) {
 function itemColumns(width) {
   const subtotalWidth = width >= 48 ? 11 : 9;
   const priceWidth = subtotalWidth;
-  const qtyWidth = width >= 48 ? 5 : 3;
   const gap = 2;
   const subtotalRight = width - 1;
   const subtotalLeft = subtotalRight - subtotalWidth + 1;
   const priceRight = subtotalLeft - gap;
-  const qtyRight = priceRight - priceWidth - gap;
-  return { qtyRight, priceRight, subtotalRight, width };
+  const priceLeft = priceRight - priceWidth + 1;
+  const qtyRight = priceLeft - gap;
+  return { qtyRight, priceLeft, priceRight, subtotalRight, width };
 }
 
 function fallbackColumns(width) {
@@ -117,6 +117,16 @@ function fallbackColumns(width) {
 function putRight(buf, text, right) {
   const t = sanitize(text).slice(0, buf.length);
   let start = right - t.length + 1;
+  if (start < 0) start = 0;
+  for (let i = 0; i < t.length; i += 1) buf[start + i] = t[i];
+  return buf;
+}
+
+/** Tulis teks rata tengah ke buffer (terpusat di antara kolom `left`-`right`). */
+function putCentered(buf, text, left, right) {
+  const t = sanitize(text).slice(0, buf.length);
+  const span = right - left + 1;
+  let start = left + Math.floor((span - t.length) / 2);
   if (start < 0) start = 0;
   for (let i = 0; i < t.length; i += 1) buf[start + i] = t[i];
   return buf;
@@ -140,12 +150,12 @@ function itemRow(name, qty, subtotal, cols) {
   return buf.join('');
 }
 
-/** Baris nilai item (mode satuan): satuan di kiri, Qty/Harga/Subtotal rata kanan. */
+/** Baris nilai item (mode satuan): "Qty Satuan" di kiri, Harga di tengah
+ *  kolom, Subtotal rata kanan — semua angka lurus sejajar. */
 function itemValueRow(unit, qty, price, subtotal, showHarga, cols) {
   const buf = new Array(cols.width).fill(' ');
-  for (let k = 0; k < unit.length; k += 1) buf[k] = unit[k];
-  putRight(buf, qty, cols.qtyRight);
-  if (showHarga) putRight(buf, price, cols.priceRight);
+  putRight(buf, unit ? `${qty} ${unit}` : qty, cols.qtyRight);
+  if (showHarga) putCentered(buf, price, cols.priceLeft, cols.priceRight);
   putRight(buf, subtotal, cols.subtotalRight);
   return buf.join('');
 }
@@ -156,6 +166,13 @@ function totalRow(qty, subtotal, cols) {
   putRight(buf, qty, cols.qtyRight);
   putRight(buf, subtotal, cols.subtotalRight);
   return buf.join('');
+}
+
+/** Baris ringkasan dot-leader: label rata kiri, titik pengisi, nominal rata kanan. */
+function dotRow(label, value, width) {
+  const amount = sanitize(String(value));
+  const fill = Math.max(1, width - label.length - amount.length);
+  return `${label}${'.'.repeat(fill)}${amount}`.slice(0, width);
 }
 
 /**
@@ -199,7 +216,6 @@ export function buildReceiptLayout({ sale, store, pos }) {
   const showHarga = pos?.show_unit_price !== false;
   const cols = showSatuan ? itemColumns(width) : fallbackColumns(width);
   if (!showSatuan) push(itemHeader(width, cols), { style: 'bold' });
-  push(dashed(width));
 
   for (const it of sale?.items || []) {
     const name = it.product?.name || 'Produk';
@@ -223,15 +239,15 @@ export function buildReceiptLayout({ sale, store, pos }) {
   const subtotalSum = (sale?.items || []).reduce((sum, it) => sum + (Number(it.subtotal) || 0), 0);
   push(totalRow(formatQty(totalQty), formatNumber(subtotalSum), cols));
   push(dashed(width));
-  if (Number(sale?.discount) > 0) info('Diskon', `-${formatRupiah(sale?.discount)}`);
-  if (Number(sale?.tax) > 0) info('Pajak', formatRupiah(sale?.tax));
-  if (Number(sale?.additional_cost) > 0) info('Biaya Lain', formatRupiah(sale?.additional_cost));
+  if (Number(sale?.discount) > 0) push(dotRow('DISKON', `-${formatRupiah(sale?.discount)}`, width));
+  if (Number(sale?.tax) > 0) push(dotRow('PAJAK', formatRupiah(sale?.tax), width));
+  if (Number(sale?.additional_cost) > 0) push(dotRow('BIAYA LAIN', formatRupiah(sale?.additional_cost), width));
 
   push(solidLine(width));
-  info('TOTAL', formatRupiah(sale?.total), { style: 'bold' });
-  info(paymentMethodLabel(sale?.payment_method), formatRupiah(sale?.payments?.[0]?.cash_received ?? sale?.total));
+  push(dotRow('TOTAL', formatRupiah(sale?.total), width), { style: 'bold' });
+  push(dotRow((paymentMethodLabel(sale?.payment_method) || '').toUpperCase(), formatRupiah(sale?.payments?.[0]?.cash_received ?? sale?.total), width));
   if (Number(sale?.payments?.[0]?.change_amount) > 0) {
-    info('Kembalian', formatRupiah(sale?.payments?.[0]?.change_amount));
+    push(dotRow('KEMBALI', formatRupiah(sale?.payments?.[0]?.change_amount), width));
   }
 
   // ---------- Hutang ----------
@@ -241,9 +257,9 @@ export function buildReceiptLayout({ sale, store, pos }) {
     push(dashed(width));
     centered('SISA HUTANG', { style: 'bold' });
     centered(formatRupiah(total - cashReceived), { style: 'bold' });
-    info('TOTAL', formatRupiah(total));
-    info('DIBAYAR', formatRupiah(cashReceived));
-    info('SISA HUTANG', formatRupiah(total - cashReceived));
+    push(dotRow('TOTAL', formatRupiah(total), width));
+    push(dotRow('DIBAYAR', formatRupiah(cashReceived), width));
+    push(dotRow('SISA HUTANG', formatRupiah(total - cashReceived), width));
     centered('STATUS: BELUM LUNAS', { style: 'bold' });
   }
 
@@ -299,10 +315,12 @@ export function scoreReceiptLayout({ width, lines }) {
     if (!atRightEdge(t)) issues.push({ line: i + 1, type: 'money-align' });
   });
 
-  // 5) Baris rangkuman harus memakai titik dua ("JUMLAH ITEM : 4")
-  const totalLabels = /^(JUMLAH ITEM|Diskon|Pajak|Biaya Lain|TOTAL|Tunai|Debit|QRIS|Kredit|Transfer|E-Wallet|Kembalian|DIBAYAR)\s*/;
+  // 5) Baris rangkuman harus pakai titik dua ATAU dot-leader ("TOTAL...Rp X")
+  const totalLabels = /^(JUMLAH ITEM|DISKON|PAJAK|BIAYA LAIN|TOTAL|TUNAI|DEBIT|QRIS|KREDIT|TRANSFER|E-WALLET|KEMBALI|DIBAYAR|SISA HUTANG)\b/;
   texts.forEach((t, i) => {
-    if (totalLabels.test(t) && t.indexOf(':') < 0) issues.push({ line: i + 1, type: 'total-colon' });
+    if (totalLabels.test(t) && t.indexOf(':') < 0 && !/\.{2}/.test(t)) {
+      issues.push({ line: i + 1, type: 'total-colon' });
+    }
   });
 
   const penalty = issues.reduce((acc, it) => acc + (it.type === 'overflow' ? 20 : 10), 0);

@@ -56,7 +56,7 @@ describe('scoreReceiptLayout', () => {
     expect(texts.some((t) => /^JUMLAH ITEM/.test(t))).toBe(false);
     expect(texts.some((t) => /^\s{4,}6\s+118\.500$/.test(t))).toBe(true);
     // Baris nilai satuan: "satuan kiri, qty/harga/subtotal rata kanan"
-    expect(texts.some((t) => /^gr\s+\d+\s+15\.500\s+46\.500$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^\s+3 gr\s+15\.500\s+46\.500$/.test(t))).toBe(true);
     expect(texts.some((t) => /^\s{4,}2\s+27\.000\s+54\.000$/.test(t))).toBe(true);
     // Tidak ada lagi baris detail "@ harga" (harga kini satu kolom nilai)
     expect(texts.some((t) => t.trim() === '@ 27.000')).toBe(false);
