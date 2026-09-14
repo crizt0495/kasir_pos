@@ -148,7 +148,8 @@ describe('buildReceiptLayout', () => {
     expect(texts[footerIdx + 1]).toBe('Anda!');
     expect(texts[footerIdx + 1]).toBe(texts[texts.length - 1]);
     expect(texts[footerIdx - 1]).toBe('');
-    expect(texts[footerIdx - 2]).toBe('kesalahan dari toko.');
+    expect(texts[footerIdx - 2]).toMatch(/^-+$/);
+    expect(texts.some((t) => t.includes('dikembalikan'))).toBe(false);
   });
 
   it('footer_nota custom dirender di paling bawah & mendukung multi-baris', () => {
@@ -161,7 +162,7 @@ describe('buildReceiptLayout', () => {
     expect(texts.slice(-4)).toEqual(['', 'Dilarang keras merokok', 'Terima kasih atas kunjungan', 'Anda!']);
   });
 
-  it('show_footer_nota=false menghilangkan footer dari struk', () => {
+  it('show_footer_nota=false menghilangkan seluruh footer (termasuk kebijakan retur hardcode)', () => {
     const layout = buildReceiptLayout({
       sale: baseSale,
       store: baseStore,
@@ -169,7 +170,10 @@ describe('buildReceiptLayout', () => {
     });
     const texts = layout.lines.map((l) => l.text);
     expect(texts.some((t) => t.includes('Terima kasih'))).toBe(false);
-    expect(texts[texts.length - 1]).toBe('kesalahan dari toko.');
+    expect(texts.some((t) => t.includes('dikembalikan'))).toBe(false);
+    const lastNonEmpty = texts.filter((t) => t.trim() !== '').pop();
+    expect(lastNonEmpty.includes('Terima kasih')).toBe(false);
+    expect(lastNonEmpty.includes('dikembalikan')).toBe(false);
   });
 
   it('footer_nota kosong (eksplisit "") tidak mencetak footer', () => {
@@ -180,7 +184,7 @@ describe('buildReceiptLayout', () => {
     });
     const texts = layout.lines.map((l) => l.text);
     expect(texts.some((t) => t.includes('Terima kasih'))).toBe(false);
-    expect(texts[texts.length - 1]).toBe('kesalahan dari toko.');
+    expect(texts.some((t) => t.includes('dikembalikan'))).toBe(false);
   });
 
   it('show_unit_price=false menghilangkan kolom Harga (tetap Item/Qty/Subtotal)', () => {

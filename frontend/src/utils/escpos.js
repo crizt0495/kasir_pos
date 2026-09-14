@@ -210,17 +210,13 @@ export function buildReceiptLayout({ sale, store, pos }) {
   }
 
   // ---------- Footer ----------
-  push(dashed(width));
-  push('');
-  centered('Barang yang sudah dibeli tidak dapat dikembalikan kecuali ada kesalahan dari toko.');
-  if (pos?.show_footer_nota !== false) {
-    const defaultFooter = 'Terima kasih atas kunjungan Anda!';
-    const raw = pos?.footer_nota == null ? defaultFooter : String(pos?.footer_nota);
-    const footerText = raw.trim();
-    if (footerText) {
-      push('');
-      for (const t of footerText.split('\n').flatMap((p) => wrap(p, width))) centered(t);
-    }
+  const footerText = String(
+    pos?.footer_nota == null ? 'Terima kasih atas kunjungan Anda!' : pos?.footer_nota
+  ).trim();
+  if (pos?.show_footer_nota !== false && footerText) {
+    push(dashed(width));
+    push('');
+    for (const t of footerText.split('\n').flatMap((p) => wrap(p, width))) centered(t);
   }
 
   return { width, lines };
