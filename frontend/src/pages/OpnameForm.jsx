@@ -123,15 +123,26 @@ export default function OpnameForm() {
     if (!selectedItems.length) { toast.error('Minimal isi stok fisik satu produk'); return; }
     setSaving(true);
     try {
+      const merged = new Map();
+      selectedItems.forEach((p) => {
+        const id = p.id;
+        if (merged.has(id)) {
+          const prev = merged.get(id);
+          prev.physical_stock += Number(itemStocks[id]) || 0;
+          if (!prev.reason && itemReasons[id]) prev.reason = itemReasons[id];
+        } else {
+          merged.set(id, {
+            product_id: id,
+            system_stock: Number(p.stock) || 0,
+            physical_stock: Number(itemStocks[id]) || 0,
+            reason: itemReasons[id] || null,
+          });
+        }
+      });
       const payload = {
         opname_date: new Date(opnameDate).toISOString(),
         notes: notes || null,
-        items: selectedItems.map((p) => ({
-          product_id: p.id,
-          system_stock: Number(p.stock),
-          physical_stock: Number(itemStocks[p.id]),
-          reason: itemReasons[p.id] || null,
-        })),
+        items: Array.from(merged.values()),
       };
       let opnameId = id;
       if (isNew) {
@@ -317,8 +328,8 @@ export default function OpnameForm() {
           )}
           {isView && existing?.status === 'draft' && (
             <>
-              <Button variant="outline" onClick={() => save(false)} loading={saving} disabled={!canSave} icon={Save}>Simpan Draft</Button>
-              <Button onClick={() => setConfirmComplete(true)} disabled={!canSave} icon={ClipboardCheck}>Selesaikan</Button>
+              <Button variant="outline" onClick={() => save(false)} loading={saving} disabled={saving || !canSave} icon={Save}>Simpan Draft</Button>
+              <Button onClick={() => setConfirmComplete(true)} loading={saving} disabled={saving || !canSave} icon={ClipboardCheck}>Selesaikan</Button>
             </>
           )}
           {isNew && (

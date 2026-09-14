@@ -253,18 +253,41 @@ export const updateOpname = asyncHandler(async (req, res) => {
     .eq('id', id);
   if (upErr) throw upErr;
 
-  // Replace items: insert baru dulu (cek error), baru hapus yang lama
-  const { error: insErr } = await supabase.from('stock_opname_items').insert(
-    items.map((i) => ({
-      opname_id: id,
-      product_id: i.product_id,
-      system_stock: i.system_stock,
-      physical_stock: i.physical_stock,
-      reason: i.reason || null,
-    }))
-  );
-  if (insErr) throw insErr;
-  const { error: delErr } = await supabase.from('stock_opname_items').delete().eq('opname_id', id);
+  // Gabungkan produk duplikat (satu baris per produk), lalu upsert dengan
+  // ON CONFLICT agar item lama di-update, bukan menabrak unique constraint
+  const merge = new Map();
+  for (const i of items) {
+    const k = i.product_id;
+    if (!merge.has(k)) {
+      merge.set(k, {
+        product_id: k,
+        system_stock: Number(i.system_stock) || 0,
+        physical_stock: Number(i.physical_stock) || 0,
+        reason: i.reason || null,
+      });
+    } else {
+      const prev = merge.get(k);
+      prev.physical_stock += Number(i.physical_stock) || 0;
+      if (!prev.reason && i.reason) prev.reason = i.reason;
+    }
+  }
+  const mergedItems = Array.from(merge.values());
+
+  const { error: upsErr } = await supabase
+    .from('stock_opname_items')
+    .upsert(
+      mergedItems.map((i) => ({ opname_id: id, ...i })),
+      { onConflict: 'opname_id,product_id' }
+    );
+  if (upsErr) throw upsErr;
+
+  // Hapus item lama yang sudah tidak ada di form
+  const keptIds = mergedItems.map((i) => i.product_id);
+  const { error: delErr } = await supabase
+    .from('stock_opname_items')
+    .delete()
+    .eq('opname_id', id)
+    .not('product_id', 'in', keptIds);
   if (delErr) throw delErr;
 
   await writeAudit({ user: req.user, action: 'STOCK_OPNAME_UPDATED', module: 'stock_opname', recordId: id, newData: { item_count: items.length }, req });
