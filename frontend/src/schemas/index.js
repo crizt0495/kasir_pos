@@ -150,6 +150,8 @@ export const settingsSchema = z.object({
     .object({
       default_payment_method: z.enum(['CASH', 'QRIS', 'DEBIT', 'CREDIT', 'TRANSFER', 'E_WALLET']),
       receipt_width: z.enum(['58mm', '80mm']),
+      show_footer_nota: z.boolean().nullable().optional(),
+      footer_nota: z.string().max(200, 'Maksimal 200 karakter').nullable().optional(),
     })
     .passthrough(),
   tax: z

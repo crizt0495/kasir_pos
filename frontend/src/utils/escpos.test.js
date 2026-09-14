@@ -119,7 +119,7 @@ describe('buildReceiptLayout', () => {
     expect(nameRow.style).toBe('bold');
   });
 
-  it('baris bawah memakai JUMLAH ITEM (bukan Subtotal) + ada blank sebelum terima kasih', () => {
+  it('baris bawah memakai JUMLAH ITEM (bukan Subtotal)', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
     const texts = layout.lines.map((l) => l.text);
     // Tidak ada lagi baris yang diawali "Subtotal" (label bawah dihapus)
@@ -128,11 +128,50 @@ describe('buildReceiptLayout', () => {
     expect(texts.some((t) => /^JUMLAH ITEM\s*:\s*3$/.test(t))).toBe(true);
     // TOTAL tetap ada (dengan titik dua)
     expect(texts.some((t) => /^TOTAL\s*:\s*Rp 34.000$/.test(t))).toBe(true);
-    // Blank line sebelum "Terima kasih"
-    const thanksIdx = texts.findIndex((t) => t.startsWith('Terima kasih'));
-    expect(thanksIdx).toBeGreaterThan(-1);
-    expect(texts[thanksIdx - 1]).toBe('');
-    expect(texts[thanksIdx - 2]).toBe('-'.repeat(32));
+  });
+
+  it('footer default (tanpa setting) memakai "Terima kasih" di baris paling bawah', () => {
+    const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
+    const texts = layout.lines.map((l) => l.text);
+    const footerIdx = texts.findIndex((t) => t.startsWith('Terima kasih'));
+    expect(footerIdx).toBeGreaterThan(-1);
+    expect(texts[footerIdx]).toBe('Terima kasih atas kunjungan');
+    expect(texts[footerIdx + 1]).toBe('Anda!');
+    expect(texts[footerIdx + 1]).toBe(texts[texts.length - 1]);
+    expect(texts[footerIdx - 1]).toBe('');
+    expect(texts[footerIdx - 2]).toBe('kesalahan dari toko.');
+  });
+
+  it('footer_nota custom dirender di paling bawah & mendukung multi-baris', () => {
+    const layout = buildReceiptLayout({
+      sale: baseSale,
+      store: baseStore,
+      pos: { ...pos58, footer_nota: 'Dilarang keras merokok\nTerima kasih atas kunjungan Anda!' },
+    });
+    const texts = layout.lines.map((l) => l.text);
+    expect(texts.slice(-4)).toEqual(['', 'Dilarang keras merokok', 'Terima kasih atas kunjungan', 'Anda!']);
+  });
+
+  it('show_footer_nota=false menghilangkan footer dari struk', () => {
+    const layout = buildReceiptLayout({
+      sale: baseSale,
+      store: baseStore,
+      pos: { ...pos58, show_footer_nota: false, footer_nota: 'Terima kasih' },
+    });
+    const texts = layout.lines.map((l) => l.text);
+    expect(texts.some((t) => t.includes('Terima kasih'))).toBe(false);
+    expect(texts[texts.length - 1]).toBe('kesalahan dari toko.');
+  });
+
+  it('footer_nota kosong (eksplisit "") tidak mencetak footer', () => {
+    const layout = buildReceiptLayout({
+      sale: baseSale,
+      store: baseStore,
+      pos: { ...pos58, footer_nota: '' },
+    });
+    const texts = layout.lines.map((l) => l.text);
+    expect(texts.some((t) => t.includes('Terima kasih'))).toBe(false);
+    expect(texts[texts.length - 1]).toBe('kesalahan dari toko.');
   });
 
   it('show_unit_price=false menghilangkan kolom Harga (tetap Item/Qty/Subtotal)', () => {

@@ -11,7 +11,7 @@ import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { Button } from '../components/ui/Button.jsx';
 import { Tabs } from '../components/ui/DataTable.jsx';
-import { Field, Input, Select, Checkbox } from '../components/ui/Form.jsx';
+import { Field, Input, Select, Checkbox, Textarea } from '../components/ui/Form.jsx';
 import { Card } from '../components/ui/DataTable.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 
@@ -97,6 +97,8 @@ export default function Settings() {
         receipt_width: '58mm',
         print_method: 'bluetooth',
         show_unit_price: true,
+        show_footer_nota: true,
+        footer_nota: 'Terima kasih atas kunjungan Anda!',
         ...(s.pos || {}),
       },
       tax: { enabled: false, percentage: 0, ...(s.tax || {}) },
@@ -356,6 +358,30 @@ export default function Settings() {
                 (contoh: <code className="rounded bg-slate-100 px-1">1 x 150.000 = 150.000</code>).
                 Saat tidak aktif, kolom harga satuan disembunyikan.
               </p>
+              <Checkbox
+                label="Tampilkan Footer Nota"
+                checked={form.pos.show_footer_nota !== false}
+                onChange={(e) => update('pos', { show_footer_nota: e.target.checked })}
+              />
+              <p className="text-xs text-slate-400">
+                Tampilkan teks penutup custom di bagian paling bawah struk, sebelum kertas dipotong.
+              </p>
+              {form.pos.show_footer_nota !== false && (
+                <>
+                  <Textarea
+                    name="footer_nota"
+                    rows={4}
+                    maxLength={200}
+                    value={form.pos.footer_nota || ''}
+                    onChange={(e) => update('pos', { footer_nota: e.target.value })}
+                    error={!!errors.pos?.footer_nota}
+                    placeholder="Terima kasih atas kunjungan Anda!"
+                  />
+                  <p className="text-right text-xs text-slate-400">
+                    {(form.pos.footer_nota || '').length}/200 karakter
+                  </p>
+                </>
+              )}
             </div>
           </Card>
         </div>
