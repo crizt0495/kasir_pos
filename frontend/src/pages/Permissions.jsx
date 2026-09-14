@@ -82,7 +82,7 @@ export default function Permissions() {
             <table className="w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
-                  <th className="px-4 py-3">Permission</th>
+                  <th className="min-w-56 px-4 py-3">Permission</th>
                   {roles.map((r) => (
                     <th key={r.id} className="px-3 py-3 text-center">
                       <span className="inline-flex items-center gap-1">
@@ -130,7 +130,7 @@ function PermissionGroup({ module, perms, roles, roleSets, editable, saving, onT
       </tr>
       {perms.map((p) => (
         <tr key={p.code} className="hover:bg-slate-50/40">
-          <td className="px-4 py-2.5">
+          <td className="min-w-56 px-4 py-2.5">
             <p className="font-medium text-slate-800">{p.name}</p>
             <p className="text-xs text-slate-400">
               <code>{p.code}</code>
@@ -149,9 +149,10 @@ function PermissionGroup({ module, perms, roles, roleSets, editable, saving, onT
                     checked={checked}
                     disabled={disabled}
                     onChange={() => onToggle(r, p.code)}
-                    className="h-5 w-9 rounded-full border-2 border-slate-300 bg-slate-200 appearance-none cursor-pointer transition-all duration-150 ease-out
-                      checked:border-primary-600 checked:bg-primary-600 checked:translate-x-full
-                      focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+                    className="relative h-5 w-9 shrink-0 cursor-pointer appearance-none rounded-full border-2 border-slate-300 bg-slate-200 transition-colors duration-150 ease-out
+                      after:absolute after:left-[3px] after:top-1/2 after:h-3.5 after:w-3.5 after:-translate-y-1/2 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:duration-150 after:ease-out
+                      checked:border-primary-600 checked:bg-primary-600 checked:after:translate-x-[14px]
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2
                       disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label={`${p.name} untuk ${r.name}`}
                     title={`${r.name}: ${p.name}`}
