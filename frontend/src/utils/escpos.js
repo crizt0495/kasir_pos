@@ -150,11 +150,12 @@ function itemRow(name, qty, subtotal, cols) {
   return buf.join('');
 }
 
-/** Baris nilai item (mode satuan): "Qty Satuan" di kiri, Harga di tengah
- *  kolom, Subtotal rata kanan — semua angka lurus sejajar. */
+/** Baris nilai item (mode satuan): "QtySatuan" rata kiri mentok, Harga di
+ *  tengah kolom, Subtotal rata kanan mentok — semua angka lurus sejajar. */
 function itemValueRow(unit, qty, price, subtotal, showHarga, cols) {
   const buf = new Array(cols.width).fill(' ');
-  putRight(buf, unit ? `${qty} ${unit}` : qty, cols.qtyRight);
+  const cluster = sanitize(unit ? `${qty}${unit}` : qty);
+  for (let i = 0; i < cluster.length; i += 1) buf[i] = cluster[i];
   if (showHarga) putCentered(buf, price, cols.priceLeft, cols.priceRight);
   putRight(buf, subtotal, cols.subtotalRight);
   return buf.join('');
@@ -168,11 +169,11 @@ function totalRow(qty, subtotal, cols) {
   return buf.join('');
 }
 
-/** Baris ringkasan dot-leader: label rata kiri, titik pengisi, nominal rata kanan. */
-function dotRow(label, value, width) {
+/** Baris ringkasan: label rata kiri mentok, spasi, nominal rata kanan mentok. */
+function padRow(label, value, width) {
   const amount = sanitize(String(value));
   const fill = Math.max(1, width - label.length - amount.length);
-  return `${label}${'.'.repeat(fill)}${amount}`.slice(0, width);
+  return `${label}${' '.repeat(fill)}${amount}`.slice(0, width);
 }
 
 /**
@@ -209,9 +210,10 @@ export function buildReceiptLayout({ sale, store, pos }) {
 
   // ---------- Item ----------
   // Mode satuan (default): 2 baris per produk — nama rata kiri memakai lebar
-  // penuh, lalu baris nilai "Satuan | Qty | Harga | Subtotal" rata kanan di
-  // kolom tetap. Mode tanpa satuan (show_satuan=false): satu baris nama +
-  // Qty/Subtotal (dengan header kolom) — sama dengan layout lama.
+  // penuh, lalu baris nilai "QtySatuan (rata kiri) | Harga (tengah) |
+  // Subtotal (rata kanan)" di kolom tetap. Mode tanpa satuan
+  // (show_satuan=false): satu baris nama + Qty/Subtotal (dengan header
+  // kolom) — sama dengan layout lama.
   const showSatuan = pos?.show_satuan !== false;
   const showHarga = pos?.show_unit_price !== false;
   const cols = showSatuan ? itemColumns(width) : fallbackColumns(width);
@@ -239,15 +241,15 @@ export function buildReceiptLayout({ sale, store, pos }) {
   const subtotalSum = (sale?.items || []).reduce((sum, it) => sum + (Number(it.subtotal) || 0), 0);
   push(totalRow(formatQty(totalQty), formatNumber(subtotalSum), cols));
   push(dashed(width));
-  if (Number(sale?.discount) > 0) push(dotRow('DISKON', `-${formatRupiah(sale?.discount)}`, width));
-  if (Number(sale?.tax) > 0) push(dotRow('PAJAK', formatRupiah(sale?.tax), width));
-  if (Number(sale?.additional_cost) > 0) push(dotRow('BIAYA LAIN', formatRupiah(sale?.additional_cost), width));
+  if (Number(sale?.discount) > 0) push(padRow('DISKON', `-${formatRupiah(sale?.discount)}`, width));
+  if (Number(sale?.tax) > 0) push(padRow('PAJAK', formatRupiah(sale?.tax), width));
+  if (Number(sale?.additional_cost) > 0) push(padRow('BIAYA LAIN', formatRupiah(sale?.additional_cost), width));
 
   push(solidLine(width));
-  push(dotRow('TOTAL', formatRupiah(sale?.total), width), { style: 'bold' });
-  push(dotRow((paymentMethodLabel(sale?.payment_method) || '').toUpperCase(), formatRupiah(sale?.payments?.[0]?.cash_received ?? sale?.total), width));
+  push(padRow('TOTAL', formatRupiah(sale?.total), width), { style: 'bold' });
+  push(padRow((paymentMethodLabel(sale?.payment_method) || '').toUpperCase(), formatRupiah(sale?.payments?.[0]?.cash_received ?? sale?.total), width));
   if (Number(sale?.payments?.[0]?.change_amount) > 0) {
-    push(dotRow('KEMBALI', formatRupiah(sale?.payments?.[0]?.change_amount), width));
+    push(padRow('KEMBALI', formatRupiah(sale?.payments?.[0]?.change_amount), width));
   }
 
   // ---------- Hutang ----------
@@ -257,9 +259,9 @@ export function buildReceiptLayout({ sale, store, pos }) {
     push(dashed(width));
     centered('SISA HUTANG', { style: 'bold' });
     centered(formatRupiah(total - cashReceived), { style: 'bold' });
-    push(dotRow('TOTAL', formatRupiah(total), width));
-    push(dotRow('DIBAYAR', formatRupiah(cashReceived), width));
-    push(dotRow('SISA HUTANG', formatRupiah(total - cashReceived), width));
+    push(padRow('TOTAL', formatRupiah(total), width));
+    push(padRow('DIBAYAR', formatRupiah(cashReceived), width));
+    push(padRow('SISA HUTANG', formatRupiah(total - cashReceived), width));
     centered('STATUS: BELUM LUNAS', { style: 'bold' });
   }
 
@@ -315,10 +317,10 @@ export function scoreReceiptLayout({ width, lines }) {
     if (!atRightEdge(t)) issues.push({ line: i + 1, type: 'money-align' });
   });
 
-  // 5) Baris rangkuman harus pakai titik dua ATAU dot-leader ("TOTAL...Rp X")
-  const totalLabels = /^(JUMLAH ITEM|DISKON|PAJAK|BIAYA LAIN|TOTAL|TUNAI|DEBIT|QRIS|KREDIT|TRANSFER|E-WALLET|KEMBALI|DIBAYAR|SISA HUTANG)\b/;
+  // 5) Baris rangkuman harus label rata kiri + spasi + nominal ("TOTAL   Rp X")
+  const labels = '(DISKON|PAJAK|BIAYA LAIN|TOTAL|TUNAI|DEBIT|QRIS|KREDIT|TRANSFER|E-WALLET|KEMBALI|DIBAYAR|SISA HUTANG)';
   texts.forEach((t, i) => {
-    if (totalLabels.test(t) && t.indexOf(':') < 0 && !/\.{2}/.test(t)) {
+    if (new RegExp(`^${labels}\\b`).test(t) && !new RegExp(`^${labels} {2,}-?Rp`).test(t)) {
       issues.push({ line: i + 1, type: 'total-colon' });
     }
   });

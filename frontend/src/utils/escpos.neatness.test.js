@@ -55,15 +55,15 @@ describe('scoreReceiptLayout', () => {
     // Total qty = 2 + 1 + 3 = 6 ditampilkan di kolom bawah (tanpa JUMLAH ITEM)
     expect(texts.some((t) => /^JUMLAH ITEM/.test(t))).toBe(false);
     expect(texts.some((t) => /^\s{4,}6\s+118\.500$/.test(t))).toBe(true);
-    // Baris nilai satuan: "satuan kiri, qty/harga/subtotal rata kanan"
-    expect(texts.some((t) => /^\s+3 gr\s+15\.500\s+46\.500$/.test(t))).toBe(true);
-    expect(texts.some((t) => /^\s{4,}2\s+27\.000\s+54\.000$/.test(t))).toBe(true);
+    // Baris nilai satuan: QtySatuan rata kiri, Harga tengah, Subtotal rata kanan
+    expect(texts.some((t) => /^3gr\s+15\.500\s+46\.500$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^2\s+27\.000\s+54\.000$/.test(t))).toBe(true);
     // Tidak ada lagi baris detail "@ harga" (harga kini satu kolom nilai)
     expect(texts.some((t) => t.trim() === '@ 27.000')).toBe(false);
-    // Semua baris nilai item diakhiri angka, mentok kanan, panjang penuh
-    const valueRowPattern = /^\s{4,}.*\d{1,3}(\.\d{3})+$/;
+    // Semua baris nilai item (QtySatuan + Harga + Subtotal) panjang penuh, mentok kanan
+    const valueRowPattern = /^\S+\s+\d{1,3}(\.\d{3})+\s+\d{1,3}(\.\d{3})+$/;
     for (const t of texts) {
-      if (valueRowPattern.test(t) && /\d$/.test(t)) {
+      if (valueRowPattern.test(t)) {
         expect(t.length).toBe(32);
         expect(t.endsWith(' ')).toBe(false);
       }

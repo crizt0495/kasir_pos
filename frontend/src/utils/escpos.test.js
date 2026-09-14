@@ -81,8 +81,8 @@ describe('buildReceiptLayout', () => {
     const texts = layout.lines.map((l) => l.text);
     expect(texts.some((t) => /^Item\s/.test(t))).toBe(false);
     expect(texts.some((t) => t.trim() === 'Madu TJ')).toBe(true);
-    expect(texts.some((t) => /^\s{4,}2\s+10\.000\s+20\.000$/.test(t))).toBe(true);
-    expect(texts.some((t) => /^\s{4,}1\s+15\.000\s+14\.000$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^2\s+10\.000\s+20\.000$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^1\s+15\.000\s+14\.000$/.test(t))).toBe(true);
   });
 
   it('item satu baris lurus saat show_satuan=false (nama kiri + qty/subtotal rata kanan)', () => {
@@ -117,7 +117,7 @@ describe('buildReceiptLayout', () => {
     };
     const layout = buildReceiptLayout({ sale, store: baseStore, pos: pos58 });
     const texts = layout.lines.map((l) => l.text);
-    expect(texts.some((t) => /^\s+2 gr\s+10\.000\s+20\.000$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^2gr\s+10\.000\s+20\.000$/.test(t))).toBe(true);
     expect(texts.some((t) => t.trim() === '@ 10.000')).toBe(false);
   });
 
@@ -139,10 +139,10 @@ describe('buildReceiptLayout', () => {
     expect(texts.some((t) => /^Subtotal/.test(t))).toBe(false);
     // Total qty 3 di kolom Qty + total subtotal 34.000 di kolom Subtotal
     expect(texts.some((t) => /^\s{4,}3\s+34\.000$/.test(t))).toBe(true);
-    // TOTAL + TUNAI + KEMBALI pakai dot-leader, nominal rata kanan
-    expect(texts.some((t) => /^TOTAL\.+Rp 34\.000$/.test(t))).toBe(true);
-    expect(texts.some((t) => /^TUNAI\.+Rp 50\.000$/.test(t))).toBe(true);
-    expect(texts.some((t) => /^KEMBALI\.+Rp 16\.000$/.test(t))).toBe(true);
+    // TOTAL + TUNAI + KEMBALI pakai spasi, nominal rata kanan
+    expect(texts.some((t) => /^TOTAL {2,}Rp 34\.000$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^TUNAI {2,}Rp 50\.000$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^KEMBALI {2,}Rp 16\.000$/.test(t))).toBe(true);
   });
 
   it('footer default (tanpa setting) memakai "Terima kasih" di baris paling bawah', () => {
