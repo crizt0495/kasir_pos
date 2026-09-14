@@ -241,7 +241,6 @@ export function buildReceiptLayout({ sale, store, pos }) {
   const totalQty = (sale?.items || []).reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
   const subtotalSum = (sale?.items || []).reduce((sum, it) => sum + (Number(it.subtotal) || 0), 0);
   push(totalRow(formatQty(totalQty), formatNumber(subtotalSum), cols));
-  push(dashed(width));
   if (Number(sale?.discount) > 0) push(padRow('DISKON', `-${formatRupiah(sale?.discount)}`, width));
   if (Number(sale?.tax) > 0) push(padRow('PAJAK', formatRupiah(sale?.tax), width));
   if (Number(sale?.additional_cost) > 0) push(padRow('BIAYA LAIN', formatRupiah(sale?.additional_cost), width));
