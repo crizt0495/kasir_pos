@@ -209,12 +209,12 @@ describe('buildReceiptLayout', () => {
     expect(valueRows.every((t) => t.length === 32)).toBe(true);
   });
 
-  it('garis solid (=) muncul sebelum TOTAL', () => {
+  it('garis --- muncul sebelum TOTAL', () => {
     const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
     const texts = layout.lines.map((l) => l.text);
     const totalIdx = texts.findIndex((t) => /^TOTAL/.test(t));
-    const solidLine = texts[totalIdx - 1];
-    expect(solidLine).toBe('='.repeat(32));
+    const separator = texts[totalIdx - 1];
+    expect(separator).toBe('-'.repeat(32));
   });
 });
 

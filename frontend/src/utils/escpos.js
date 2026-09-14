@@ -235,7 +235,6 @@ export function buildReceiptLayout({ sale, store, pos }) {
     }
     if (Number(it.discount) > 0) push(`  disc -${formatRupiah(it.discount)}`);
   }
-  push(dashed(width));
 
   // ---------- Rangkuman ----------
   const totalQty = (sale?.items || []).reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
@@ -245,7 +244,7 @@ export function buildReceiptLayout({ sale, store, pos }) {
   if (Number(sale?.tax) > 0) push(padRow('PAJAK', formatRupiah(sale?.tax), width));
   if (Number(sale?.additional_cost) > 0) push(padRow('BIAYA LAIN', formatRupiah(sale?.additional_cost), width));
 
-  push(solidLine(width));
+  push(dashed(width));
   push(padRow('TOTAL', formatRupiah(sale?.total), width), { style: 'bold' });
   push(padRow((paymentMethodLabel(sale?.payment_method) || '').toUpperCase(), formatRupiah(sale?.payments?.[0]?.cash_received ?? sale?.total), width));
   if (Number(sale?.payments?.[0]?.change_amount) > 0) {
