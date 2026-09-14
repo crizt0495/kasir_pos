@@ -301,12 +301,13 @@ export const updateOpname = asyncHandler(async (req, res) => {
   if (upsErr) throw upsErr;
 
   // Hapus item lama yang sudah tidak ada di form
+  // (not.in harus berupa string '(id1,id2)' agar query PostgREST valid)
   const keptIds = mergedItems.map((i) => i.product_id);
   const { error: delErr } = await supabase
     .from('stock_opname_items')
     .delete()
     .eq('opname_id', id)
-    .not('product_id', 'in', keptIds);
+    .not('product_id', 'in', `(${keptIds.join(',')})`);
   if (delErr) throw delErr;
 
   await writeAudit({ user: req.user, action: 'STOCK_OPNAME_UPDATED', module: 'stock_opname', recordId: id, newData: { item_count: items.length }, req });

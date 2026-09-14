@@ -28,7 +28,10 @@ const tableOf = (t) => (t === 'stock_opnames' ? 'opnames' : t === 'stock_opname_
 const fakeSB = (() => {
   const matches = (row, filters) => filters.every((f) => {
     if (f.op === 'eq') return row[f.col] === f.val;
-    if (f.op === 'not' && f.op2 === 'in') return !f.val.includes(row[f.col]);
+    if (f.op === 'not' && f.op2 === 'in') {
+      const list = String(f.val).replace(/^\((.*)\)$/, '$1').split(',').filter(Boolean);
+      return !list.includes(row[f.col]);
+    }
     return true;
   });
 
