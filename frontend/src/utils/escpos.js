@@ -235,6 +235,7 @@ export function buildReceiptLayout({ sale, store, pos }) {
     }
     if (Number(it.discount) > 0) push(`  disc -${formatRupiah(it.discount)}`);
   }
+  push(dashed(width));
 
   // ---------- Rangkuman ----------
   const totalQty = (sale?.items || []).reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);

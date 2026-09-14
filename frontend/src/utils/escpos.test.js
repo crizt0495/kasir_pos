@@ -216,6 +216,17 @@ describe('buildReceiptLayout', () => {
     const separator = texts[totalIdx - 1];
     expect(separator).toBe('-'.repeat(32));
   });
+
+  it('satu garis --- memisahkan list produk dari total qty & total harga', () => {
+    const layout = buildReceiptLayout({ sale: baseSale, store: baseStore, pos: pos58 });
+    const texts = layout.lines.map((l) => l.text);
+    const totalRowIdx = texts.findIndex((t) => /^3\s+34\.000$/.test(t));
+    // Baris tepat sebelum total qty adalah garis pemisah setelah item terakhir
+    expect(texts[totalRowIdx - 1]).toBe('-'.repeat(32));
+    // Baris total qty & total nilai dipisah dari TOTAL oleh tepat satu garis
+    expect(texts[totalRowIdx + 1]).toBe('-'.repeat(32));
+    expect(texts[totalRowIdx + 2]).toMatch(/^TOTAL/);
+  });
 });
 
 describe('encodeLinesToBytes / buildEscPosReceipt', () => {
