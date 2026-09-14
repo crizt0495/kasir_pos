@@ -31,6 +31,7 @@ fi
 PROJECT_REF=$(echo "$SUPABASE_URL" | sed -E 's|https://||' | cut -d'.' -f1)
 MIGRATION_0034="supabase/migrations/0034_price_movements.sql"
 MIGRATION_0035="supabase/migrations/0035_status_barang_revisi_harga.sql"
+MIGRATION_COMBINED="supabase/migrations/0034_0035_combined.sql"
 
 if [ ! -f "$MIGRATION_0034" ] || [ ! -f "$MIGRATION_0035" ]; then
   echo "❌ File migrasi 0034/0035 tidak ditemukan"
@@ -45,8 +46,9 @@ if ! command -v psql &> /dev/null; then
   echo "⚠️  psql tidak terinstall. Cara paling mudah:"
   echo ""
   echo "  1. Buka https://supabase.com/dashboard/project/$PROJECT_REF/sql/new"
-  echo "  2. Copy-paste isi file $MIGRATION_0034 lalu klik Run"
-  echo "  3. Copy-paste isi file $MIGRATION_0035 lalu klik Run"
+  echo "  2. Copy-paste SELURUH isi file supabase/migrations/0034_0035_combined.sql"
+  echo "     (file ini sudah memuat 0034 + 0035 sekaligus, cukup sekali tempel)"
+  echo "  3. Klik 'Run' / F5"
   echo ""
   echo "Setelah install psql, jalankan script ini lagi."
   exit 1
