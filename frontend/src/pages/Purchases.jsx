@@ -23,6 +23,7 @@ export default function Purchases() {
   const [supplierId, setSupplierId] = useState('');
   const [status, setStatus] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('');
+  const [statusBarang, setStatusBarang] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [toReceive, setToReceive] = useState(null);
@@ -35,15 +36,15 @@ export default function Purchases() {
     []
   );
   const list = useApi(
-    () => purchasesApi.list({ search: debounced || undefined, supplier_id: supplierId || undefined, status: status || undefined, payment_status: paymentStatus || undefined, page, pageSize }).then((r) => r.data),
-    [debounced, supplierId, status, paymentStatus, page, pageSize]
+    () => purchasesApi.list({ search: debounced || undefined, supplier_id: supplierId || undefined, status: status || undefined, payment_status: paymentStatus || undefined, status_barang: statusBarang || undefined, page, pageSize }).then((r) => r.data),
+    [debounced, supplierId, status, paymentStatus, statusBarang, page, pageSize]
   );
 
   const receive = async () => {
     setActing(true);
     try {
-      await purchasesApi.receive(toReceive.id);
-      toast.success('Pembelian diterima — stok & harga beli produk diperbarui');
+      const res = await purchasesApi.receive(toReceive.id);
+      toast.success(res.message || 'Pembelian diterima — stok & harga beli produk diperbarui');
       setToReceive(null);
       list.reload();
     } catch (error) {
@@ -56,8 +57,8 @@ export default function Purchases() {
   const remove = async () => {
     setActing(true);
     try {
-      await purchasesApi.remove(toDelete.id);
-      toast.success('Pembelian dihapus');
+      const res = await purchasesApi.remove(toDelete.id);
+      toast.success(res.message || 'Pembelian dihapus');
       setToDelete(null);
       list.reload();
     } catch (error) {
@@ -85,15 +86,16 @@ export default function Purchases() {
           { key: 'purchase_date', header: 'Tanggal', render: (r) => formatDate(r.purchase_date) },
           { key: 'total', header: 'Total', render: (r) => <span className="font-semibold">{formatRupiah(r.total)}</span> },
           { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+          { key: 'status_barang', header: 'Status Barang', render: (r) => <StatusBadge status={r.status_barang || 'DRAFT'} /> },
           { key: 'payment_status', header: 'Pembayaran', render: (r) => <StatusBadge status={r.payment_status} /> },
           { key: 'actions', header: 'Aksi', render: (r) => (
             <div className="flex items-center gap-1">
               <button onClick={() => navigate(`/purchases/${r.id}`)} className="rounded-sm p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-600">
                 <Eye className="h-4 w-4" />
               </button>
-              {r.status === 'draft' && can('purchases.update') && (
+              {(r.status_barang || 'DRAFT') === 'DRAFT' && can('purchases.update') && (
                 <>
-                  <button onClick={() => setToReceive(r)} title="Terima (stok masuk)" className="rounded-sm p-1.5 text-emerald-600 hover:bg-emerald-50">
+                  <button onClick={() => setToReceive(r)} title="Terima barang (stok masuk)" className="rounded-sm p-1.5 text-emerald-600 hover:bg-emerald-50">
                     <PackageCheck className="h-4 w-4" />
                   </button>
                   <button onClick={() => navigate(`/purchases/${r.id}/edit`)} className="rounded-sm p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600">
@@ -101,7 +103,7 @@ export default function Purchases() {
                   </button>
                 </>
               )}
-              {r.status === 'draft' && can('purchases.delete') && (
+              {(r.status_barang || 'DRAFT') !== 'BATAL' && can('purchases.delete') && (
                 <button onClick={() => setToDelete(r)} className="rounded-sm p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600">
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -126,7 +128,10 @@ export default function Purchases() {
                 <p className="font-medium text-primary-600">{r.purchase_number}</p>
                 <p className="text-xs text-slate-400">{r.supplier?.name || '-'} · {formatDate(r.purchase_date)}</p>
               </div>
-              <StatusBadge status={r.status} />
+              <div className="flex flex-col items-end gap-1">
+                <StatusBadge status={r.status} />
+                <StatusBadge status={r.status_barang || 'DRAFT'} />
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="font-semibold text-sm">{formatRupiah(r.total)}</span>
@@ -134,7 +139,7 @@ export default function Purchases() {
                 <button onClick={(e) => { e.stopPropagation(); navigate(`/purchases/${r.id}`); }} className="rounded-md bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
                   Detail
                 </button>
-                {r.status === 'draft' && can('purchases.update') && (
+                {(r.status_barang || 'DRAFT') === 'DRAFT' && can('purchases.update') && (
                   <button onClick={(e) => { e.stopPropagation(); setToReceive(r); }} className="rounded-md bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-100 transition-colors">
                     Terima
                   </button>
@@ -163,6 +168,12 @@ export default function Purchases() {
                 <option value="partial">Sebagian</option>
                 <option value="unpaid">Belum Bayar</option>
               </Select>
+              <Select value={statusBarang} onChange={(e) => { setStatusBarang(e.target.value); setPage(1); }} className="w-full sm:w-40">
+                <option value="">Semua Status Barang</option>
+                <option value="DRAFT">Draft</option>
+                <option value="BARANG_DITERIMA">Barang Diterima</option>
+                <option value="BATAL">Batal</option>
+              </Select>
             </div>
           </>
         }
@@ -174,7 +185,7 @@ export default function Purchases() {
         onConfirm={receive}
         loading={acting}
         title="Terima pembelian ini?"
-        message="Stok produk akan bertambah sesuai item pembelian. Pastikan barang sudah sesuai."
+        message="Stok produk akan bertambah sesuai item pembelian. Harga beli produk baru disinkronkan bila pembelian sudah Lunas."
         confirmText="Ya, terima"
       />
       <ConfirmDialog
@@ -183,7 +194,7 @@ export default function Purchases() {
         onConfirm={remove}
         loading={acting}
         title="Hapus pembelian?"
-        message="Hanya pembelian draft yang dapat dihapus."
+        message="Pembelian draft dihapus tanpa efek harga beli. Pembelian dengan status Barang Diterima akan mengembalikan harga beli produk ke harga sebelumnya."
         confirmText="Ya, hapus"
       />
     </div>

@@ -4,7 +4,6 @@ import { ArrowLeft, PackageCheck, Pencil, Trash2 } from 'lucide-react';
 import { purchasesApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
-import { syncPurchasePrices } from '../hooks/useSyncPurchasePrice.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { Button } from '../components/ui/Button.jsx';
@@ -29,18 +28,8 @@ export default function PurchaseDetail() {
   const receive = async () => {
     setActing(true);
     try {
-      await purchasesApi.receive(id);
-      // Sinkronkan harga beli produk dari item pembelian sebagai cadangan,
-      // agar halaman Produk menampilkan harga beli terbaru bahkan bila
-      // fungsi DB fn_receive_purchase belum di-upgrade.
-      if (p?.items?.length) {
-        try {
-          await syncPurchasePrices(p.items);
-        } catch {
-          /* kegagalan sync tambahan tidak menggagalkan penerimaan */
-        }
-      }
-      toast.success('Pembelian diterima — stok & harga beli produk diperbarui');
+      const res = await purchasesApi.receive(id);
+      toast.success(res.message || 'Pembelian berhasil diterima');
       setToReceive(false);
       detail.reload();
     } catch (error) {
@@ -53,8 +42,8 @@ export default function PurchaseDetail() {
   const remove = async () => {
     setActing(true);
     try {
-      await purchasesApi.remove(id);
-      toast.success('Pembelian dihapus');
+      const res = await purchasesApi.remove(id);
+      toast.success(res.message || 'Pembelian dihapus');
       navigate('/purchases');
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -65,8 +54,8 @@ export default function PurchaseDetail() {
 
   const setPayment = async (payment_status) => {
     try {
-      await purchasesApi.payment(id, { payment_status });
-      toast.success('Status pembayaran diperbarui');
+      const res = await purchasesApi.payment(id, { payment_status });
+      toast.success(res.message || 'Status pembayaran diperbarui');
       detail.reload();
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -87,13 +76,13 @@ export default function PurchaseDetail() {
         </div>
         {p && (
           <div className="flex gap-2">
-            {p.status === 'draft' && can('purchases.update') && (
+            {(p.status_barang || 'DRAFT') === 'DRAFT' && can('purchases.update') && (
               <>
                 <Button variant="outline" icon={PackageCheck} onClick={() => setToReceive(true)}>Terima Barang</Button>
                 <Button variant="secondary" icon={Pencil} onClick={() => navigate(`/purchases/${id}/edit`)}>Edit</Button>
               </>
             )}
-            {p.status === 'draft' && can('purchases.delete') && (
+            {(p.status_barang || 'DRAFT') !== 'BATAL' && can('purchases.delete') && (
               <Button variant="danger" icon={Trash2} onClick={() => setToDelete(true)}>Hapus</Button>
             )}
           </div>
@@ -106,16 +95,20 @@ export default function PurchaseDetail() {
         <ErrorState onRetry={detail.reload} />
       ) : !p ? null : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card bodyClassName="p-4">
               <p className="text-xs text-slate-400">Status</p>
               <div className="mt-1"><StatusBadge status={p.status} /></div>
             </Card>
             <Card bodyClassName="p-4">
+              <p className="text-xs text-slate-400">Status Barang</p>
+              <div className="mt-1"><StatusBadge status={p.status_barang || 'DRAFT'} /></div>
+            </Card>
+            <Card bodyClassName="p-4">
               <p className="text-xs text-slate-400">Pembayaran</p>
               <div className="mt-1 flex items-center gap-2">
                 <StatusBadge status={p.payment_status} />
-                {can('purchases.update') && p.status !== 'cancelled' && (
+                {can('purchases.update') && (p.status_barang || 'DRAFT') !== 'BATAL' && (
                   <Select
                     value={p.payment_status}
                     onChange={(e) => setPayment(e.target.value)}
@@ -187,7 +180,7 @@ export default function PurchaseDetail() {
         onConfirm={receive}
         loading={acting}
         title="Terima pembelian ini?"
-        message="Stok produk akan bertambah sesuai item pembelian."
+        message="Stok produk akan bertambah sesuai item pembelian. Harga beli produk baru disinkronkan bila pembelian sudah Lunas."
         confirmText="Ya, terima"
       />
       <ConfirmDialog
@@ -196,6 +189,7 @@ export default function PurchaseDetail() {
         onConfirm={remove}
         loading={acting}
         title="Hapus pembelian?"
+        message="Pembelian dengan status Barang Diterima akan mengembalikan harga beli produk ke harga sebelumnya."
         confirmText="Ya, hapus"
       />
     </div>

@@ -7,7 +7,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { safeSearch } from '../utils/sanitize.js';
 
 const LIST_SELECT =
-  'id, purchase_number, invoice_number, purchase_date, subtotal, discount, total, payment_status, status, notes, created_at, ' +
+  'id, purchase_number, invoice_number, purchase_date, subtotal, discount, total, payment_status, status, status_barang, notes, created_at, ' +
   'supplier:suppliers(id, name), items:purchase_items(count)';
 
 async function fetchPurchaseDetail(id) {
@@ -23,7 +23,7 @@ async function fetchPurchaseDetail(id) {
 export const listPurchases = asyncHandler(async (req, res) => {
   const { page, pageSize } = getPagination(req.query, 20);
   const q = safeSearch(req.query.search);
-  const { supplier_id, status, payment_status } = req.query;
+  const { supplier_id, status, payment_status, status_barang } = req.query;
 
   const result = await fetchPage({
     buildQuery: (select, opts) => {
@@ -32,12 +32,13 @@ export const listPurchases = asyncHandler(async (req, res) => {
       if (supplier_id) query = query.eq('supplier_id', supplier_id);
       if (status) query = query.eq('status', status);
       if (payment_status) query = query.eq('payment_status', payment_status);
+      if (status_barang) query = query.eq('status_barang', status_barang);
       if (req.query.from) query = query.gte('purchase_date', req.query.from);
       if (req.query.to) query = query.lte('purchase_date', req.query.to);
       return query;
     },
     select: LIST_SELECT,
-    signature: countSignature('purchases', [q, supplier_id, status, payment_status, req.query.from, req.query.to]),
+    signature: countSignature('purchases', [q, supplier_id, status, payment_status, status_barang, req.query.from, req.query.to]),
     page,
     pageSize,
     orderBy: 'purchase_date',
@@ -72,7 +73,7 @@ export const createPurchase = asyncHandler(async (req, res) => {
   if (error) throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
 
   const purchase = await fetchPurchaseDetail(result.purchase_id);
-  return created(res, { ...result, purchase }, 'Pembelian berhasil dibuat, harga beli produk diperbarui');
+  return created(res, { ...result, purchase }, 'Pembelian berhasil dibuat');
 });
 
 export const updatePurchase = asyncHandler(async (req, res) => {
@@ -114,27 +115,35 @@ export const updatePurchase = asyncHandler(async (req, res) => {
     newData: { purchase_number: existing.purchase_number, total: result.total },
     req,
   });
-  return ok(res, await fetchPurchaseDetail(id), 'Pembelian berhasil diperbarui, harga beli produk disinkronkan');
+  return ok(res, await fetchPurchaseDetail(id), 'Pembelian berhasil diperbarui');
 });
 
 export const deletePurchase = asyncHandler(async (req, res) => {
   const id = req.params.id;
-  const { data: existing } = await supabase.from('purchases').select('id, status, purchase_number').eq('id', id).maybeSingle();
+  const { data: existing } = await supabase.from('purchases').select('id, status, status_barang, purchase_number').eq('id', id).maybeSingle();
   if (!existing) throw notFound('Pembelian tidak ditemukan');
-  if (existing.status !== 'draft') throw badRequest('Hanya pembelian draft yang dapat dihapus', 'NOT_DRAFT');
+  if (existing.status_barang === 'BATAL') throw badRequest('Pembelian yang dibatalkan tidak dapat dihapus', 'NOT_DELETABLE');
 
-  const { error } = await supabase.from('purchases').delete().eq('id', id);
-  if (error) throw error;
+  const { data, error } = await supabase.rpc('fn_delete_purchase', {
+    p_purchase_id: id,
+    p_created_by: req.user.id,
+  });
+  if (error) throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
+
+  const message =
+    Number(data?.price_reverted) > 0
+      ? 'Pembelian dihapus. Harga beli produk dikembalikan ke harga sebelumnya'
+      : 'Pembelian berhasil dihapus';
 
   await writeAudit({
     user: req.user,
     action: 'PURCHASE_DELETED',
     module: 'purchases',
     recordId: id,
-    newData: { purchase_number: existing.purchase_number },
+    newData: { purchase_number: existing.purchase_number, price_reverted: Number(data?.price_reverted) || 0 },
     req,
   });
-  return ok(res, null, 'Pembelian berhasil dihapus');
+  return ok(res, { ...data, purchase_number: existing.purchase_number }, message);
 });
 
 export const receivePurchase = asyncHandler(async (req, res) => {
@@ -143,24 +152,27 @@ export const receivePurchase = asyncHandler(async (req, res) => {
     p_created_by: req.user.id,
   });
   if (error) throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
-  return ok(res, data, 'Pembelian diterima, stok & harga beli produk diperbarui');
+
+  const message = data?.price_synced
+    ? 'Pembelian berhasil diterima. Harga produk telah diupdate'
+    : 'Pembelian berhasil diterima';
+  return ok(res, data, message);
 });
 
 export const updatePaymentStatus = asyncHandler(async (req, res) => {
   const id = req.params.id;
   const { payment_status } = req.body;
 
-  const { data: existing } = await supabase.from('purchases').select('id, status, purchase_number, payment_status').eq('id', id).maybeSingle();
+  const { data: existing } = await supabase.from('purchases').select('id, status, status_barang, purchase_number, payment_status').eq('id', id).maybeSingle();
   if (!existing) throw notFound('Pembelian tidak ditemukan');
-  if (existing.status === 'cancelled') throw badRequest('Pembelian dibatalkan', 'CANCELLED');
+  if (existing.status_barang === 'BATAL') throw badRequest('Pembelian dibatalkan', 'CANCELLED');
 
-  const { data, error } = await supabase
-    .from('purchases')
-    .update({ payment_status, updated_by: req.user.id })
-    .eq('id', id)
-    .select('*')
-    .single();
-  if (error) throw error;
+  const { data, error } = await supabase.rpc('fn_set_purchase_payment_status', {
+    p_purchase_id: id,
+    p_payment_status: payment_status,
+    p_created_by: req.user.id,
+  });
+  if (error) throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
 
   await writeAudit({
     user: req.user,
@@ -171,5 +183,9 @@ export const updatePaymentStatus = asyncHandler(async (req, res) => {
     newData: { payment_status },
     req,
   });
-  return ok(res, data, 'Status pembayaran diperbarui');
+
+  const message = data?.price_synced
+    ? 'Status pembayaran diperbarui. Harga produk telah diupdate'
+    : 'Status pembayaran diperbarui';
+  return ok(res, data, message);
 });

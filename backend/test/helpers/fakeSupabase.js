@@ -33,12 +33,16 @@ const permissionRows = [
   { id: 'p-users-update', code: 'users.update', name: 'Ubah User', module: 'users' },
   { id: 'p-users-delete', code: 'users.delete', name: 'Hapus User', module: 'users' },
   { id: 'p-inventory-adjust', code: 'inventory.adjust', name: 'Penyesuaian Stok', module: 'inventory' },
+  { id: 'p-purchases-view', code: 'purchases.view', name: 'Lihat Pembelian', module: 'purchases' },
+  { id: 'p-purchases-create', code: 'purchases.create', name: 'Tambah Pembelian', module: 'purchases' },
+  { id: 'p-purchases-update', code: 'purchases.update', name: 'Ubah Pembelian', module: 'purchases' },
+  { id: 'p-purchases-delete', code: 'purchases.delete', name: 'Hapus Pembelian', module: 'purchases' },
   { id: 'p-notifications-view', code: 'notifications.view', name: 'Lihat Notifikasi', module: 'notifications' },
 ];
 
 /** Kode permission per role (sumber tunggal kebenaran relasi role↔permission) */
 const rolePermissionCodes = {
-  [ownerRoleId]: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.create', 'products.delete', 'roles.view', 'roles.create', 'roles.update', 'roles.delete', 'permissions.view', 'reports.view', 'reports.export', 'inventory.view', 'inventory.adjust', 'customers.view', 'customers.create', 'customers.update', 'customers.delete', 'users.view', 'users.create', 'users.update', 'users.delete', 'notifications.view'],
+  [ownerRoleId]: ['dashboard.view', 'pos.access', 'sales.view', 'sales.create', 'products.view', 'products.create', 'products.delete', 'roles.view', 'roles.create', 'roles.update', 'roles.delete', 'permissions.view', 'reports.view', 'reports.export', 'inventory.view', 'inventory.adjust', 'customers.view', 'customers.create', 'customers.update', 'customers.delete', 'users.view', 'users.create', 'users.update', 'users.delete', 'notifications.view', 'purchases.view', 'purchases.create', 'purchases.update', 'purchases.delete'],
   [kasirRoleId]: ['pos.access', 'products.view', 'customers.view', 'customers.create', 'customers.update'],
 };
 
@@ -165,6 +169,7 @@ const store = {
   sales: [],
   returns: [],
   purchases: [],
+  price_movements: [],
   cash_sessions: [],
   cash_transactions: [],
   purchase_items: [],
@@ -209,7 +214,64 @@ function matchesFilter(row, filters) {
 }
 
 export function createFakeSupabase() {
+  // ---------- Emulasi logika pembelian (mirror fn_* di DB) ----------
+  const purchaseById = (pid) => (store.purchases || []).find((p) => p.id === pid);
+  const productById = (pid) => (store.products || []).find((p) => p.id === pid);
+  const purchaseItemsOf = (pid) => (store.purchase_items || []).filter((i) => i.purchase_id === pid);
+
+  /** Mirror fn_sync_purchase_price: hanya BARANG_DITERIMA + LUNAS. */
+  const syncPurchasePrice = (pid, createdBy) => {
+    const purchase = purchaseById(pid);
+    if (!purchase || purchase.status_barang !== 'BARANG_DITERIMA') return { synced: 0, reason: 'belum_diterima' };
+    if (purchase.payment_status !== 'paid') return { synced: 0, reason: 'belum_lunas' };
+    let synced = 0;
+    for (const it of purchaseItemsOf(pid)) {
+      const prod = productById(it.product_id);
+      if (prod && Number(it.cost_price) > 0 && Number(prod.purchase_price) !== Number(it.cost_price)) {
+        const oldValue = Number(prod.purchase_price);
+        prod.purchase_price = Number(it.cost_price);
+        store.price_movements.push({
+          id: randomUUID(),
+          product_id: it.product_id,
+          price_type: 'purchase_price',
+          old_value: oldValue,
+          new_value: Number(it.cost_price),
+          difference: Number(it.cost_price) - oldValue,
+          source: 'pembelian',
+          changed_by: createdBy,
+          changed_by_name: '-',
+          id_referensi: pid,
+          created_at: new Date().toISOString(),
+        });
+        synced += 1;
+      }
+    }
+    return { synced, reason: 'ok' };
+  };
+
+  /** Mirror fn_delete_purchase (bagian revert): kembalikan harga produk. */
+  const revertPurchasePrice = (pid, createdBy) => {
+    const rows = (store.price_movements || []).filter((m) => m.id_referensi === pid && m.price_type === 'purchase_price');
+    const firstPerProduct = {};
+    for (const m of rows) {
+      if (!firstPerProduct[m.product_id]) firstPerProduct[m.product_id] = m;
+    }
+    let reverted = 0;
+    for (const m of Object.values(firstPerProduct)) {
+      const prod = productById(m.product_id);
+      if (prod) {
+        prod.purchase_price = Number(m.old_value);
+        reverted += 1;
+      }
+    }
+    store.price_movements = (store.price_movements || []).filter((m) => m.id_referensi !== pid);
+    return reverted;
+  };
+
   return {
+    get store() {
+      return store;
+    },
     from(table) {
       const state = { table, filters: [], orFilters: [], orderBy: null, ascending: true, rangeFrom: null, rangeTo: null, limit: null, mode: null };
 
@@ -343,6 +405,9 @@ export function createFakeSupabase() {
               if (parent) parent.profiles = prof;
               return prof;
             }
+            if (state.table === 'products') {
+              return { ...row, id: row.id || randomUUID(), created_at: row.created_at || new Date().toISOString(), updated_at: row.updated_at || new Date().toISOString() };
+            }
             return { ...row };
           });
           if (!store[state.table]) store[state.table] = [];
@@ -428,6 +493,100 @@ export function createFakeSupabase() {
     },
 
     rpc(fn, args) {
+      if (fn === 'fn_create_purchase') {
+        const items = Array.isArray(args.p_items) ? args.p_items : [];
+        if (!items.length) return Promise.resolve({ data: null, error: { message: 'Daftar produk tidak boleh kosong' } });
+        if (!store.purchases) store.purchases = [];
+        const id = randomUUID();
+        const number = `PPR-2026TEST-${String(store.purchases.length + 1).padStart(6, '0')}`;
+        let subtotal = 0;
+        for (const it of items) {
+          if (Number(it.quantity) <= 0) return Promise.resolve({ data: null, error: { message: 'Qty harus lebih dari 0' } });
+          if (Number(it.cost_price) < 0) return Promise.resolve({ data: null, error: { message: 'Harga beli tidak boleh negatif' } });
+          const sub = Number(it.quantity) * Number(it.cost_price);
+          store.purchase_items.push({ purchase_id: id, product_id: it.product_id, quantity: it.quantity, cost_price: it.cost_price, subtotal: sub, created_at: new Date().toISOString() });
+          subtotal += sub;
+        }
+        const total = subtotal - Number(args.p_discount || 0);
+        store.purchases.push({
+          id,
+          purchase_number: number,
+          invoice_number: args.p_invoice_number || null,
+          purchase_date: args.p_purchase_date || '2026-08-15',
+          subtotal,
+          discount: Number(args.p_discount || 0),
+          total,
+          payment_status: 'unpaid',
+          status: 'draft',
+          status_barang: 'DRAFT',
+          notes: args.p_notes || null,
+          created_by: args.p_created_by,
+          updated_by: args.p_created_by,
+        });
+        return Promise.resolve({ data: { purchase_id: id, purchase_number: number, subtotal, discount: Number(args.p_discount || 0), total }, error: null });
+      }
+      if (fn === 'fn_receive_purchase') {
+        const purchase = purchaseById(args.p_purchase_id);
+        if (!purchase) return Promise.resolve({ data: null, error: { message: 'Pembelian tidak ditemukan' } });
+        if (['BARANG_DITERIMA', 'BATAL'].includes(purchase.status_barang)) {
+          return Promise.resolve({ data: null, error: { message: 'Pembelian sudah diterima atau dibatalkan' } });
+        }
+        for (const it of purchaseItemsOf(purchase.id)) {
+          const prod = productById(it.product_id);
+          if (prod) prod.stock = Number(prod.stock) + Number(it.quantity);
+        }
+        purchase.status_barang = 'BARANG_DITERIMA';
+        purchase.status = 'received';
+        const sync = purchase.payment_status === 'paid'
+          ? syncPurchasePrice(purchase.id, args.p_created_by)
+          : { synced: 0, reason: 'belum_lunas' };
+        return Promise.resolve({
+          data: {
+            purchase_id: purchase.id,
+            status: 'received',
+            status_barang: 'BARANG_DITERIMA',
+            items_updated: purchaseItemsOf(purchase.id).length,
+            price_synced: sync.synced > 0,
+            price_updated: sync.synced > 0,
+            price_reason: sync.reason,
+          },
+          error: null,
+        });
+      }
+      if (fn === 'fn_set_purchase_payment_status') {
+        const purchase = purchaseById(args.p_purchase_id);
+        if (!purchase) return Promise.resolve({ data: null, error: { message: 'Pembelian tidak ditemukan' } });
+        if (purchase.status_barang === 'BATAL') return Promise.resolve({ data: null, error: { message: 'Pembelian dibatalkan' } });
+        purchase.payment_status = args.p_payment_status;
+        const sync = args.p_payment_status === 'paid' && purchase.status_barang === 'BARANG_DITERIMA'
+          ? syncPurchasePrice(purchase.id, args.p_created_by)
+          : { synced: 0, reason: 'tidak_perlu' };
+        return Promise.resolve({
+          data: {
+            purchase_id: purchase.id,
+            payment_status: args.p_payment_status,
+            status_barang: purchase.status_barang,
+            price_synced: sync.synced > 0,
+            price_updated: sync.synced > 0,
+            price_reason: sync.reason,
+          },
+          error: null,
+        });
+      }
+      if (fn === 'fn_delete_purchase') {
+        const purchase = purchaseById(args.p_purchase_id);
+        if (!purchase) return Promise.resolve({ data: null, error: { message: 'Pembelian tidak ditemukan' } });
+        if (purchase.status_barang === 'BATAL') {
+          return Promise.resolve({ data: null, error: { message: 'Pembelian yang dibatalkan tidak dapat dihapus' } });
+        }
+        let reverted = 0;
+        if (purchase.status_barang === 'BARANG_DITERIMA') {
+          reverted = revertPurchasePrice(purchase.id, args.p_created_by);
+        }
+        store.purchases = (store.purchases || []).filter((p) => p.id !== purchase.id);
+        store.purchase_items = (store.purchase_items || []).filter((i) => i.purchase_id !== purchase.id);
+        return Promise.resolve({ data: { deleted: true, price_reverted: reverted }, error: null });
+      }
       if (fn === 'fn_create_sale') {
         return Promise.resolve({ data: { sale_id: '00000000-0000-0000-0000-000000000001', invoice_number: 'INV-20260815-000001', subtotal: 15000, discount: 0, tax: 0, additional_cost: 0, total: 15000, payment_method: 'CASH', cash_received: 20000, change: 5000 }, error: null });
       }

@@ -38,6 +38,8 @@ export const STATUS_BADGES = {
   processing: 'bg-primary-500 text-white',
   shipped: 'bg-info-500 text-white',
   delivered: 'bg-success-500 text-white',
+  BARANG_DITERIMA: 'bg-success-500 text-white',
+  BATAL: 'bg-danger-500 text-white',
 };
 
 export const STATUS_LABELS = {
@@ -58,6 +60,8 @@ export const STATUS_LABELS = {
   processing: 'Diproses',
   shipped: 'Dikirim',
   delivered: 'Diterima',
+  BARANG_DITERIMA: 'Barang Diterima',
+  BATAL: 'Batal',
 };
 
 export function StatusBadge({ status, className = '' }) {
