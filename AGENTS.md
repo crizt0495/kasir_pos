@@ -11,10 +11,10 @@ Aplikasi Point of Sale (POS) modern: React 18 + Vite + Tailwind CSS v4 (frontend
 - Build: `npm run build` (build frontend)
 - Test frontend: `npm run test -w frontend` (Vitest, 33 tests)
 - Test backend: `npm run test -w backend`
-- E2E: `npx playwright test` (dari `frontend/`) — butuh backend + Supabase live. CATATAN: `playwright.config.js` menjalankan `dev:backend` dari folder frontend sehingga gagal sendiri; jalankan `npm run dev:backend` & `npm run dev:frontend` manual dulu, lalu `npx playwright test` (config pakai `reuseExistingServer: true`).
+- E2E: dari `frontend/`, `npx playwright test` — config memakai `webServer` (backend via `cwd: '..'` karena script ada di root, frontend langsung) + `reuseExistingServer: true`; butuh backend/.env + Supabase live + `npx playwright install chromium`.
 - CATATAN lingkungan Termux/Android (Node v26 build khusus):
-  - `node --test` multi-file rusak ("expected absolute path: --test-concurrency=0"). Backend test dipakai lewat `test/run-all.mjs` (menjalankan tiap file `.test.js` proses terpisah) → `npm run test -w backend` = 56 test.
-  - Vitest default gagal spawn worker; `frontend/vitest.config.js` memakai `pool: threads, singleThread: true` → 33 test.
+  - `node --test` multi-file rusak ("expected absolute path: --test-concurrency=0"). Backend test dipakai lewat `test/run-all.mjs` (menjalankan tiap file `.test.js` proses terpisah) → `npm run test -w backend` = 147 test.
+  - Vitest default gagal spawn worker; `frontend/vitest.config.js` memakai `pool: threads, singleThread: true` → 78 test.
   - `process.execPath`/`process.argv[0]` mengarah ke linker Android (bukan node); runner backdoor memakai `command -v node` sebagai fallback.
   - E2E browser (Playwright + Supabase live) TIDAK bisa dijalankan di sini: butuh kredensial Supabase (backend/.env) + browser chromium; tidak tersedia di perangkat ini.
 
@@ -40,8 +40,7 @@ Aplikasi Point of Sale (POS) modern: React 18 + Vite + Tailwind CSS v4 (frontend
 
 ## Area yang belum dikerjakan (jika dilanjutkan)
 - Dark mode belum didukung (hanya light).
-- `playwright.config.js` script `dev:backend` belum diperbaiki (bug yang sudah ada).
-- PWA `sw.js` dan manifest ada namun belum diverifikasi penuh.
+- PWA sudah terverifikasi level kode: `sw.js` terdaftar di `main.jsx` (skip cache di dev :5173), manifest + ikon (192/512 PNG, SVG) valid & di-link, plumbing Web Push lengkap (frontend `NotificationsBell`/Settings → backend `profit.routes.js` `/notifications/*` + `notificationService.js`); belum diuji di device browser sungguhan.
 
 ## Selector E2E yang TIDAK BOLEH diubah
 Login: placeholder `Masukkan username` / `Masukkan password`, button `Login`. Dashboard: heading `Dashboard`. POS: link `POS / Kasir`, teks `Keranjang`, placeholder `Cari produk atau Scan Barcode (F2)...`, tombol /Bayar/, `Grand Total`, testid `cash-received`, tombol /Proses Pembayaran/, `Struk Transaksi`, `INV-`, `Terima kasih`.
