@@ -31,6 +31,49 @@ export function formatNumber(value) {
   return numberFmt.format(Number(value || 0));
 }
 
+/** Kelas ukuran font-mono yang menyusut otomatis agar angka besar tidak overflow kartu kecil */
+export function monoSizeClass(text) {
+  const n = String(text ?? '').length;
+  if (n <= 9) return 'text-xl sm:text-2xl';
+  if (n <= 12) return 'text-lg sm:text-xl';
+  if (n <= 15) return 'text-base sm:text-lg';
+  return 'text-sm sm:text-base';
+}
+
+/** Format Rupiah ringkas: Rp 53,3 Jt — angka lengkap via tooltip */
+export function formatRupiahCompact(value) {
+  const n = Number(value || 0);
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1_000_000_000) {
+    const v = (abs / 1_000_000_000).toLocaleString('id-ID', { maximumFractionDigits: 1 });
+    return `${sign}Rp ${v} M`;
+  }
+  if (abs >= 1_000_000) {
+    const v = (abs / 1_000_000).toLocaleString('id-ID', { maximumFractionDigits: 1 });
+    return `${sign}Rp ${v} Jt`;
+  }
+  if (abs >= 1_000) {
+    const v = (abs / 1_000).toLocaleString('id-ID', { maximumFractionDigits: 1 });
+    return `${sign}Rp ${v} rb`;
+  }
+  return `${sign}${rupiah.format(abs)}`;
+}
+
+/** Format angka ringkas: 1,5 jt / 3,2 rb */
+export function formatNumberCompact(value) {
+  const n = Number(value || 0);
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1_000_000) {
+    return `${sign}${(abs / 1_000_000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} jt`;
+  }
+  if (abs >= 1_000) {
+    return `${sign}${(abs / 1_000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} rb`;
+  }
+  return `${sign}${numberFmt.format(abs)}`;
+}
+
 /** Format qty (hilangkan desimal jika bulat) */
 export function formatQty(value) {
   const n = Number(value || 0);

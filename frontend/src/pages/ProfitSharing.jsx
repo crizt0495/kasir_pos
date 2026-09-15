@@ -8,10 +8,23 @@ import { Card, Pagination, DataTable } from '../components/ui/DataTable.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Field, Textarea, Select } from '../components/ui/Form.jsx';
-import { StatCard, SkeletonRows, EmptyState, ErrorState, Badge, Spinner } from '../components/ui/Feedback.jsx';
+import { SkeletonRows, EmptyState, ErrorState, Badge, Spinner } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import CurrencyInput from '../components/ui/CurrencyInput.jsx';
-import { formatRupiah, formatDateTime } from '../utils/format.js';
+import { formatRupiah, formatDateTime, monoSizeClass } from '../utils/format.js';
+
+function ShareStatCard({ label, value, sub, icon: Icon, color }) {
+  return (
+    <div className="group flex flex-col gap-2 rounded-xl border-2 border-black bg-white p-5 min-h-[9rem] shadow-[4px_4px_0_0_#0A0A0A] card-hover">
+      <span className={`flex h-10 w-10 items-center justify-center rounded-lg border-2 border-black shadow-[2px_2px_0_0_#0A0A0A] transition-transform duration-200 group-hover:-rotate-6 ${color}`}>
+        <Icon className="h-5 w-5" aria-hidden="true" />
+      </span>
+      <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 whitespace-normal break-words leading-tight" title={label}>{label}</p>
+      <p className={`${monoSizeClass(value)} font-extrabold text-slate-900 truncate tracking-tight font-mono`} title={String(value ?? '')}>{value}</p>
+      {sub && <p className="text-[11px] font-medium text-slate-500 break-words leading-snug">{sub}</p>}
+    </div>
+  );
+}
 
 export default function ProfitSharing() {
   const { can } = usePermission();
@@ -110,12 +123,18 @@ export default function ProfitSharing() {
 
   const summaryCards = useMemo(
     () => [
-      { label: 'Total Pelanggan', value: totals?.customers ?? 0, icon: Users, color: 'bg-primary-50 text-primary-600' },
-      { label: 'Total Pembelian', value: formatRupiah(totals?.total_purchase), icon: Wallet, color: 'bg-sky-50 text-sky-600' },
-      { label: 'Total Laba Pelanggan', value: formatRupiah(totals?.total_profit), icon: PiggyBank, color: 'bg-emerald-50 text-emerald-600' },
-      { label: 'Hak 2,5%', value: formatRupiah(totals?.share), icon: HandCoins, color: 'bg-violet-50 text-violet-600' },
-      { label: 'Sudah Dibagikan', value: formatRupiah(totals?.distributed), icon: CheckCircle2, color: 'bg-teal-50 text-teal-600' },
-      { label: 'Sisa', value: formatRupiah(totals?.remaining), icon: Clock, color: 'bg-amber-50 text-amber-600' },
+      { label: 'Total Pelanggan', value: totals?.customers ?? 0, icon: Users, color: 'bg-primary-50 text-primary-600',
+        sub: 'Jumlah pelanggan terdaftar yang mendapat hak bagi hasil di periode ini' },
+      { label: 'Total Pembelanjaan', value: formatRupiah(totals?.total_purchase), icon: Wallet, color: 'bg-sky-50 text-sky-600',
+        sub: 'Jumlah nilai belanja pelanggan selama periode ini' },
+      { label: 'Total Laba Toko', value: formatRupiah(totals?.total_profit), icon: PiggyBank, color: 'bg-emerald-50 text-emerald-600',
+        sub: 'Keuntungan toko dari penjualan ke pelanggan. Dasar perhitungan hak 2,5%.' },
+      { label: 'Hak Bagi Hasil 2,5%', value: formatRupiah(totals?.share), icon: HandCoins, color: 'bg-violet-50 text-violet-600',
+        sub: '2,5% dari total laba toko — hak yang diterima pelanggan' },
+      { label: 'Sudah Dibagikan', value: formatRupiah(totals?.distributed), icon: CheckCircle2, color: 'bg-teal-50 text-teal-600',
+        sub: 'Hak yang sudah dibayarkan ke pelanggan' },
+      { label: 'Sisa Hak Belum Dibagikan', value: formatRupiah(totals?.remaining), icon: Clock, color: 'bg-amber-50 text-amber-600',
+        sub: 'Sisa hak yang belum dibagikan ke pelanggan' },
     ],
     [totals]
   );
@@ -187,9 +206,9 @@ export default function ProfitSharing() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {summaryCards.map((c) => (
-              <StatCard key={c.label} label={c.label} value={c.value} icon={c.icon} color={c.color} />
+              <ShareStatCard key={c.label} label={c.label} value={c.value} sub={c.sub} icon={c.icon} color={c.color} />
             ))}
           </div>
 
@@ -203,21 +222,24 @@ export default function ProfitSharing() {
             ) : (
               <DataTable
                 columns={[
-                  { key: 'customer', headerLabel: 'Pelanggan', render: (row) => (
+                  { key: 'no', headerLabel: 'No', align: 'center', render: (row) => (
+                    <span className="font-semibold text-slate-400">{row._no}</span>
+                  )},
+                  { key: 'customer', headerLabel: 'Nama Pelanggan', render: (row) => (
                     <>
                       <p className="font-medium text-slate-800">{row.customer?.name || '-'}</p>
                       <p className="text-xs text-slate-400">{row.customer?.phone || ''}</p>
                     </>
                   )},
-                  { key: 'total_purchase', headerLabel: 'Total Pembelian', align: 'right', render: (row) => formatRupiah(row.total_purchase) },
-                  { key: 'total_profit', headerLabel: 'Total Laba', align: 'right', render: (row) => (
+                  { key: 'total_purchase', headerLabel: 'Total Pembelanjaan', align: 'right', render: (row) => formatRupiah(row.total_purchase) },
+                  { key: 'total_profit', headerLabel: 'Laba Toko (dasar 2,5%)', align: 'right', render: (row) => (
                     <span className="font-medium text-emerald-600">{formatRupiah(row.total_profit)}</span>
                   )},
-                  { key: 'share_amount', headerLabel: 'Hak 2,5%', align: 'right', render: (row) => (
+                  { key: 'share_amount', headerLabel: 'Hak Bagi Hasil 2,5%', align: 'right', render: (row) => (
                     <span className="font-semibold text-violet-700">{formatRupiah(row.share_amount)}</span>
                   )},
-                  { key: 'distributed', headerLabel: 'Dibagikan', align: 'right', render: (row) => formatRupiah(row.distributed) },
-                  { key: 'remaining', headerLabel: 'Sisa', align: 'right', render: (row) => (
+                  { key: 'distributed', headerLabel: 'Sudah Dibagikan', align: 'right', render: (row) => formatRupiah(row.distributed) },
+                  { key: 'remaining', headerLabel: 'Sisa Hak', align: 'right', render: (row) => (
                     row.remaining > 0 ? (
                       <span className="font-medium text-amber-600">{formatRupiah(row.remaining)}</span>
                     ) : (
@@ -243,7 +265,7 @@ export default function ProfitSharing() {
                     )
                   }] : [])
                 ]}
-                data={shares.data.items || []}
+                data={(shares.data.items || []).map((row, i) => ({ ...row, _no: (sharesPage - 1) * sharesPageSize + i + 1 }))}
                 loading={shares.loading}
                 page={sharesPage}
                 totalPages={shares.data.totalPages || 1}

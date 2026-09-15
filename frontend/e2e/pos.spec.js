@@ -22,7 +22,7 @@ test('Alur penjualan lengkap: login → POS → checkout → transaksi sukses', 
   await expect(page.getByText('Keranjang', { exact: true })).toBeVisible();
 
   // ---------- Cari & tambah produk ----------
-  await page.getByPlaceholder('Cari produk (F2)...').fill('Indomie');
+  await page.getByPlaceholder('Cari produk').fill('Indomie');
   const productCard = page.locator('button', { hasText: 'Indomie Goreng' }).first();
   await productCard.click();
   await expect(page.locator('text=Indomie Goreng').first()).toBeVisible();

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FileDown, TrendingUp, FileSpreadsheet, FileText } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts';
 import { reportsApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
@@ -15,7 +15,7 @@ import { Card } from '../components/ui/DataTable.jsx';
 import { Skeleton, ErrorState, EmptyState, Badge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { DatePicker, DateRangePicker } from '../components/ui/DatePicker.jsx';
-import { formatRupiah, formatNumber, formatDate, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
+import { formatRupiah, formatNumber, formatDate, paymentMethodLabel, paymentMethodColor, monoSizeClass } from '../utils/format.js';
 
 const PERIODS = [
   { key: 'daily', label: 'Harian' },
@@ -202,24 +202,24 @@ export default function Reports() {
             <Card title={tab === 'sales' ? 'Grafik Penjualan Harian' : 'Grafik Revenue vs Profit'} bodyClassName="p-4">
               {d.buckets?.length ? (
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={d.buckets} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+                  <LineChart data={d.buckets} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e7e4df" />
                     <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                     <YAxis tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}rb` : v)} tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(v) => formatRupiah(v)} />
+                    <Tooltip formatter={(v) => formatRupiah(v)} contentStyle={{ borderRadius: 8, border: '2px solid #0A0A0A' }} />
                     <Legend />
                     {tab === 'sales' ? (
                       <>
-                        <Bar dataKey="sales" name="Penjualan" fill="#1f6f5c" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="refunds" name="Retur" fill="#b23a48" radius={[4, 4, 0, 0]} />
+                        <Line type="monotone" dataKey="sales" name="Penjualan" stroke="#1f6f5c" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                        <Line type="monotone" dataKey="refunds" name="Retur" stroke="#b23a48" strokeWidth={2.5} strokeDasharray="5 4" dot={{ r: 3 }} activeDot={{ r: 5 }} />
                       </>
                     ) : (
                       <>
-                        <Bar dataKey="revenue" name="Pendapatan" fill="#1f6f5c" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="profit" name="Profit" fill="#369469" radius={[4, 4, 0, 0]} />
+                        <Line type="monotone" dataKey="revenue" name="Pendapatan" stroke="#1f6f5c" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                        <Line type="monotone" dataKey="profit" name="Profit" stroke="#b9793a" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
                       </>
                     )}
-                  </BarChart>
+                  </LineChart>
                 </ResponsiveContainer>
               ) : (
                 <EmptyState title="Belum ada data" />
@@ -245,9 +245,9 @@ export default function Reports() {
 
 function SummaryCard({ label, value, highlight = false }) {
   return (
-    <div className={`rounded-lg p-4 shadow-sm ${highlight ? 'border-2 border-black bg-primary-50' : 'border-2 border-black bg-white'}`}>
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className={`mt-1 text-lg font-bold font-mono ${highlight ? 'text-primary-700' : 'text-slate-900'}`}>{value}</p>
+    <div className={`rounded-lg p-4 min-h-[5.5rem] shadow-sm ${highlight ? 'border-2 border-black bg-primary-50' : 'border-2 border-black bg-white'}`}>
+      <p className="text-xs text-slate-500 break-words leading-tight">{label}</p>
+      <p className={`mt-1 ${monoSizeClass(value)} font-bold font-mono truncate ${highlight ? 'text-primary-700' : 'text-slate-900'}`} title={String(value ?? '')}>{value}</p>
     </div>
   );
 }

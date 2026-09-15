@@ -10,7 +10,7 @@ import { useApi } from '../hooks/useApi.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { computeTotals, computeTax, computeChange } from '../utils/cart.js';
-import { formatRupiah, formatNumber, formatQty, formatDateTime, formatDate, paymentMethodLabel } from '../utils/format.js';
+import { formatRupiah, formatNumber, formatQty, formatDateTime, formatDate, paymentMethodLabel, monoSizeClass } from '../utils/format.js';
 import { Button } from '../components/ui/Button.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Input, Select, Field, Textarea } from '../components/ui/Form.jsx';
@@ -135,22 +135,62 @@ export default function POS() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  const addToCartIfAvailable = useCallback((product) => {
+    if (!product) {
+      toast.error('Produk tidak ditemukan');
+      return false;
+    }
+    if (Number(product.stock) <= 0) {
+      toast.error(`${product.name} stok habis`);
+      return false;
+    }
+    const added = cart.add(product);
+    if (!added) {
+      toast.error(`Stok ${product.name} tidak cukup`);
+      return false;
+    }
+    toast.success(`${product.name} ditambahkan`);
+    return true;
+  }, [cart]);
+
   const addProductByCode = useCallback(async (code) => {
     if (!code) return;
     try {
       const res = await productsApi.byBarcode(code);
-      if (Number(res.data.stock) <= 0) {
-        toast.error(`${res.data.name} stok habis`);
-      } else {
-        cart.add(res.data);
-        toast.success(`${res.data.name} ditambahkan`);
-      }
+      addToCartIfAvailable(res.data);
     } catch {
       toast.error('Produk tidak ditemukan');
     }
     setSearch('');
     searchRef.current?.focus();
-  }, [cart]);
+  }, [addToCartIfAvailable]);
+
+  // Auto-add via ENTER (full keyboard, tanpa mouse):
+  // 1) Ketikan angka semua → prioritas cocok barcode presisi (scan tetap
+  //    normal); kalau tidak ada, lanjut ke hasil pencarian pertama.
+  // 2) Ketikan teks/SKU → tambahkan produk paling atas dari hasil pencarian
+  //    nama/SKU/barcode (case-insensitive).
+  const addFirstMatchingProduct = useCallback(async (query) => {
+    if (/^[0-9]+$/.test(query)) {
+      try {
+        const res = await productsApi.byBarcode(query);
+        if (addToCartIfAvailable(res.data)) return;
+      } catch {
+        // barcode presisi tidak ditemukan → lanjut lewat pencarian
+      }
+    }
+    try {
+      const res = await productsApi.list({
+        search: query,
+        category_id: categoryId || undefined,
+        pageSize: 100,
+        sort: 'name',
+      });
+      addToCartIfAvailable(res.data?.items?.[0]);
+    } catch {
+      toast.error('Produk tidak ditemukan');
+    }
+  }, [addToCartIfAvailable, categoryId]);
 
   const handleScan = useCallback((code) => {
     setScannerOpen(false);
@@ -237,8 +277,14 @@ export default function POS() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && /^[0-9]+$/.test(search.trim())) {
-                  addProductByCode(search.trim());
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const q = search.trim();
+                  if (!q) return;
+                  addFirstMatchingProduct(q).finally(() => {
+                    setSearch('');
+                    searchRef.current?.focus();
+                  });
                 }
               }}
               placeholder="Cari produk atau Scan Barcode (F2)..."
@@ -700,9 +746,9 @@ export default function POS() {
                 </span>
               </div>
             )}
-            <div className="flex justify-between border-t border-slate-300 pt-3 text-lg font-bold">
-              <span className="text-slate-900">Grand Total</span>
-              <span className="text-primary-700 font-mono text-2xl">
+            <div className="flex justify-between border-t border-slate-300 pt-3 gap-3">
+              <span className="text-slate-900 font-bold">Grand Total</span>
+              <span className={`text-primary-700 font-mono ${monoSizeClass(formatRupiah(totals.total))} truncate`} title={formatRupiah(totals.total)}>
                 {formatRupiah(totals.total)}
               </span>
             </div>
@@ -936,9 +982,9 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                 className="w-32 text-right"
               />
             </div>
-            <div className="flex justify-between border-t-2 border-black pt-3 mt-1">
+            <div className="flex justify-between border-t-2 border-black pt-3 mt-1 gap-3">
               <span className="font-semibold text-slate-900">Grand Total</span>
-              <span className="text-xl font-bold text-primary-700 font-mono">
+              <span className={`font-bold text-primary-700 font-mono ${monoSizeClass(formatRupiah(totals.total))} truncate`} title={formatRupiah(totals.total)}>
                 {formatRupiah(totals.total)}
               </span>
             </div>
@@ -1017,7 +1063,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                     ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
                     : 'border-red-300 bg-red-50 text-red-700'
                 }`}>
-                  <div className="text-2xl font-bold font-mono">
+                  <div className={`${monoSizeClass(change >= 0 ? formatRupiah(change) : formatRupiah(Math.abs(change)))} font-bold font-mono truncate`} title={change >= 0 ? formatRupiah(change) : formatRupiah(Math.abs(change))}>
                     {change >= 0 ? formatRupiah(change) : formatRupiah(Math.abs(change))}
                   </div>
                   <div className="text-xs text-slate-500 mt-1">

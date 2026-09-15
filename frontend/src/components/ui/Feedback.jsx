@@ -1,6 +1,7 @@
 import { CheckCircle2, Info, Inbox, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { useUiStore } from '../../stores/uiStore.js';
 import { Button } from './Button.jsx';
+import { monoSizeClass } from '../../utils/format.js';
 
 export function Badge({ color = 'bg-white text-slate-900', children, className = '', variant, dot = false }) {
   const variantStyles = {
@@ -124,9 +125,9 @@ export function ErrorState({ message = 'Terjadi kesalahan, silakan coba lagi', o
 export function StatCard({ label, value, icon: Icon, color = 'bg-primary-100 text-primary-600', sub, trend, trendUp = true, className = '', neo = false }) {
   if (neo) {
     return (
-      <div className={`group rounded-xl border-2 border-black p-5 neo-shadow neopush ${className}`}>
-        <p className="text-[10px] font-extrabold uppercase tracking-widest text-black/70 truncate">{label}</p>
-        <p className="mt-1.5 text-xl sm:text-2xl font-extrabold text-black break-words tracking-tight font-mono">{value}</p>
+      <div className={`group rounded-xl border-2 border-black p-5 min-h-[8.5rem] neo-shadow neopush ${className}`}>
+        <p className="text-[10px] font-extrabold uppercase tracking-widest text-black/70 whitespace-normal break-words leading-tight" title={label}>{label}</p>
+        <p className={`mt-1.5 ${monoSizeClass(value)} font-extrabold text-black truncate tracking-tight font-mono`} title={String(value ?? '')}>{value}</p>
         {sub && <p className="mt-1 text-[11px] font-bold text-black/60 break-words">{sub}</p>}
         {Icon && (
           <div className="mt-3 inline-flex items-center rounded-md border-2 border-black bg-white p-2 shadow-[3px_3px_0_0_#0A0A0A] transition-transform duration-200 group-hover:-rotate-6 group-hover:translate-x-[3px]">
@@ -137,11 +138,11 @@ export function StatCard({ label, value, icon: Icon, color = 'bg-primary-100 tex
     );
   }
   return (
-    <div className={`group rounded-xl border-2 border-black bg-white p-5 shadow-[4px_4px_0_0_#0A0A0A] card-hover ${className}`}>
+    <div className={`group rounded-xl border-2 border-black bg-white p-5 min-h-[8.5rem] shadow-[4px_4px_0_0_#0A0A0A] card-hover ${className}`}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 truncate">{label}</p>
-          <p className="mt-1.5 text-xl sm:text-2xl font-extrabold text-slate-900 break-words tracking-tight font-mono">{value}</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 whitespace-normal break-words leading-tight" title={label}>{label}</p>
+          <p className={`mt-1.5 ${monoSizeClass(value)} font-extrabold text-slate-900 truncate tracking-tight font-mono`} title={String(value ?? '')}>{value}</p>
           {sub && <p className="mt-1 text-[11px] font-bold text-slate-500 break-words">{sub}</p>}
           {trend && (
             <p className={`mt-2 flex items-center gap-1 text-xs font-extrabold ${trendUp ? 'text-success-600' : 'text-danger-600'}`}>

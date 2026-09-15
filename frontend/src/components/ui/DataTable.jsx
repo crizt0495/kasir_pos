@@ -140,6 +140,10 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange, on
 
 const PRIORITY_CLASS = { md: 'hidden md:table-cell', lg: 'hidden lg:table-cell' };
 
+/** Teks header kolom: utamakan `header`, fallback ke `headerLabel`/key agar
+ *  header tabel tidak pernah kosong. */
+const headerText = (c) => c.header ?? c.headerLabel ?? c.key;
+
 function readHiddenCols(storageKey) {
   if (!storageKey) return [];
   try {
@@ -313,7 +317,7 @@ export function DataTable({
                         onClick={() => onSortChange(sortKey)}
                         className={`inline-flex items-center gap-1 hover:text-primary-300 transition-colors ${active ? 'text-warning-400' : ''}`}
                       >
-                        {c.header}
+                        {headerText(c)}
                         {active ? (
                           sort.order === 'asc' ? (
                             <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
@@ -325,7 +329,7 @@ export function DataTable({
                         )}
                       </button>
                     ) : (
-                      c.header
+                      headerText(c)
                     )}
                   </th>
                 );

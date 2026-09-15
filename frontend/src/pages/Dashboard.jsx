@@ -1,7 +1,7 @@
 import { useApi } from '../hooks/useApi.js';
 import { dashboardApi } from '../api/index.js';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid,
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid,
 } from 'recharts';
 import {
   Banknote, ReceiptText, Package, AlertTriangle, Users, ShoppingBag, TrendingUp, Wallet,
@@ -11,7 +11,20 @@ import { Card } from '../components/ui/DataTable.jsx';
 import { StatCard, Skeleton, ErrorState, EmptyState, Badge } from '../components/ui/Feedback.jsx';
 import { formatRupiah, formatNumber, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 
-const PIE_COLORS = ['#1f6f5c', '#369469', '#b9793a', '#2e7c7a', '#b23a48', '#7f5589', '#3a8f84', '#6e6d74'];
+const CATEGORY_COLOR_MAP = {
+  Sembako: '#2563eb',
+  Minuman: '#f59e0b',
+  Elektronik: '#dc2626',
+  Makanan: '#16a34a',
+  Snack: '#9333ea',
+  'Kebutuhan Rumah': '#0d9488',
+  Rokok: '#ea580c',
+};
+const PIE_FALLBACK_COLORS = ['#2563eb', '#f59e0b', '#16a34a', '#dc2626', '#9333ea', '#0d9488', '#ea580c', '#db2777', '#ca8a04'];
+
+function categoryColor(name, i) {
+  return CATEGORY_COLOR_MAP[name] || PIE_FALLBACK_COLORS[i % PIE_FALLBACK_COLORS.length];
+}
 
 function SummarySkeleton() {
   return (
@@ -32,6 +45,22 @@ function ChartTooltip({ active, payload, label }) {
         <p key={i} className="font-medium text-slate-600">
           <span className="mr-1.5 inline-block h-2 w-2 rounded-full" style={{ background: p.color || p.fill }} />
           {p.name}: {formatRupiah(p.value)}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function PieTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const total = payload.reduce((sum, p) => sum + Number(p.value || 0), 0);
+  return (
+    <div className="rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-xs shadow-xl">
+      {payload.map((p, i) => (
+        <p key={i} className="font-medium text-slate-600">
+          <span className="mr-1.5 inline-block h-2 w-2 rounded-full" style={{ background: p.payload?.color || p.color || p.fill }} />
+          {p.name}: {formatRupiah(p.value)}
+          {total > 0 && <span className="text-slate-400"> ({((Number(p.value) / total) * 100).toFixed(1)}%)</span>}
         </p>
       ))}
     </div>
@@ -130,19 +159,21 @@ export default function Dashboard() {
             <Card title="Penjualan 7 Hari Terakhir" bodyClassName="p-4">
               {charts.data.sales_7_days.length ? (
                 <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={charts.data.sales_7_days} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#1f6f5c" />
-                        <stop offset="100%" stopColor="#164f41" />
-                      </linearGradient>
-                    </defs>
+                  <LineChart data={charts.data.sales_7_days} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e7e4df" vertical={false} />
                     <XAxis dataKey="label" tickFormatter={(v) => v.slice(5)} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                     <YAxis tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}rb` : v)} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
-                    <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgb(31 111 92 / 0.06)' }} />
-                    <Bar dataKey="total" name="Penjualan" fill="url(#barGrad)" radius={[6, 6, 0, 0]} maxBarSize={48} />
-                  </BarChart>
+                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#1f6f5c', strokeDasharray: '4 4' }} />
+                    <Line
+                      type="monotone"
+                      dataKey="total"
+                      name="Penjualan"
+                      stroke="#1f6f5c"
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: '#1f6f5c', strokeWidth: 0 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
                 </ResponsiveContainer>
               ) : (
                 <EmptyState title="Belum ada penjualan" />
@@ -154,7 +185,7 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
                     <Pie
-                      data={charts.data.category_sales}
+                      data={charts.data.category_sales.map((d, i) => ({ ...d, color: categoryColor(d.name, i) }))}
                       dataKey="value"
                       nameKey="name"
                       innerRadius={60}
@@ -164,10 +195,10 @@ export default function Dashboard() {
                       labelLine={false}
                     >
                       {charts.data.category_sales.map((_, i) => (
-                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                        <Cell key={i} fill={categoryColor(charts.data.category_sales[i].name, i)} />
                       ))}
                     </Pie>
-                    <Tooltip content={<ChartTooltip />} />
+                    <Tooltip content={<PieTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (

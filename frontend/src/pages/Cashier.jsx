@@ -12,7 +12,7 @@ import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { StatusBadge, Skeleton, EmptyState, Badge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import CurrencyInput from '../components/ui/CurrencyInput.jsx';
-import { formatRupiah, formatDateTime, formatNumber } from '../utils/format.js';
+import { formatRupiah, formatDateTime, formatNumber, monoSizeClass } from '../utils/format.js';
 
 const parseAmount = (v) => {
   if (v === '' || v === null || v === undefined) return null;
@@ -168,21 +168,21 @@ export default function Cashier() {
         <Skeleton className="h-24 w-full" />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card bodyClassName="p-4">
-            <p className="text-xs text-slate-400">Saldo Awal</p>
-            <p className="mt-1 text-lg font-bold text-slate-900">{formatRupiah(s.opening_balance)}</p>
+          <Card bodyClassName="p-4 min-h-[6.5rem]">
+            <p className="text-xs text-slate-400 break-words leading-tight">Saldo Awal</p>
+            <p className={`mt-1 ${monoSizeClass(formatRupiah(s.opening_balance))} font-bold text-slate-900 font-mono truncate`} title={formatRupiah(s.opening_balance)}>{formatRupiah(s.opening_balance)}</p>
           </Card>
-          <Card bodyClassName="p-4">
-            <p className="text-xs text-slate-400">Cash Masuk (Penjualan + IN)</p>
-            <p className="mt-1 text-lg font-bold text-emerald-600">{formatRupiah(cashIn)}</p>
+          <Card bodyClassName="p-4 min-h-[6.5rem]">
+            <p className="text-xs text-slate-400 break-words leading-tight">Cash Masuk (Penjualan + IN)</p>
+            <p className={`mt-1 ${monoSizeClass(formatRupiah(cashIn))} font-bold text-emerald-600 font-mono truncate`} title={formatRupiah(cashIn)}>{formatRupiah(cashIn)}</p>
           </Card>
-          <Card bodyClassName="p-4">
-            <p className="text-xs text-slate-400">Cash Keluar (Pengeluaran + OUT + Refund)</p>
-            <p className="mt-1 text-lg font-bold text-red-600">{formatRupiah(cashOut)}</p>
+          <Card bodyClassName="p-4 min-h-[6.5rem]">
+            <p className="text-xs text-slate-400 break-words leading-tight">Cash Keluar (Pengeluaran + OUT + Refund)</p>
+            <p className={`mt-1 ${monoSizeClass(formatRupiah(cashOut))} font-bold text-red-600 font-mono truncate`} title={formatRupiah(cashOut)}>{formatRupiah(cashOut)}</p>
           </Card>
-          <Card bodyClassName="p-4">
-            <p className="text-xs text-slate-400">Kas Yang Diharapkan</p>
-            <p className="mt-1 text-lg font-bold text-primary-700">{formatRupiah(expected)}</p>
+          <Card bodyClassName="p-4 min-h-[6.5rem]">
+            <p className="text-xs text-slate-400 break-words leading-tight">Kas Yang Diharapkan</p>
+            <p className={`mt-1 ${monoSizeClass(formatRupiah(expected))} font-bold text-primary-700 font-mono truncate`} title={formatRupiah(expected)}>{formatRupiah(expected)}</p>
           </Card>
         </div>
       )}

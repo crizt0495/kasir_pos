@@ -8,7 +8,7 @@ test('POS lengkap: diskon · pajak · biaya tambahan → struk → detail → re
   await page.getByRole('link', { name: 'POS' }).click();
   await page.getByText('Keranjang', { exact: true }).waitFor({ state: 'visible' });
 
-  await page.getByPlaceholder('Cari produk (F2)...').fill('Indomie');
+  await page.getByPlaceholder('Cari produk').fill('Indomie');
   await page.locator('button', { hasText: 'Indomie Goreng' }).first().click();
   await expect(page.locator('li', { hasText: 'Indomie Goreng' })).toBeVisible();
 
