@@ -83,6 +83,13 @@ export const salesApi = {
   refund: (id, payload) => api.post(`/sales/${id}/refund`, payload).then((r) => r.data),
 };
 
+// ---------- OFFLINE SYNC ----------
+/** Sinkronisasi antrian transaksi offline (triggered saat internet kembali). */
+export const syncApi = {
+  /** transaction: [{ offline_id, payload }] — dibuat ulang oleh endpoint antrian. */
+  sync: (transactions) => api.post('/sync-offline-transactions', { transactions }).then((r) => r.data),
+};
+
 export const returnsApi = {
   list: (params) => api.get('/returns', { params }).then((r) => r.data),
   get: (id) => api.get(`/returns/${id}`).then((r) => r.data),

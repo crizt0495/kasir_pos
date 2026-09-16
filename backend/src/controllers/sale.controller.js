@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { writeAudit } from '../services/auditService.js';
-import { notifyNewSale } from '../services/notificationService.js';
+import { fetchSaleDetail, createSaleRecord } from '../services/saleService.js';
 import { getPagination, buildPage, fetchPage, countSignature } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, AppError, extractPgMessage } from '../utils/errors.js';
@@ -10,18 +10,6 @@ import { safeSearch } from '../utils/sanitize.js';
 const SALE_LIST_SELECT =
   'id, invoice_number, subtotal, discount, tax, additional_cost, total, payment_method, status, notes, created_at, ' +
   'customer:customers(id, name, phone), cashier:users!sales_cashier_id_fkey(id, username, profiles(full_name)), items:sale_items(count)';
-
-const SALE_DETAIL_SELECT =
-  '*, customer:customers(id, name, phone, email, address), ' +
-  'cashier:users!sales_cashier_id_fkey(id, username, profiles(full_name)), ' +
-  'items:sale_items(*, product:products(id, name, sku, unit:product_units(short_name))), ' +
-  'payments:sale_payments(*)';
-
-async function fetchSaleDetail(id) {
-  const { data, error } = await supabase.from('sales').select(SALE_DETAIL_SELECT).eq('id', id).maybeSingle();
-  if (error) throw error;
-  return data;
-}
 
 async function fetchReturnsForSale(saleId) {
   const { data } = await supabase
@@ -79,74 +67,48 @@ export const getSale = asyncHandler(async (req, res) => {
 });
 
 export const createSale = asyncHandler(async (req, res) => {
-  const body = req.body;
-  const hasDebt = Boolean(body.record_debt);
+  const result = await createSaleRecord(req.user.id, req.body);
+  return created(res, result, 'Transaksi berhasil');
+});
 
-  let { data: result, error } = await supabase.rpc('fn_create_sale', {
-    p_cashier_id: req.user.id,
-    p_created_by: req.user.id,
-    p_items: body.items,
-    p_customer_id: body.customer_id || null,
-    p_discount: body.discount || 0,
-    p_tax: body.tax || 0,
-    p_additional_cost: body.additional_cost || 0,
-    p_payment_method: body.payment_method || 'CASH',
-    p_cash_received: body.cash_received ?? null,
-    p_notes: body.notes || null,
-    p_session_id: body.session_id || null,
-    p_allow_partial: hasDebt,
-    p_record_debt: body.record_debt ?? null,
-  });
+/**
+ * Sinkronkan antrian transaksi offline (POST /api/sync-offline-transactions).
+ * Dikirim frontend SATU PER SATU saat internet kembali. Antrian berhenti pada
+ * transaksi pertama yang gagal — transaksi gagal tetap disimpan di device dan
+ * dicoba lagi nanti (retry 30 detik).
+ */
+export const syncOfflineTransactions = asyncHandler(async (req, res) => {
+  const transactions = req.body.transactions;
+  const results = [];
+  let stopped = false;
 
-  // Fallback: jika migration 0013 belum di-apply, tanpa p_allow_partial
-  const isFunctionNotFound = (e) =>
-    e &&
-    (String(e.code || '') === 'PGRST202' ||
-      String(e.message || '').includes('Could not find') ||
-      String(e.details || '').includes('schema cache') ||
-      String(e.message || '').includes('schema cache'));
-
-  if (isFunctionNotFound(error)) {
-    console.warn('[createSale] fn_create_sale versi 0014 (dgn p_record_debt) tidak ditemukan, retry ke versi 0013 (p_allow_partial)');
-    const retry = await supabase.rpc('fn_create_sale', {
-      p_cashier_id: req.user.id,
-      p_created_by: req.user.id,
-      p_items: body.items,
-      p_customer_id: body.customer_id || null,
-      p_discount: body.discount || 0,
-      p_tax: body.tax || 0,
-      p_additional_cost: body.additional_cost || 0,
-      p_payment_method: body.payment_method || 'CASH',
-      p_cash_received: body.cash_received ?? null,
-      p_notes: body.notes || null,
-      p_session_id: body.session_id || null,
-      p_allow_partial: hasDebt,
-    });
-    result = retry.data;
-    error = retry.error;
+  for (const { offline_id, payload } of transactions) {
+    if (stopped) {
+      results.push({ offline_id, success: false, error: 'Antrian dihentikan sementara (transaksi sebelumnya gagal)' });
+      continue;
+    }
+    try {
+      const created = await createSaleRecord(req.user.id, payload);
+      results.push({ offline_id, success: true, ...created });
+    } catch (err) {
+      // Transaksi gagal TETAP disimpan di device oleh frontend, dicoba lagi
+      // setelah delay (30 detik). Hentikan antrian supaya tidak mengirim
+      // transaksi berikutnya berdasarkan data yang mungkin sudah usang.
+      stopped = true;
+      results.push({ offline_id, success: false, error: String(err?.message || err).slice(0, 500) });
+    }
   }
 
-  if (error) {
-    console.error('[createSale] RPC error:', {
-      code: error.code,
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-      body: { customer_id: body.customer_id, payment_method: body.payment_method, cash_received: body.cash_received, items_count: body.items?.length },
-    });
-  }
-
-  handleRpcError(error);
-
-  const sale = await fetchSaleDetail(result.sale_id);
-
-  // Notifikasi ke HP Owner (Web Push PWA). Di-await agar di serverless
-  // (Vercel) lambda tidak membekukan pengiriman sebelum push terkirim.
-  // notifyNewSale dijamin TIDAK pernah melempar error — kegagalan notif
-  // tidak akan menggagalkan/rollback transaksi.
-  await notifyNewSale(sale).catch(() => {});
-
-  return created(res, { ...result, sale }, 'Transaksi berhasil');
+  return ok(
+    res,
+    {
+      total: results.length,
+      synced: results.filter((r) => r.success).length,
+      failed: results.filter((r) => !r.success).length,
+      results,
+    },
+    'Sinkronisasi transaksi offline selesai'
+  );
 });
 
 export const refundSale = asyncHandler(async (req, res) => {

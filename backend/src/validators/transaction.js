@@ -45,6 +45,17 @@ export const refundSaleSchema = z.object({
   session_id: z.string().uuid().nullable().optional(),
 });
 
+/** Satu item antrian transaksi offline (dari device kasir). */
+export const offlineSyncItemSchema = z.object({
+  offline_id: z.string().trim().min(1, 'offline_id wajib diisi').max(64),
+  payload: createSaleSchema,
+});
+
+/** Batch sinkronisasi transaksi offline via POST /api/sync-offline-transactions. */
+export const syncOfflineTransactionsSchema = z.object({
+  transactions: z.array(offlineSyncItemSchema).min(1, 'Tidak ada transaksi untuk disinkronkan').max(50, 'Maksimal 50 transaksi per pengiriman'),
+});
+
 export const purchaseItemSchema = z.object({
   product_id: z.string().uuid('Produk tidak valid'),
   quantity: z.coerce.number().positive('Qty harus lebih dari 0'),

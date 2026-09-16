@@ -5,8 +5,10 @@ import {
 } from 'lucide-react';
 import { productsApi, categoriesApi, customersApi, salesApi, settingsApi, cashierApi } from '../api/index.js';
 import { useCartStore } from '../stores/cartStore.js';
+import { useAuthStore } from '../stores/authStore.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { useApi } from '../hooks/useApi.js';
+import { useOnlineStatus } from '../hooks/useOnlineStatus.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { computeTotals, computeTax, computeChange } from '../utils/cart.js';
@@ -18,9 +20,31 @@ import CurrencyInput from '../components/ui/CurrencyInput.jsx';
 import { Skeleton, EmptyState, ErrorState, Badge } from '../components/ui/Feedback.jsx';
 import BarcodeScanner from '../components/ui/BarcodeScanner.jsx';
 import ReceiptModal from '../components/pos/ReceiptModal.jsx';
+import OfflineStatusBar from '../components/pos/OfflineStatusBar.jsx';
 import ProductImage from '../components/ProductImage.jsx';
 import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
 import { usePrinterConnect } from '../context/PrinterConnectProvider.jsx';
+import {
+  seedOfflineCatalog,
+  loadProductsOffline,
+  loadCategoriesOffline,
+  loadCustomersOffline,
+  loadGeneralCustomerOffline,
+  searchProductsOffline,
+} from '../offline/catalog.js';
+import {
+  savePendingSale,
+  countPendingSales,
+  syncPendingSales,
+  generateOfflineId,
+} from '../offline/pendingSales.js';
+import {
+  buildPendingSale,
+  isNetworkError,
+  filterProductsLocal,
+  filterCustomersLocal,
+  findProductByCodeLocal,
+} from '../offline/pure.js';
 
 const PAYMENT_METHODS = ['CASH', 'QRIS', 'DEBIT', 'CREDIT', 'TRANSFER', 'E_WALLET'];
 
@@ -49,19 +73,59 @@ export default function POS() {
   const bluetooth = useBluetoothPrinter();
   const { openConnectModal } = usePrinterConnect();
 
+  // ---------- MODE OFFLINE ----------
+  const online = useOnlineStatus();
+  const user = useAuthStore((s) => s.user);
+  const onlineRef = useRef(online);
+  const wasOnlineRef = useRef(false);
+  const syncingRef = useRef(false);
+  const syncTimerRef = useRef(null);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [cachedProducts, setCachedProducts] = useState([]);
+  const [cachedCategories, setCachedCategories] = useState([]);
+  const [cachedCustomers, setCachedCustomers] = useState([]);
+  const [cachedGeneral, setCachedGeneral] = useState(null);
+
+  const refreshCached = useCallback(() => {
+    loadProductsOffline().then(setCachedProducts).catch(() => {});
+    loadCategoriesOffline().then(setCachedCategories).catch(() => {});
+    loadCustomersOffline().then(setCachedCustomers).catch(() => {});
+    loadGeneralCustomerOffline().then(setCachedGeneral).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    countPendingSales().then(setPendingCount).catch(() => {});
+    refreshCached();
+  }, [refreshCached]);
+
   const products = useApi(
-    () => productsApi.list({ search: debouncedSearch, category_id: categoryId || undefined, pageSize: 100, sort: 'name' }).then((r) => r.data),
-    [debouncedSearch, categoryId]
+    () => {
+      if (!online) return Promise.resolve({ items: [] });
+      return productsApi.list({ search: debouncedSearch, category_id: categoryId || undefined, pageSize: 100, sort: 'name' }).then((r) => r.data);
+    },
+    [debouncedSearch, categoryId, online]
   );
-  const categories = useApi(() => categoriesApi.list({ status: 'active' }).then((r) => r.data), []);
+  const categories = useApi(
+    () => {
+      if (!online) return Promise.resolve({ items: [] });
+      return categoriesApi.list({ status: 'active' }).then((r) => r.data);
+    },
+    [online]
+  );
   const customerResults = useApi(
-    () => customersApi.list({ search: debouncedCustomer, is_general: 'false', pageSize: 10 }).then((r) => r.data),
-    [debouncedCustomer]
+    () => {
+      if (!online) return Promise.resolve({ items: [] });
+      return customersApi.list({ search: debouncedCustomer, is_general: 'false', pageSize: 10 }).then((r) => r.data);
+    },
+    [debouncedCustomer, online]
   );
   // Pelanggan default: "Pelanggan Umum" (tidak masuk perhitungan bagi hasil 2,5%)
   const generalCustomer = useApi(
-    () => customersApi.list({ is_general: 'true', pageSize: 1 }).then((r) => r.data?.items?.[0] || null),
-    []
+    () => {
+      if (!online) return Promise.resolve(null);
+      return customersApi.list({ is_general: 'true', pageSize: 1 }).then((r) => r.data?.items?.[0] || null);
+    },
+    [online]
   );
 
   // Muat settings toko + sesi kas terbuka
@@ -75,11 +139,95 @@ export default function POS() {
   }, []);
 
   // Defaultkan pelanggan ke "Pelanggan Umum" saat keranjang belum punya pelanggan
+  // (gunanya data cache saat offline karena request API tidak bisa berjalan)
   useEffect(() => {
-    if (generalCustomer.data && !cart.customer) {
-      cart.setCustomer(generalCustomer.data);
+    const target = online ? generalCustomer.data : cachedGeneral;
+    if (target && !cart.customer) {
+      cart.setCustomer(target);
     }
-  }, [generalCustomer.data, cart.customer, cart.setCustomer]);
+  }, [generalCustomer.data, cachedGeneral, online, cart.customer, cart.setCustomer]);
+
+  // ---------- TAMPILAN PRODUK (online = API / offline = cache lokal) ----------
+  const reloadProductsRef = useRef(products.reload);
+  reloadProductsRef.current = products.reload;
+
+  const displayProducts = useMemo(() => {
+    if (online) {
+      return {
+        loading: products.loading,
+        error: products.error,
+        items: products.data?.items || [],
+        reload: reloadProductsRef.current,
+      };
+    }
+    return {
+      loading: false,
+      error: null,
+      items: filterProductsLocal(cachedProducts, { search: debouncedSearch, categoryId, limit: 100 }),
+      reload: () => {},
+    };
+  }, [online, products.loading, products.error, products.data, cachedProducts, debouncedSearch, categoryId]);
+
+  const displayCategories = useMemo(
+    () => (online ? (categories.data?.items || []) : cachedCategories),
+    [online, categories.data, cachedCategories]
+  );
+
+  const displayCustomerResults = useMemo(() => {
+    if (online) return customerResults;
+    return {
+      loading: false,
+      error: null,
+      data: { items: filterCustomersLocal(cachedCustomers, { search: debouncedCustomer, limit: 10 }) },
+      reload: () => {},
+    };
+  }, [online, customerResults, cachedCustomers, debouncedCustomer]);
+
+  // ---------- SINKRONISASI OTOMATIS saaat kembali online ----------
+  const scheduleSyncRetry = useCallback(() => {
+    clearTimeout(syncTimerRef.current);
+    syncTimerRef.current = setTimeout(() => {
+      if (onlineRef.current) handleReconnectRef.current();
+    }, 30000);
+  }, []);
+
+  const seedAndRefresh = useCallback(async () => {
+    await seedOfflineCatalog().catch(() => {});
+    await refreshCached();
+    reloadProductsRef.current?.();
+  }, [refreshCached]);
+
+  const handleReconnect = useCallback(async () => {
+    if (syncingRef.current) return;
+    syncingRef.current = true;
+    try {
+      const hasPending = (await countPendingSales()) > 0;
+      if (hasPending) toast.info('Internet terhubung, menyinkronkan data...');
+      const result = hasPending ? await syncPendingSales() : { synced: 0, failed: 0, networkError: false };
+      if (result.synced > 0) toast.success(`${result.synced} transaksi offline berhasil disinkronkan`);
+      setPendingCount(await countPendingSales());
+      await seedAndRefresh();
+      if (result.networkError || result.failed > 0) scheduleSyncRetry();
+    } catch {
+      toast.error('Sinkronisasi gagal. Akan dicoba lagi otomatis.');
+      scheduleSyncRetry();
+    } finally {
+      syncingRef.current = false;
+    }
+  }, [scheduleSyncRetry, seedAndRefresh]);
+
+  const handleReconnectRef = useRef(handleReconnect);
+  handleReconnectRef.current = handleReconnect;
+
+  useEffect(() => {
+    onlineRef.current = online;
+    if (online && !wasOnlineRef.current) {
+      handleReconnectRef.current();
+    }
+    wasOnlineRef.current = online;
+  }, [online]);
+
+  useEffect(() => () => clearTimeout(syncTimerRef.current), []);
 
   // Muat statistik hutang pelanggan terdaftar (bukan Umum)
   const loadDebtStats = useCallback(async () => {
@@ -156,14 +304,18 @@ export default function POS() {
   const addProductByCode = useCallback(async (code) => {
     if (!code) return;
     try {
-      const res = await productsApi.byBarcode(code);
-      addToCartIfAvailable(res.data);
+      if (!online) {
+        addToCartIfAvailable(findProductByCodeLocal(cachedProducts, code));
+      } else {
+        const res = await productsApi.byBarcode(code);
+        addToCartIfAvailable(res.data);
+      }
     } catch {
       toast.error('Produk tidak ditemukan');
     }
     setSearch('');
     searchRef.current?.focus();
-  }, [addToCartIfAvailable]);
+  }, [addToCartIfAvailable, online, cachedProducts]);
 
   // Auto-add via ENTER (full keyboard, tanpa mouse):
   // 1) Ketikan angka semua → prioritas cocok barcode presisi (scan tetap
@@ -171,6 +323,15 @@ export default function POS() {
   // 2) Ketikan teks/SKU → tambahkan produk paling atas dari hasil pencarian
   //    nama/SKU/barcode (case-insensitive).
   const addFirstMatchingProduct = useCallback(async (query) => {
+    if (!online) {
+      if (/^[0-9]+$/.test(query)) {
+        const exact = findProductByCodeLocal(cachedProducts, query);
+        if (exact && addToCartIfAvailable(exact)) return;
+      }
+      const first = searchProductsOffline(cachedProducts, { search: query, categoryId, limit: 1 })[0];
+      addToCartIfAvailable(first);
+      return;
+    }
     if (/^[0-9]+$/.test(query)) {
       try {
         const res = await productsApi.byBarcode(query);
@@ -190,35 +351,97 @@ export default function POS() {
     } catch {
       toast.error('Produk tidak ditemukan');
     }
-  }, [addToCartIfAvailable, categoryId]);
+  }, [addToCartIfAvailable, categoryId, online, cachedProducts]);
 
   const handleScan = useCallback((code) => {
     setScannerOpen(false);
     addProductByCode(code);
   }, [addProductByCode]);
 
-  const handleCheckout = async (payload) => {
-    try {
-      // Auto-konek printer Bluetooth: jika belum ada printer tersimpan,
-      // dialog pairing browser langsung muncul (masih dalam konteks klik user).
-      // Gagal/batal tidak menggagalkan transaksi — cukup tanpa cetak otomatis.
-      if (bluetooth.supported && !bluetooth.isConnected && !bluetooth.hasStoredDevice) {
-        await bluetooth.connect().catch(() => {});
-      }
-      // Kirim item keranjang ke API (product_id, qty, harga, diskon)
-      const items = cart.items.map((i) => ({
-        product_id: i.product.id,
-        quantity: i.quantity,
-        price: i.product.sale_price,
-        discount: i.discount || 0,
-      }));
-      const res = await salesApi.create({
-        ...payload,
-        items,
-        customer_id: cart.customer?.id || null,
-        session_id: sessionId || null,
-        discount: Number(cart.discount) || 0,
+  const printStrukAfterSale = useCallback((sale) => {
+    // Printer Bluetooth = cetak struk otomatis selalu (auto-connect bila perlu).
+    if (!bluetooth.supported || !sale) return;
+    bluetooth
+      .printStruk(sale, settings?.store, settings?.pos)
+      .catch(() => {
+        setShowReceipt(false);
+        pendingPrintRef.current = { sale, store: settings?.store, pos: settings?.pos };
+        openConnectModal({
+          title: 'Printer Tidak Terhubung',
+          message: 'Gagal mencetak struk. Silakan aktifkan Bluetooth dan pilih printer thermal Anda.',
+          connectLabel: 'Hubungkan & Cetak Ulang',
+          onClose: () => setShowReceipt(true),
+          onConnected: async () => {
+            const data = pendingPrintRef.current;
+            pendingPrintRef.current = null;
+            if (!data) return;
+            try {
+              await bluetooth.printStruk(data.sale, data.store, data.pos);
+              toast.success('Struk berhasil dicetak');
+            } catch {
+              toast.error('Gagal mencetak struk. Silakan coba lagi.');
+            }
+          },
+        });
       });
+  }, [bluetooth, settings?.store, settings?.pos, openConnectModal]);
+
+  // Simpan transaksi OFF-LINE ke IndexedDB (antrean sinkronisasi).
+  const saveOfflineTransaction = useCallback(async (payload) => {
+    const items = cart.items.map((i) => ({
+      product_id: i.product.id,
+      quantity: i.quantity,
+      price: i.product.sale_price,
+      discount: i.discount || 0,
+    }));
+    const fullPayload = {
+      ...payload,
+      items,
+      customer_id: cart.customer?.id || null,
+      session_id: sessionId || null,
+      discount: Number(cart.discount) || 0,
+    };
+    const offlineId = generateOfflineId();
+    const record = buildPendingSale({ cart, payload: fullPayload, totals, user, offlineId });
+    await savePendingSale(record);
+    setPendingCount((c) => Number(c) + 1);
+    toast.success('Transaksi disimpan secara offline');
+    setLastSale(record.sale);
+    cart.clear();
+    setShowCheckout(false);
+    setShowReceipt(true);
+    loadDebtStats();
+    printStrukAfterSale(record.sale);
+  }, [cart, sessionId, totals, user, loadDebtStats, printStrukAfterSale]);
+
+  const handleCheckout = async (payload) => {
+    // Auto-konek printer Bluetooth: jika belum ada printer tersimpan,
+    // dialog pairing browser langsung muncul (masih dalam konteks klik user).
+    // Gagal/batal tidak menggagalkan transaksi — cukup tanpa cetak otomatis.
+    if (bluetooth.supported && !bluetooth.isConnected && !bluetooth.hasStoredDevice) {
+      await bluetooth.connect().catch(() => {});
+    }
+    // OFF-LINE: simpan ke antrean lokal, tanpa hit server (tidak menunggu timeout).
+    if (!online) {
+      await saveOfflineTransaction(payload);
+      return;
+    }
+    // Kirim item keranjang ke API (product_id, qty, harga, diskon)
+    const items = cart.items.map((i) => ({
+      product_id: i.product.id,
+      quantity: i.quantity,
+      price: i.product.sale_price,
+      discount: i.discount || 0,
+    }));
+    const fullPayload = {
+      ...payload,
+      items,
+      customer_id: cart.customer?.id || null,
+      session_id: sessionId || null,
+      discount: Number(cart.discount) || 0,
+    };
+    try {
+      const res = await salesApi.create(fullPayload);
       // Hutang dicatat atomik di dalam fn_create_sale (server) dari record_debt
       if (payload.record_debt && cart.customer?.id) {
         toast.success(`Hutang ${formatRupiah(payload.record_debt.amount)} berhasil dicatat`);
@@ -230,33 +453,13 @@ export default function POS() {
       // Refresh data hutang & daftar pelanggan agar info hutang selalu terbaru
       loadDebtStats();
       customerResults.reload();
-      // Printer Bluetooth = cetak struk otomatis selalu (auto-connect bila perlu).
-      if (bluetooth.supported) {
-        bluetooth
-          .printStruk(res.data.sale, settings?.store, settings?.pos)
-          .catch(() => {
-            setShowReceipt(false);
-            pendingPrintRef.current = { sale: res.data.sale, store: settings?.store, pos: settings?.pos };
-            openConnectModal({
-              title: 'Printer Tidak Terhubung',
-              message: 'Gagal mencetak struk. Silakan aktifkan Bluetooth dan pilih printer thermal Anda.',
-              connectLabel: 'Hubungkan & Cetak Ulang',
-              onClose: () => setShowReceipt(true),
-              onConnected: async () => {
-                const data = pendingPrintRef.current;
-                pendingPrintRef.current = null;
-                if (!data) return;
-                try {
-                  await bluetooth.printStruk(data.sale, data.store, data.pos);
-                  toast.success('Struk berhasil dicetak');
-                } catch {
-                  toast.error('Gagal mencetak struk. Silakan coba lagi.');
-                }
-              },
-            });
-          });
-      }
+      printStrukAfterSale(res.data.sale);
     } catch (error) {
+      // Jaringan putus di tengah proses → alihkan ke penyimpanan offline
+      if (isNetworkError(error)) {
+        await saveOfflineTransaction(payload);
+        return;
+      }
       toast.error(getErrorMessage(error, 'Transaksi gagal'));
       throw error;
     }
@@ -265,7 +468,10 @@ export default function POS() {
   const itemCount = cart.itemCount();
 
   return (
-    <div className="flex h-full flex-col gap-4 xl:h-[calc(100vh-6.5rem)] xl:flex-row">
+    <div className="relative flex h-full flex-col gap-4 xl:h-[calc(100vh-6.5rem)] xl:flex-row">
+      {/* Status koneksi & transaksi tertunda (mode offline) */}
+      <OfflineStatusBar online={online} pendingCount={pendingCount} />
+
       {/* ================= PRODUCTS SECTION ================= */}
       <div className="flex min-w-0 flex-1 flex-col gap-4 rounded-xl border-2 border-black bg-white p-4 shadow-sm xl:p-5">
         <div className="space-y-3">
@@ -308,7 +514,7 @@ export default function POS() {
           {/* Category Filters */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
             <span className="hidden shrink-0 text-xs font-medium text-slate-500 sm:inline">
-              {products.data?.items?.length || 0} produk
+              {displayProducts.items.length} produk
             </span>
             <div className="h-4 w-px shrink-0 bg-slate-200 sm:block" />
             <button
@@ -321,7 +527,7 @@ export default function POS() {
             >
               Semua
             </button>
-            {(categories.data?.items || []).map((c) => (
+            {(displayCategories).map((c) => (
               <button
                 key={c.id}
                 onClick={() => setCategoryId(categoryId === c.id ? '' : c.id)}
@@ -339,7 +545,7 @@ export default function POS() {
 
         {/* Product Grid */}
         <div className="grid flex-1 min-h-0 grid-cols-2 content-start items-start gap-2 overflow-y-auto pb-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
-          {products.loading ? (
+          {displayProducts.loading ? (
             Array.from({ length: 10 }).map((_, i) => (
               <div
                 key={i}
@@ -353,16 +559,19 @@ export default function POS() {
                 </div>
               </div>
             ))
-          ) : products.error ? (
+          ) : displayProducts.error ? (
             <div className="col-span-full">
-              <ErrorState onRetry={products.reload} />
+              <ErrorState onRetry={displayProducts.reload} />
             </div>
-          ) : !products.data?.items?.length ? (
+          ) : !displayProducts.items.length ? (
             <div className="col-span-full">
-              <EmptyState title="Produk tidak ditemukan" />
+              <EmptyState
+                title={!online ? 'Katalog belum tersedia di perangkat' : 'Produk tidak ditemukan'}
+                description={!online ? 'Hubungkan internet sekali untuk menyimpan katalog, lalu kasir tetap bisa berjalan tanpa koneksi.' : null}
+              />
             </div>
           ) : (
-            products.data.items.map((p) => {
+            displayProducts.items.map((p) => {
               const outOfStock = Number(p.stock) <= 0;
               const inactive = p.status !== 'active';
               const disabled = inactive || outOfStock;
@@ -798,8 +1007,8 @@ export default function POS() {
         onClose={() => setShowCustomer(false)}
         query={customerQuery}
         setQuery={setCustomerQuery}
-        results={customerResults}
-        generalCustomer={generalCustomer.data}
+        results={displayCustomerResults}
+        generalCustomer={online ? generalCustomer.data : cachedGeneral}
         onSelect={(c) => { cart.setCustomer(c); setShowCustomer(false); }}
       />
 
