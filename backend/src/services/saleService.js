@@ -43,10 +43,40 @@ function isFunctionNotFound(e) {
  *           additional_cost, total, total_cost, profit, payment_method,
  *           cash_received, change, debt_id, debt_amount, sale }
  */
-export async function createSaleRecord(cashierUserId, body) {
+export async function createSaleRecord(cashierUserId, body, { offlineId } = {}) {
   const hasDebt = Boolean(body.record_debt);
 
-  let { data: result, error } = await supabase.rpc('fn_create_sale', {
+  // Idempotensi offline: offline_id yang SUDAH pernah diproses → kembalikan
+  // transaksi yang sudah tersimpan, tanpa membuat duplikat (respons hilang
+  // saat offline-sync / timeout akan mengirim offline_id yang sama lagi).
+  if (offlineId) {
+    const pre = await supabase
+      .from('sales')
+      .select('id')
+      .eq('offline_id', offlineId)
+      .maybeSingle();
+    if (!pre.error && pre.data) {
+      const existing = await fetchSaleDetail(pre.data.id);
+      return {
+        sale_id: existing.id,
+        invoice_number: existing.invoice_number,
+        subtotal: existing.subtotal,
+        discount: existing.discount,
+        tax: existing.tax,
+        additional_cost: existing.additional_cost,
+        total: existing.total,
+        total_cost: existing.total_cost,
+        profit: existing.profit,
+        payment_method: existing.payment_method,
+        cash_received: existing.payments?.[0]?.cash_received ?? null,
+        change: existing.payments?.[0]?.change_amount ?? 0,
+        sale: existing,
+        idempotent: true,
+      };
+    }
+  }
+
+  const baseArgs = {
     p_cashier_id: cashierUserId,
     p_created_by: cashierUserId,
     p_items: body.items,
@@ -59,28 +89,27 @@ export async function createSaleRecord(cashierUserId, body) {
     p_notes: body.notes || null,
     p_session_id: body.session_id || null,
     p_allow_partial: hasDebt,
-    p_record_debt: body.record_debt ?? null,
-  });
+  };
+
+  // Versi fungsional: 0036 (14-arg, idempoten offline) → 0030/0014 (13-arg)
+  // → 0013 (12-arg). Fallback otomatis bila migrasi belum di-apply.
+  let rpcArgs = { ...baseArgs, p_record_debt: body.record_debt ?? null };
+  if (offlineId) rpcArgs.p_offline_id = offlineId;
+
+  let { data: result, error } = await supabase.rpc('fn_create_sale', rpcArgs);
+
+  if (isFunctionNotFound(error)) {
+    if (offlineId) {
+      console.warn('[createSale] fn_create_sale 14-arg (0036) tidak ditemukan, retry ke 13-arg (tanpa p_offline_id)');
+      ({ data: result, error } = await supabase.rpc('fn_create_sale', { ...baseArgs, p_record_debt: body.record_debt ?? null }));
+    } else {
+      console.warn('[createSale] fn_create_sale 13-arg (0030/0014) tidak ditemukan, retry ke 12-arg (0013)');
+    }
+  }
 
   // Fallback: jika migration 0013 belum di-apply, tanpa p_allow_partial
   if (isFunctionNotFound(error)) {
-    console.warn('[createSale] fn_create_sale versi 0014 (dgn p_record_debt) tidak ditemukan, retry ke versi 0013 (p_allow_partial)');
-    const retry = await supabase.rpc('fn_create_sale', {
-      p_cashier_id: cashierUserId,
-      p_created_by: cashierUserId,
-      p_items: body.items,
-      p_customer_id: body.customer_id || null,
-      p_discount: body.discount || 0,
-      p_tax: body.tax || 0,
-      p_additional_cost: body.additional_cost || 0,
-      p_payment_method: body.payment_method || 'CASH',
-      p_cash_received: body.cash_received ?? null,
-      p_notes: body.notes || null,
-      p_session_id: body.session_id || null,
-      p_allow_partial: hasDebt,
-    });
-    result = retry.data;
-    error = retry.error;
+    ({ data: result, error } = await supabase.rpc('fn_create_sale', baseArgs));
   }
 
   if (error) {

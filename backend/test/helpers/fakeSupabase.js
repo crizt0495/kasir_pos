@@ -588,7 +588,81 @@ export function createFakeSupabase() {
         return Promise.resolve({ data: { deleted: true, price_reverted: reverted }, error: null });
       }
       if (fn === 'fn_create_sale') {
-        return Promise.resolve({ data: { sale_id: '00000000-0000-0000-0000-000000000001', invoice_number: 'INV-20260815-000001', subtotal: 15000, discount: 0, tax: 0, additional_cost: 0, total: 15000, payment_method: 'CASH', cash_received: 20000, change: 5000 }, error: null });
+        const offlineId = args.p_offline_id || null;
+        // Idempotensi (migration 0036): offline_id yang sama → kembalikan
+        // transaksi yang sudah pernah dibuat, tanpa membuat duplikat.
+        const existing = offlineId ? (store.sales || []).find((s) => s.offline_id === offlineId) : null;
+        if (existing) {
+          const pay = (existing.payments || [])[0] || {};
+          return Promise.resolve({
+            data: {
+              sale_id: existing.id,
+              invoice_number: existing.invoice_number,
+              subtotal: existing.subtotal,
+              discount: existing.discount,
+              tax: existing.tax,
+              additional_cost: existing.additional_cost,
+              total: existing.total,
+              total_cost: existing.total_cost,
+              profit: existing.profit,
+              payment_method: existing.payment_method,
+              cash_received: pay.cash_received ?? args.p_cash_received ?? null,
+              change: pay.change_amount ?? 0,
+              debt_id: null,
+              debt_amount: 0,
+              idempotent: true,
+            },
+            error: null,
+          });
+        }
+        if (!offlineId) {
+          // Perilaku default tanpa offline_id — identik dengan sebelum migrasi
+          // 0036 (test notifikasi & struktur transaksi mengandalkan ini).
+          return Promise.resolve({ data: { sale_id: '00000000-0000-0000-0000-000000000001', invoice_number: 'INV-20260815-000001', subtotal: 15000, discount: 0, tax: 0, additional_cost: 0, total: 15000, payment_method: 'CASH', cash_received: 20000, change: 5000 }, error: null });
+        }
+        // offline_id baru → simpan transaksi agar fetchSaleDetail menemukannya.
+        const saleId = `offline-sale-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        const invoice = `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(store.sales.length + 1).padStart(6, '0')}`;
+        const cashReceived = args.p_cash_received ?? 20000;
+        store.sales.push({
+          id: saleId,
+          invoice_number: invoice,
+          offline_id: offlineId,
+          subtotal: 15000,
+          discount: 0,
+          tax: 0,
+          additional_cost: 0,
+          total: 15000,
+          total_cost: 0,
+          profit: 0,
+          payment_method: 'CASH',
+          status: 'completed',
+          notes: args.p_notes || null,
+          cashier_id: args.p_cashier_id,
+          customer_id: args.p_customer_id || null,
+          created_by: args.p_created_by,
+          updated_by: args.p_created_by,
+          created_at: new Date().toISOString(),
+          payments: [{ sale_id: saleId, amount: 15000, payment_method: 'CASH', cash_received: cashReceived, change_amount: cashReceived - 15000 }],
+        });
+        return Promise.resolve({
+          data: {
+            sale_id: saleId,
+            invoice_number: invoice,
+            subtotal: 15000,
+            discount: 0,
+            tax: 0,
+            additional_cost: 0,
+            total: 15000,
+            payment_method: 'CASH',
+            cash_received: cashReceived,
+            change: cashReceived - 15000,
+            debt_id: null,
+            debt_amount: 0,
+            idempotent: false,
+          },
+          error: null,
+        });
       }
       if (fn === 'fn_update_purchase') {
         // Atomik: hapus item lama, masukkan item baru, hitung total

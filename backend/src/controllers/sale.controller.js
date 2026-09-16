@@ -88,7 +88,7 @@ export const syncOfflineTransactions = asyncHandler(async (req, res) => {
       continue;
     }
     try {
-      const created = await createSaleRecord(req.user.id, payload);
+      const created = await createSaleRecord(req.user.id, payload, { offlineId: offline_id });
       results.push({ offline_id, success: true, ...created });
     } catch (err) {
       // Transaksi gagal TETAP disimpan di device oleh frontend, dicoba lagi

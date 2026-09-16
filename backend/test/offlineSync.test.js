@@ -2,7 +2,8 @@ import { describe, it, before, after, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createFakeSupabase, ADMIN_PASSWORD } from './helpers/fakeSupabase.js';
 
-mock.module('../src/config/supabase.js', { namedExports: { supabase: createFakeSupabase() } });
+const supabaseFake = createFakeSupabase();
+mock.module('../src/config/supabase.js', { namedExports: { supabase: supabaseFake } });
 
 const { default: app } = await import('../src/app.js');
 const { default: request } = await import('supertest');
@@ -69,5 +70,28 @@ describe('Sync transaksi offline — POST /api/sync-offline-transactions', () =>
       assert.equal(res.body.data.results[i].offline_id, `offline-id-00${i + 1}`);
       assert.ok(res.body.data.results[i].invoice_number, 'hasil harus membawa invoice_number');
     }
+  });
+
+  it('offline_id dikirim ulang → idempoten (TIDAK membuat transaksi ganda)', async () => {
+    const agent = await loginAgent('admin', ADMIN_PASSWORD);
+    const tx = { offline_id: 'offline-id-dedup', payload: VALID_TX.payload };
+
+    const first = await agent.post('/api/sync-offline-transactions').send({ transactions: [tx] });
+    assert.equal(first.status, 200, JSON.stringify(first.body));
+    assert.equal(first.body.data.results[0].success, true);
+    assert.equal(first.body.data.results[0].idempotent, false, 'kiriman pertama = buat baru');
+
+    const second = await agent.post('/api/sync-offline-transactions').send({ transactions: [tx] });
+    assert.equal(second.status, 200, JSON.stringify(second.body));
+    assert.equal(second.body.data.results[0].success, true, 'kiriman ulang tetap dianggap sukses');
+    assert.equal(second.body.data.results[0].idempotent, true, 'kiriman ulang = transaksi lama');
+    assert.equal(
+      second.body.data.results[0].invoice_number,
+      first.body.data.results[0].invoice_number,
+      'harus mengembalikan invoice yang sama (bukan transaksi baru)'
+    );
+
+    const dedupRows = supabaseFake.store.sales.filter((s) => s.offline_id === 'offline-id-dedup');
+    assert.equal(dedupRows.length, 1, 'offline_id yang sama harus menghasilkan SATU transaksi saja');
   });
 });
