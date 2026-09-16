@@ -18,11 +18,13 @@ export const useAuthStore = create(
           const res = await authApi.me();
           set({ user: res.data, loading: false });
         } catch (error) {
-          // Hanya logout saat server BENAR-BENAR bilang sesi tidak valid (401).
-          // Error lain (jaringan mati, 500, 503, timeout, dll.) JANGAN menghapus
-          // sesi — pertahankan data di localStorage agar POS tetap bisa dipakai
-          // saat offline tanpa harus login ulang.
-          const isAuth = error?.response?.status === 401;
+          // Hanya logout saat server BENAR-BENAR bilang sesi tidak valid (401)
+          // DAN perangkat tidak sedang offline. Error lain (jaringan mati, 503,
+          // timeout, captive portal 401) JANGAN menghapus sesi — pertahankan
+          // data di localStorage agar POS tetap bisa dipakai saat offline.
+          const isAuth =
+            error?.response?.status === 401 &&
+            (typeof navigator === 'undefined' || navigator.onLine !== false);
           if (isAuth) {
             set({ user: null, loading: false });
           } else {
@@ -58,9 +60,11 @@ export const useAuthStore = create(
   )
 );
 
-// Sesi kedaluwarsa (401) → bersihkan state; redirect ditangani App
+// Sesi kedaluwarsa (401) → bersihkan state; redirect ditangani App.
+// Saat offline, event auth:expired diabaikan — sesi tetap dipertahankan.
 if (typeof window !== 'undefined') {
   window.addEventListener('auth:expired', () => {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
     useAuthStore.getState().clear();
   });
 }

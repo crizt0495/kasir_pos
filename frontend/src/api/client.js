@@ -16,8 +16,12 @@ api.interceptors.response.use(
     try {
       const status = error?.response?.status;
       const path = window?.location?.pathname || '';
+      const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
 
-      if (status === 401 && !path.startsWith('/login') && !path.startsWith('/change-password')) {
+      // 401 dari jaringan/proxy yang "pura-pura" server (mis. koneksi terputus,
+      // captive portal) jangan dianggap sesi kadaluarsa. Logout hanya ketika
+      // browser benar-benar online & server menjawab 401.
+      if (status === 401 && !offline && !path.startsWith('/login') && !path.startsWith('/change-password')) {
         window.dispatchEvent(new CustomEvent('auth:expired'));
       }
     } catch {
