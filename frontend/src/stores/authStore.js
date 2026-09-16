@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authApi } from '../api/index.js';
+import { isNetworkError } from '../api/client.js';
 import { hasPermission, hasAnyPermission } from '../utils/permission.js';
 
 export const useAuthStore = create(
@@ -17,8 +18,16 @@ export const useAuthStore = create(
         try {
           const res = await authApi.me();
           set({ user: res.data, loading: false });
-        } catch {
-          set({ user: null, loading: false });
+        } catch (error) {
+          // Koneksi mati (offline): JANGAN logout — pertahankan sesi lokal
+          // (persisted di localStorage, pos-auth) agar halaman seperti POS
+          // tetap bisa dipakai tanpa internet. Logout hanya saat server
+          // benar-benar menjawab bahwa sesi tidak valid (mis. 401).
+          if (isNetworkError(error) || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
+            set({ user: useAuthStore.getState().user, loading: false });
+          } else {
+            set({ user: null, loading: false });
+          }
         }
       },
 

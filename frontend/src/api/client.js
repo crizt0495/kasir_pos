@@ -40,3 +40,16 @@ export function getErrorMessage(error, fallback = 'Terjadi kesalahan, silakan co
   if (typeof error?.message === 'string' && error.message) return error.message;
   return fallback;
 }
+
+/**
+ * Deteksi error jaringan (bukan error bisnis/validasi).
+ * TRUE untuk: koneksi mati/terputus & HTTP 502/503/504 (gateway tak terjangkau).
+ * FALSE untuk: error server yang valid (4xx/5xx payload) — retry tidak membantu.
+ */
+export function isNetworkError(error) {
+  if (!error) return false;
+  if (error.response) {
+    return [502, 503, 504].includes(Number(error.response.status));
+  }
+  return true;
+}
