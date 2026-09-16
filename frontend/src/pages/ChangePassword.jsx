@@ -14,7 +14,7 @@ import { Card } from '../components/ui/DataTable.jsx';
 
 export default function ChangePassword() {
   const navigate = useNavigate();
-  const clear = useAuthStore((s) => s.clear);
+  const clear = useAuthStore((s) => s.forceClear);
   const [show, setShow] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 

@@ -14,7 +14,7 @@ import { hasUnseenRelease, markChangelogSeen } from '../../data/changelog.js';
 
 export function Topbar({ onMenuClick }) {
   const user = useAuthStore((s) => s.user);
-  const clear = useAuthStore((s) => s.clear);
+  const clear = useAuthStore((s) => s.forceClear);
   const canDashboard = useAuthStore((s) => s.can)('dashboard.view');
   const setGlobalSearchOpen = useUiStore((s) => s.setGlobalSearchOpen);
   const [menuOpen, setMenuOpen] = useState(false);

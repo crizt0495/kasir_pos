@@ -3,14 +3,38 @@ import { persist } from 'zustand/middleware';
 import { authApi } from '../api/index.js';
 import { hasPermission, hasAnyPermission } from '../utils/permission.js';
 
+const STORAGE_KEY = 'pos-auth';
+
+function isOffline() {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
 export const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       loading: true,
       setSession: (user) => set({ user, loading: false }),
       setLoading: (loading) => set({ loading }),
-      clear: () => set({ user: null, loading: false }),
+
+      /**
+       * Bersihkan sesi. SAAT OFFLINE: sesi TIDAK dihapus — jaga agar POS
+       * tetap berfungsi tanpa internet. Hanya dipanggil oleh
+       * auto-logout paths (auth:expired, focus handler, bootstrap).
+       * Untuk logout paksa / ganti password, pakai forceClear().
+       */
+      clear: () => {
+        if (isOffline()) return;
+        set({ user: null, loading: false });
+      },
+
+      /**
+       * Hapus sesi tanpa syarat — dipakai oleh tombol Logout manual
+       * dan setelah ganti password (user pasti ONLINE saat aksi ini).
+       */
+      forceClear: () => {
+        set({ user: null, loading: false, _skipRestore: true });
+      },
 
       /** Muat ulang sesi dari /auth/me saat aplikasi dibuka */
       bootstrap: async () => {
@@ -18,53 +42,72 @@ export const useAuthStore = create(
           const res = await authApi.me();
           set({ user: res.data, loading: false });
         } catch (error) {
-          // Hanya logout saat server BENAR-BENAR bilang sesi tidak valid (401)
-          // DAN perangkat tidak sedang offline. Error lain (jaringan mati, 503,
-          // timeout, captive portal 401) JANGAN menghapus sesi — pertahankan
-          // data di localStorage agar POS tetap bisa dipakai saat offline.
           const isAuth =
-            error?.response?.status === 401 &&
-            (typeof navigator === 'undefined' || navigator.onLine !== false);
+            error?.response?.status === 401 && !isOffline();
           if (isAuth) {
             set({ user: null, loading: false });
           } else {
-            set({ user: useAuthStore.getState().user, loading: false });
+            set({ user: get().user, loading: false });
           }
         }
       },
 
       /** Helper permission: cek punya semua permission yang diberikan */
-      can: (codes) => hasPermission(useAuthStore.getState().user, codes),
+      can: (codes) => hasPermission(get().user, codes),
 
       /** Cek punya salah satu permission */
-      hasAny: (codes) => hasAnyPermission(useAuthStore.getState().user, codes),
+      hasAny: (codes) => hasAnyPermission(get().user, codes),
 
       /** Nama tampilan user */
       displayName: () => {
-        const u = useAuthStore.getState().user;
+        const u = get().user;
         if (!u) return '';
         return u.profile?.full_name || u.username;
       },
 
       /** Nama role utama */
       primaryRole: () => {
-        const u = useAuthStore.getState().user;
+        const u = get().user;
         if (!u || !u.roles?.length) return '-';
         return u.roles[0].name;
       },
     }),
     {
-      name: 'pos-auth',
+      name: STORAGE_KEY,
       partialize: (state) => ({ user: state.user }),
     }
   )
 );
 
-// Sesi kedaluwarsa (401) → bersihkan state; redirect ditangani App.
-// Saat offline, event auth:expired diabaikan — sesi tetap dipertahankan.
+// ────────────────────────────────────────────────────────────────
+// SAFETY NET: jika user menjadi null saat offline (apapun penyebabnya),
+// pulihkan dari cache lokal agar POS tetap berfungsi. Ini menangkap
+// SEMUA jalur yang mungkin terlewat — termasuk code path yang belum
+// kita temukan di review.
+// ────────────────────────────────────────────────────────────────
 if (typeof window !== 'undefined') {
+  let lastUser = useAuthStore.getState().user;
+
+  useAuthStore.subscribe((state) => {
+    if (state._skipRestore) {
+      lastUser = null;
+      useAuthStore.setState({ _skipRestore: false });
+      return;
+    }
+    if (state.user) {
+      lastUser = state.user;
+      return;
+    }
+    if (lastUser && isOffline()) {
+      useAuthStore.setState({ user: lastUser, loading: false });
+      lastUser = null;
+    }
+  });
+
+  // Sesi kedaluwarsa (401) → bersihkan state; redirect ditangani App.
+  // Saat offline, event auth:expired diabaikan — sesi tetap dipertahankan.
   window.addEventListener('auth:expired', () => {
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+    if (isOffline()) return;
     useAuthStore.getState().clear();
   });
 }
