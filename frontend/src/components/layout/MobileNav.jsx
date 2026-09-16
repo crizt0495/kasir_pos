@@ -3,8 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, Package, ReceiptText, Settings as SettingsIcon,
   MoreHorizontal, X, Tags, Users, Truck, Boxes, ArrowLeftRight, ClipboardList,
-  ShoppingBag, Wallet, PiggyBank, BarChart3, ShieldCheck, UserCog, KeyRound,
-  ScrollText, HandCoins, BookUser, Coins,
+  ShoppingBag, Wallet, BarChart3, ShieldCheck, UserCog, KeyRound,
+  ScrollText, HandCoins, BookUser, Coins, BanknoteArrowDown,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore.js';
 
@@ -34,7 +34,7 @@ const MORE_ITEMS = [
   ]},
   { section: 'Kas', items: [
     { label: 'Kasir', to: '/cashier', icon: Wallet, perm: ['cashier.view', 'cashier.open'] },
-    { label: 'Pengeluaran', to: '/expenses', icon: PiggyBank, perm: 'expenses.view' },
+    { label: 'Pengeluaran', to: '/expenses', icon: BanknoteArrowDown, perm: 'expenses.view' },
   ]},
   { section: 'Lainnya', items: [
     { label: 'Laporan', to: '/reports', icon: BarChart3, perm: 'reports.view' },

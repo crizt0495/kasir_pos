@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, ReceiptText, Package, Tags, Users, Truck, Boxes,
-  ArrowLeftRight, ClipboardList, ShoppingBag, Wallet, PiggyBank, BarChart3, ShieldCheck,
+  ArrowLeftRight, ClipboardList, ShoppingBag, Wallet, BarChart3, ShieldCheck,
   UserCog, KeyRound, ScrollText, Settings as SettingsIcon, X, Store, HandCoins, BookUser,
-  ChevronLeft, ChevronRight, Coins,
+  ChevronLeft, ChevronRight, Coins, BanknoteArrowDown,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore.js';
 
@@ -45,7 +45,7 @@ const MENU = [
     section: 'Kas',
     items: [
       { label: 'Kasir', to: '/cashier', icon: Wallet, perm: ['cashier.view', 'cashier.open'] },
-      { label: 'Pengeluaran', to: '/expenses', icon: PiggyBank, perm: 'expenses.view' },
+      { label: 'Pengeluaran', to: '/expenses', icon: BanknoteArrowDown, perm: 'expenses.view' },
     ],
   },
   {
