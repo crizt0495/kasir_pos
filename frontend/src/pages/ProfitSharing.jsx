@@ -4,7 +4,7 @@ import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
-import { Card, Pagination, DataTable } from '../components/ui/DataTable.jsx';
+import { Card, DataTable } from '../components/ui/DataTable.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Field, Textarea, Select } from '../components/ui/Form.jsx';
@@ -311,9 +311,6 @@ export default function ProfitSharing() {
                     className="w-full"
                   />
                 )}
-                <div className="border-t-2 border-black">
-                  <Pagination page={distributionsPage} totalPages={distributions.data?.totalPages || 1} total={distributions.data?.total || 0} pageSize={distributions.data?.pageSize || 20} onPageChange={setDistributionsPage} />
-                </div>
               </>
             )}
           </Card>
