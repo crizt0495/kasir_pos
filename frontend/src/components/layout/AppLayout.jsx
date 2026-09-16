@@ -5,6 +5,7 @@ import { MobileNav } from './MobileNav.jsx';
 import { Topbar } from './Topbar.jsx';
 import { useUiStore } from '../../stores/uiStore.js';
 import { useAuthStore } from '../../stores/authStore.js';
+import { isNetworkError } from '../../api/client.js';
 import { resolvePageTitle } from '../../utils/routeMeta.js';
 import GlobalSearch from '../GlobalSearch.jsx';
 
@@ -42,8 +43,9 @@ export default function AppLayout() {
     const onFocus = () => {
       if (useAuthStore.getState().user) {
         import('../../api/index.js').then(({ authApi }) =>
-          authApi.me().catch(() => {
-            clear();
+          authApi.me().catch((err) => {
+            const offline = isNetworkError(err) || navigator.onLine === false;
+            if (!offline) clear();
           })
         );
       }

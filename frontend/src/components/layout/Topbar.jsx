@@ -55,20 +55,6 @@ export function Topbar({ onMenuClick }) {
     return () => window.removeEventListener('keydown', handler);
   }, [setGlobalSearchOpen]);
 
-  useEffect(() => {
-    const onFocus = () => {
-      if (useAuthStore.getState().user) {
-        import('../../api/index.js').then(({ authApi }) =>
-          authApi.me().catch(() => {
-            clear();
-          })
-        );
-      }
-    };
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [clear]);
-
   return (
     <header className="sticky top-0 z-30 h-14 border-b-2 border-black bg-white">
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
