@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { Search, ChevronRight, LogOut, KeyRound, UserCircle2, ChevronDown } from 'lucide-react';
+import { Search, ChevronRight, LogOut, KeyRound, UserCircle2, ChevronDown, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore.js';
 import { useUiStore } from '../../stores/uiStore.js';
 import { authApi } from '../../api/index.js';
@@ -9,6 +9,8 @@ import { initials } from '../../utils/format.js';
 import { resolvePageTitle } from '../../utils/routeMeta.js';
 import { NotificationsBell } from './NotificationsBell.jsx';
 import { Button } from '../ui/Button.jsx';
+import { WhatNewModal } from '../changelog/WhatNewModal.jsx';
+import { hasUnseenRelease, markChangelogSeen } from '../../data/changelog.js';
 
 export function Topbar({ onMenuClick }) {
   const user = useAuthStore((s) => s.user);
@@ -16,6 +18,8 @@ export function Topbar({ onMenuClick }) {
   const canDashboard = useAuthStore((s) => s.can)('dashboard.view');
   const setGlobalSearchOpen = useUiStore((s) => s.setGlobalSearchOpen);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(() => hasUnseenRelease());
+  const [hasChangelogUpdate, setHasChangelogUpdate] = useState(() => hasUnseenRelease());
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -99,6 +103,30 @@ export function Topbar({ onMenuClick }) {
 
           <NotificationsBell />
 
+          <button
+            onClick={() => setChangelogOpen(true)}
+            className="relative rounded-lg border-2 border-transparent p-2 text-slate-500 hover:border-black hover:bg-slate-100 hover:text-slate-700 transition-all duration-100"
+            title="Apa yang baru"
+            aria-label="Apa yang baru"
+            aria-expanded={changelogOpen}
+          >
+            <Sparkles className="h-5 w-5" />
+            {hasChangelogUpdate && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-md border border-black bg-warning-500 px-1 text-[0.6rem] font-extrabold text-white" aria-hidden="true">
+                !
+              </span>
+            )}
+          </button>
+
+          <WhatNewModal
+            open={changelogOpen}
+            onClose={() => {
+              markChangelogSeen();
+              setHasChangelogUpdate(false);
+              setChangelogOpen(false);
+            }}
+          />
+
           <div className="relative">
             <button
               onClick={() => setMenuOpen((v) => !v)}
@@ -125,6 +153,15 @@ export function Topbar({ onMenuClick }) {
                     <p className="text-sm font-extrabold text-slate-800 truncate">{displayName}</p>
                     <p className="text-xs font-bold text-slate-400 truncate">@{user?.username} · {roleName}</p>
                   </div>
+                  <button
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setChangelogOpen(true);
+                    }}
+                  >
+                    <Sparkles className="h-4 w-4" /> Apa yang baru
+                  </button>
                   <button
                     className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors"
                     onClick={() => {

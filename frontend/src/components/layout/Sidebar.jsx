@@ -7,6 +7,7 @@ import {
   ChevronLeft, ChevronRight, Coins, BanknoteArrowDown,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore.js';
+import { APP_VERSION } from '../../data/changelog.js';
 
 const MENU = [
   { section: null, items: [{ label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, perm: 'dashboard.view' }] },
@@ -216,9 +217,9 @@ export function Sidebar({ open, onClose }) {
 
         <div className="shrink-0 border-t-2 border-black p-4">
           {showLabels ? (
-            <p className="text-center text-[0.65rem] font-bold text-slate-400">POS App v1.0</p>
+            <p className="text-center text-[0.65rem] font-bold text-slate-400">POS App v{APP_VERSION}</p>
           ) : (
-            <div className="mx-auto flex h-6 w-6 items-center justify-center rounded-md border border-black bg-slate-100" title="POS App v1.0">
+            <div className="mx-auto flex h-6 w-6 items-center justify-center rounded-md border border-black bg-slate-100" title={`POS App v${APP_VERSION}`}>
               <Store className="h-3.5 w-3.5 text-slate-500" />
             </div>
           )}
