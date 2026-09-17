@@ -408,7 +408,7 @@ export default function POS() {
     const record = buildPendingSale({ cart, payload: fullPayload, totals, user, offlineId });
     await savePendingSale(record);
     window.dispatchEvent(new CustomEvent('pos:pending-changed'));
-    toast.success('Transaksi disimpan secara offline');
+    toast.success('Transaksi disimpan secara offline — akan sync otomatis saat online');
     setLastSale(record.sale);
     cart.clear();
     setShowCheckout(false);
