@@ -41,6 +41,20 @@ describe('apiCache — snapshot respons API untuk baca offline', () => {
     expect(row.data.data.items).toHaveLength(1);
   });
 
+  it('fallback family key: param berbeda tetap mendapat snapshot endpoint', async () => {
+    await saveApiCache(getConfig({ url: '/sales' }), { data: { total: 7 } }, 200);
+    const row = await loadApiCache(getConfig({ url: '/sales', params: { from: 'x', to: 'y' } }));
+    expect(row).not.toBeNull();
+    expect(row.data.data.total).toBe(7);
+  });
+
+  it('fallback family terbaru menimpa yang lama', async () => {
+    await saveApiCache(getConfig({ url: '/sales', params: { page: 1 } }), { data: 1 });
+    await saveApiCache(getConfig({ url: '/sales', params: { page: 2 } }), { data: 2 });
+    const row = await loadApiCache(getConfig({ url: '/sales' }));
+    expect(row.data.data).toBe(2);
+  });
+
   it('loadApiCache null bila belum pernah tersimpan', async () => {
     expect(await loadApiCache(getConfig({ url: '/never-fetched' }))).toBeNull();
   });

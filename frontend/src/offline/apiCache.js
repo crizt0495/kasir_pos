@@ -45,6 +45,17 @@ export function buildCacheKey(config) {
   return `${base}|${url}?${params}`;
 }
 
+/**
+ * Kunci "keluarga" endpoint (hanya base + url, tanpa params). Dipakai sebagai
+ * fallback agar halaman dengan params dinamis (tanggal, halaman, pencarian)
+ * tetap mendapat snapshot terakhir saat offline.
+ */
+export function buildFamilyKey(config) {
+  const base = config.baseURL || '';
+  const url = config.url || '';
+  return `${base}|${url}?`;
+}
+
 function stableSerialize(params) {
   if (!params) return '';
   try {
@@ -58,9 +69,12 @@ function stableSerialize(params) {
 /** Simpan snapshot respons (fire-and-forget dari interceptor). */
 export async function saveApiCache(config, data, status = 200) {
   if (!isCacheableConfig(config)) return;
-  const row = { id: buildCacheKey(config), data, status, savedAt: Date.now() };
+  const now = Date.now();
+  const row = { id: buildCacheKey(config), data, status, savedAt: now };
+  const familyRow = { id: buildFamilyKey(config), data, status, savedAt: now };
   if (useMemory) {
     memoryStore.set(row.id, row);
+    memoryStore.set(familyRow.id, familyRow);
     pruneMemory();
     return;
   }
@@ -68,6 +82,7 @@ export async function saveApiCache(config, data, status = 200) {
   if (!db) return;
   try {
     await putOne(STORE, row);
+    await putOne(STORE, familyRow);
     await pruneIfNeeded();
   } catch {
     /* snapshot gagal → jangan mengganggu aliran normal */
@@ -77,14 +92,18 @@ export async function saveApiCache(config, data, status = 200) {
 /** Ambil snapshot untuk sebuah permintaan (null bila belum ada). */
 export async function loadApiCache(config) {
   if (!isCacheableConfig(config)) return null;
+  const exactKey = buildCacheKey(config);
+  const familyKey = buildFamilyKey(config);
   if (useMemory) {
-    const row = memoryStore.get(buildCacheKey(config));
+    const row =
+      memoryStore.get(exactKey) || memoryStore.get(familyKey) || null;
     return row && typeof row.data !== 'undefined' ? row : null;
   }
   const db = await storeDb();
   if (!db) return null;
   try {
-    const row = await getOne(STORE, buildCacheKey(config));
+    const row =
+      (await getOne(STORE, exactKey)) || (await getOne(STORE, familyKey));
     if (!row || typeof row.data === 'undefined') return null;
     return row;
   } catch {

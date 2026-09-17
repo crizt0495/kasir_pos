@@ -5,8 +5,12 @@
    - Versi: v13 — bump untuk paksa invalidate cache chunk lama
    - Di server dev (localhost:5173) SW tetap terdaftar untuk Web Push,
      tapi TIDAK meng-cache apa pun agar HMR Vite tidak terganggu. */
-const CACHE = 'pos-shell-v14';
+const CACHE = 'pos-shell-v15';
 const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
+
+// Daftar aset ber-hash diinjeksi saat build (lihat vite.config.js → injectSwPrecache).
+// Di server dev / sebelum build, token ini aman → array kosong.
+const PRECACHE_ASSETS = typeof __SW_PRECACHE_JSON__ !== 'undefined' ? __SW_PRECACHE_JSON__ : [];
 
 const isDevServer =
   typeof location !== 'undefined' &&
@@ -17,7 +21,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     (isDevServer
       ? Promise.resolve()
-      : caches.open(CACHE).then((cache) => cache.addAll(ASSETS))
+      : caches.open(CACHE).then((cache) => cache.addAll([...ASSETS, ...PRECACHE_ASSETS]))
     )
       .then(() => self.skipWaiting())
       .catch(() => self.skipWaiting())
@@ -88,7 +92,10 @@ self.addEventListener('fetch', (event) => {
           }
           return res;
         }).catch(() => {
-          return caches.match('/index.html').then((cached) => cached || new Response('Offline', { status: 503 }));
+          // Jangan sajikan HTML untuk permintaan JS/CSS — itu membuat bundle
+          // rusak (SyntaxError). Chunk yang belum pernah di-cache offline
+          // mustahil dimuat; precache dari injectSwPrecache menutupi ini.
+          return new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
         })
     ).then((res) => {
       if (res && res.status === 404 && res.headers.get('content-type')?.includes('javascript')) {
