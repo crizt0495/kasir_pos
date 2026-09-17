@@ -15,7 +15,7 @@ import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Field, Input, Textarea } from '../components/ui/Form.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { DebtStatusBadge } from '../components/ui/Feedback.jsx';
-import { formatRupiah, formatNumber } from '../utils/format.js';
+import { formatRupiah, formatNumber, formatRupiahCard } from '../utils/format.js';
 import { getSisaHutangOf } from '../offline/pure.js';
 
 const emptyForm = { name: '', phone: '', email: '', address: '', birth_date: '', notes: '' };
@@ -173,7 +173,7 @@ export default function Customers() {
               </div>
               <div className="flex items-center gap-4 text-xs text-slate-500">
                 <span>Transaksi: <b>{formatNumber(r.total_transactions)}</b></span>
-                <span>Total: <b className="text-slate-800">{formatRupiah(r.total_spend)}</b></span>
+                <span>Total: <b className="text-slate-800" title={formatRupiah(r.total_spend)}>{formatRupiahCard(r.total_spend)}</b></span>
               </div>
               <div className="flex justify-end gap-1">
                   <button onClick={(e) => { e.stopPropagation(); navigate(`/customers/${r.id}`); }} className="rounded-md bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">

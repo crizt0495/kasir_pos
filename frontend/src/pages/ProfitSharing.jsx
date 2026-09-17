@@ -11,16 +11,17 @@ import { Field, Textarea, Select } from '../components/ui/Form.jsx';
 import { SkeletonRows, EmptyState, ErrorState, Badge, Spinner } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import CurrencyInput from '../components/ui/CurrencyInput.jsx';
-import { formatRupiah, formatDateTime, monoSizeClass } from '../utils/format.js';
+import { formatRupiah, formatDateTime, monoSizeClass, compactRupiahText } from '../utils/format.js';
 
 function ShareStatCard({ label, value, sub, icon: Icon, color }) {
+  const display = compactRupiahText(value);
   return (
     <div className="group flex flex-col gap-2 rounded-xl border-2 border-black bg-white p-5 min-h-[9rem] shadow-[4px_4px_0_0_#0A0A0A] card-hover">
       <span className={`flex h-10 w-10 items-center justify-center rounded-lg border-2 border-black shadow-[2px_2px_0_0_#0A0A0A] transition-transform duration-200 group-hover:-rotate-6 ${color}`}>
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>
       <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 whitespace-normal break-words leading-tight" title={label}>{label}</p>
-      <p className={`${monoSizeClass(value)} font-extrabold text-slate-900 truncate tracking-tight font-mono`} title={String(value ?? '')}>{value}</p>
+      <p className={`${monoSizeClass(display)} font-extrabold text-slate-900 truncate tracking-tight font-mono`} title={String(value ?? '')}>{display}</p>
       {sub && <p className="text-[11px] font-medium text-slate-500 break-words leading-snug">{sub}</p>}
     </div>
   );

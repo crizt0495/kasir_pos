@@ -13,7 +13,7 @@ import { Select } from '../components/ui/Form.jsx';
 import { ConfirmDialog } from '../components/ui/Modal.jsx';
 import { StatusBadge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
-import { formatRupiah, formatDate } from '../utils/format.js';
+import { formatRupiah, formatDate, formatRupiahCard } from '../utils/format.js';
 
 export default function Purchases() {
   const navigate = useNavigate();
@@ -133,8 +133,8 @@ export default function Purchases() {
                 <StatusBadge status={r.status_barang || 'DRAFT'} />
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-sm">{formatRupiah(r.total)}</span>
+            <div className="flex items-center justify-between gap-2 min-w-0">
+              <span className="font-semibold text-sm truncate" title={formatRupiah(r.total)}>{formatRupiahCard(r.total)}</span>
               <div className="flex gap-1">
                 <button onClick={(e) => { e.stopPropagation(); navigate(`/purchases/${r.id}`); }} className="rounded-md bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
                   Detail

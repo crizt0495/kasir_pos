@@ -7,7 +7,7 @@ import { useDebounce } from '../hooks/useDebounce.js';
 import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
 import { StatusBadge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
-import { formatRupiah, formatDateTime, paymentMethodLabel } from '../utils/format.js';
+import { formatRupiah, formatDateTime, formatRupiahCard, paymentMethodLabel } from '../utils/format.js';
 
 export default function Returns() {
   const navigate = useNavigate();
@@ -68,7 +68,7 @@ export default function Returns() {
                 </p>
                 <p className="text-xs text-slate-400">{formatDateTime(r.created_at)}</p>
               </div>
-              <span className="font-semibold text-sm text-red-600">-{formatRupiah(r.total_refund)}</span>
+              <span className="font-semibold text-sm text-red-600 truncate" title={`-${formatRupiah(r.total_refund)}`}>-{formatRupiahCard(r.total_refund)}</span>
             </div>
             <div className="text-xs text-slate-500">
               <span>Penjualan: <b className="text-primary-600">{r.sale?.invoice_number || '-'}</b></span>

@@ -12,7 +12,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus.js';
 import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { computeTotals, computeTax, computeChange } from '../utils/cart.js';
-import { formatRupiah, formatNumber, formatQty, formatDateTime, formatDate, paymentMethodLabel, monoSizeClass } from '../utils/format.js';
+import { formatRupiah, formatNumber, formatQty, formatDateTime, formatDate, formatRupiahCard, paymentMethodLabel, monoSizeClass } from '../utils/format.js';
 import { Button } from '../components/ui/Button.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Input, Select, Field, Textarea } from '../components/ui/Form.jsx';
@@ -1033,8 +1033,8 @@ export default function POS() {
             )}
             <div className="flex justify-between border-t border-slate-300 pt-3 gap-3">
               <span className="text-slate-900 font-bold">Grand Total</span>
-              <span className={`text-primary-700 font-mono ${monoSizeClass(formatRupiah(totals.total))} truncate`} title={formatRupiah(totals.total)}>
-                {formatRupiah(totals.total)}
+              <span className={`text-primary-700 font-mono ${monoSizeClass(formatRupiahCard(totals.total))} truncate`} title={formatRupiah(totals.total)}>
+                {formatRupiahCard(totals.total)}
               </span>
             </div>
           </div>
@@ -1358,8 +1358,8 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
             </div>
             <div className="flex justify-between border-t-2 border-black pt-3 mt-1 gap-3">
               <span className="font-semibold text-slate-900">Grand Total</span>
-              <span className={`font-bold text-primary-700 font-mono ${monoSizeClass(formatRupiah(totals.total))} truncate`} title={formatRupiah(totals.total)}>
-                {formatRupiah(totals.total)}
+              <span className={`font-bold text-primary-700 font-mono ${monoSizeClass(formatRupiahCard(totals.total))} truncate`} title={formatRupiah(totals.total)}>
+                {formatRupiahCard(totals.total)}
               </span>
             </div>
           </div>
@@ -1437,8 +1437,8 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                     ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
                     : 'border-red-300 bg-red-50 text-red-700'
                 }`}>
-                  <div className={`${monoSizeClass(change >= 0 ? formatRupiah(change) : formatRupiah(Math.abs(change)))} font-bold font-mono truncate`} title={change >= 0 ? formatRupiah(change) : formatRupiah(Math.abs(change))}>
-                    {change >= 0 ? formatRupiah(change) : formatRupiah(Math.abs(change))}
+                  <div className={`${monoSizeClass(formatRupiahCard(change >= 0 ? change : Math.abs(change)))} font-bold font-mono truncate`} title={change >= 0 ? formatRupiah(change) : formatRupiah(Math.abs(change))}>
+                    {change >= 0 ? formatRupiahCard(change) : formatRupiahCard(Math.abs(change))}
                   </div>
                   <div className="text-xs text-slate-500 mt-1">
                     {change >= 0 ? 'Kembalian kepada pelanggan' : 'Kurang bayar'}

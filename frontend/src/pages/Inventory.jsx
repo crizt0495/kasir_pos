@@ -14,7 +14,7 @@ import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Field, Input, Textarea, Select } from '../components/ui/Form.jsx';
 import { Badge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
-import { formatQty, formatRupiah } from '../utils/format.js';
+import { formatQty, formatRupiah, formatRupiahCard } from '../utils/format.js';
 
 // Arah penyesuaian (bertambah / berkurang)
 const DIRECTIONS = [
@@ -177,7 +177,7 @@ export default function Inventory() {
             <div className="flex items-center gap-4 text-xs text-slate-500">
               <span>Stok: <b className={r.is_out ? 'text-red-600' : r.is_low ? 'text-amber-600' : 'text-slate-800'}>{formatQty(r.stock)}</b></span>
               <span>Min: {formatQty(r.min_stock)}</span>
-              <span>HPP: {formatRupiah(r.purchase_price)}</span>
+              <span>HPP: <b title={formatRupiah(r.purchase_price)}>{formatRupiahCard(r.purchase_price)}</b></span>
             </div>
             {can('inventory.adjust') && (
               <div className="flex justify-end">

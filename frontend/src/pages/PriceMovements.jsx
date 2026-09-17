@@ -6,7 +6,7 @@ import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
 import { Field, Input, Select } from '../components/ui/Form.jsx';
 import { Badge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
-import { formatRupiah, formatDateTime } from '../utils/format.js';
+import { formatRupiah, formatDateTime, formatRupiahCard } from '../utils/format.js';
 
 const TYPE_BADGES = {
   purchase_price: 'bg-violet-100 text-violet-700',
@@ -96,7 +96,7 @@ export default function PriceMovements() {
               <Badge color={TYPE_BADGES[r.price_type]}>{TYPE_LABELS[r.price_type] || r.price_type}</Badge>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span>{formatRupiah(r.old_value)} → {formatRupiah(r.new_value)}</span>
+              <span className="truncate min-w-0" title={`${formatRupiah(r.old_value)} → ${formatRupiah(r.new_value)}`}>{formatRupiahCard(r.old_value)} → {formatRupiahCard(r.new_value)}</span>
               {diffBadge(r.difference)}
             </div>
             <div className="flex items-center gap-3 text-xs text-slate-400">

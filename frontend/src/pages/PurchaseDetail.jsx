@@ -11,7 +11,7 @@ import { DataTable, Pagination, Card } from '../components/ui/DataTable.jsx';
 import { ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Select } from '../components/ui/Form.jsx';
 import { StatusBadge, Skeleton, ErrorState, EmptyState } from '../components/ui/Feedback.jsx';
-import { formatRupiah, formatDate, formatQty } from '../utils/format.js';
+import { formatRupiah, formatDate, formatQty, formatRupiahCard } from '../utils/format.js';
 
 export default function PurchaseDetail() {
   const { id } = useParams();
@@ -163,10 +163,10 @@ export default function PurchaseDetail() {
           <div className="flex justify-end">
             <Card bodyClassName="p-4 w-72">
               <div className="space-y-1.5 text-sm">
-                <div className="flex justify-between"><span className="text-slate-500">Subtotal</span><span>{formatRupiah(p.subtotal)}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500">Diskon</span><span>-{formatRupiah(p.discount)}</span></div>
-                <div className="flex justify-between border-t-2 border-black pt-2 text-base font-bold">
-                  <span>Total</span><span className="text-primary-700">{formatRupiah(p.total)}</span>
+                <div className="flex justify-between gap-2"><span className="text-slate-500">Subtotal</span><span className="truncate min-w-0 font-mono" title={formatRupiah(p.subtotal)}>{formatRupiahCard(p.subtotal)}</span></div>
+                <div className="flex justify-between gap-2"><span className="text-slate-500">Diskon</span><span className="truncate min-w-0 font-mono" title={`-${formatRupiah(p.discount)}`}>-{formatRupiahCard(p.discount)}</span></div>
+                <div className="flex justify-between gap-2 border-t-2 border-black pt-2 text-base font-bold">
+                  <span>Total</span><span className="truncate min-w-0 text-primary-700" title={formatRupiah(p.total)}>{formatRupiahCard(p.total)}</span>
                 </div>
               </div>
             </Card>

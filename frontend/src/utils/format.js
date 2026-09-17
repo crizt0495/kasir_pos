@@ -40,6 +40,25 @@ export function monoSizeClass(text) {
   return 'text-sm sm:text-base';
 }
 
+/** Format Rupiah adaptif untuk kartu: angka ≥ 1 juta otomatis diringkas
+ *  (Rp 1,2 Jt / Rp 1,2 M) agar selalu muat tanpa terpotong ellipsis.
+ *  Nilai < 1 juta tampil penuh seperti biasa. */
+export function formatRupiahCard(value) {
+  const n = Number(value || 0);
+  return Math.abs(n) >= 1_000_000 ? formatRupiahCompact(n) : formatRupiah(n);
+}
+
+/** Ringkas teks Rupiah yang sudah diformat: "Rp 12.345.678" → "Rp 12,3 Jt".
+ *  Berguna untuk kartu yang sudah menerima value berupa string terformat.
+ *  Teks non-Rupiah dikembalikan apa adanya. */
+export function compactRupiahText(text) {
+  const s = String(text ?? '');
+  if (!/^(-)?Rp\s?\d/.test(s)) return s;
+  const n = Number(s.replace(/[^\d-]/g, ''));
+  if (!Number.isFinite(n) || Math.abs(n) < 1_000_000) return s;
+  return formatRupiahCompact(n);
+}
+
 /** Format Rupiah ringkas: Rp 53,3 Jt — angka lengkap via tooltip */
 export function formatRupiahCompact(value) {
   const n = Number(value || 0);

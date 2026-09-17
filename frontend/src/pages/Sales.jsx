@@ -11,7 +11,7 @@ import { Field, Input, Select } from '../components/ui/Form.jsx';
 import { SaleStatusBadge } from '../components/ui/SaleStatusBadge.jsx';
 import { pickSaleDebt } from '../utils/saleDebt.js';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
-import { formatRupiah, formatDateTime, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
+import { formatRupiah, formatDateTime, formatRupiahCard, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
 import { usePrinterConnect, DEFAULT_CONNECT_CONFIG } from '../context/PrinterConnectProvider.jsx';
 import { getErrorMessage } from '../api/client.js';
@@ -159,8 +159,8 @@ export default function Sales() {
                 {paymentMethodLabel(r.payment_method)}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-sm">{formatRupiah(r.total)}</span>
+            <div className="flex items-center justify-between gap-2 min-w-0">
+              <span className="font-semibold text-sm truncate" title={formatRupiah(r.total)}>{formatRupiahCard(r.total)}</span>
               <div className="flex gap-1">
                 {can('sales.view') && (
                   <button onClick={(e) => { e.stopPropagation(); navigate(`/sales/${r.id}`); }} className="rounded-md bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">

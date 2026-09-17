@@ -1,5 +1,5 @@
 import { Ban, CheckCircle2, Wallet } from 'lucide-react';
-import { formatRupiah } from '../../utils/format.js';
+import { formatRupiahCard } from '../../utils/format.js';
 import { StatusBadge } from './Feedback.jsx';
 
 /**
@@ -39,7 +39,7 @@ export function SaleStatusBadge({ debt, saleStatus, className = '' }) {
     <span className={`inline-flex items-center gap-1 rounded-md bg-amber-100 px-2.5 py-1 text-xs font-extrabold uppercase tracking-wider text-amber-700 ${className}`}>
       <Wallet className="h-4 w-4 shrink-0" aria-hidden="true" />
       BELUM LUNAS
-      {sisa > 0 && <span className="ml-0.5 font-mono text-[0.7rem]">({formatRupiah(sisa)})</span>}
+      {sisa > 0 && <span className="ml-0.5 font-mono text-[0.7rem]">({formatRupiahCard(sisa)})</span>}
     </span>
   );
 }

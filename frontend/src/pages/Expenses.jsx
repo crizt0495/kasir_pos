@@ -15,7 +15,7 @@ import { Field, Input, Textarea, Select } from '../components/ui/Form.jsx';
 import { Badge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import CurrencyInput from '../components/ui/CurrencyInput.jsx';
-import { formatRupiah, formatDate, paymentMethodLabel, paymentMethodColor, todayInput } from '../utils/format.js';
+import { formatRupiah, formatDate, formatRupiahCard, paymentMethodLabel, paymentMethodColor, todayInput } from '../utils/format.js';
 
 const CATEGORIES = ['Operasional', 'Listrik & Air', 'Gaji', 'Transportasi', 'Pajak', 'Perbaikan', 'Lainnya'];
 
@@ -157,7 +157,7 @@ export default function Expenses() {
                 <p className="text-xs text-slate-400">{formatDate(r.expense_date)}</p>
                 <Badge color="bg-slate-100 text-slate-700">{r.category}</Badge>
               </div>
-              <span className="font-semibold text-sm text-red-600">-{formatRupiah(r.amount)}</span>
+              <span className="font-semibold text-sm text-red-600 truncate" title={`-${formatRupiah(r.amount)}`}>-{formatRupiahCard(r.amount)}</span>
             </div>
             {r.description && <p className="text-xs text-slate-500 line-clamp-2">{r.description}</p>}
             <div className="flex items-center justify-between text-xs text-slate-400">

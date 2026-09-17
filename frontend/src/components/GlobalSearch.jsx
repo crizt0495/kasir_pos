@@ -4,7 +4,7 @@ import { Search, Package, ReceiptText, Users, Truck, Inbox } from 'lucide-react'
 import { useUiStore } from '../stores/uiStore.js';
 import { searchApi } from '../api/index.js';
 import { useDebounce } from '../hooks/useDebounce.js';
-import { formatRupiah, formatDateTime, paymentMethodLabel } from '../utils/format.js';
+import { formatRupiah, formatDateTime, formatRupiahCard, paymentMethodLabel } from '../utils/format.js';
 
 const GROUPS = [
   { key: 'products', label: 'Produk', icon: Package, path: (r) => `/products/${r.id}/edit` },
@@ -131,16 +131,16 @@ export default function GlobalSearch() {
                         {g.key === 'products' && (
                           <>
                             <p className="truncate font-extrabold text-slate-800">{row.name}</p>
-                            <p className="text-xs font-bold text-slate-400/80">
-                              {row.sku} · Stok {row.stock} · {formatRupiah(row.sale_price)}
+                            <p className="text-xs font-bold text-slate-400/80 truncate" title={`${row.sku} · Stok ${row.stock} · ${formatRupiah(row.sale_price)}`}>
+                              {row.sku} · Stok {row.stock} · {formatRupiahCard(row.sale_price)}
                             </p>
                           </>
                         )}
                         {g.key === 'sales' && (
                           <>
                             <p className="font-extrabold text-slate-800">{row.invoice_number}</p>
-                            <p className="text-xs font-bold text-slate-400/80">
-                              {formatRupiah(row.total)} · {formatDateTime(row.created_at)}
+                            <p className="text-xs font-bold text-slate-400/80 truncate" title={`${formatRupiah(row.total)} · ${formatDateTime(row.created_at)}`}>
+                              {formatRupiahCard(row.total)} · {formatDateTime(row.created_at)}
                             </p>
                           </>
                         )}

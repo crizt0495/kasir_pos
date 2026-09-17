@@ -15,7 +15,7 @@ import { Card } from '../components/ui/DataTable.jsx';
 import { Skeleton, ErrorState, EmptyState, Badge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { DatePicker, DateRangePicker } from '../components/ui/DatePicker.jsx';
-import { formatRupiah, formatNumber, formatDate, paymentMethodLabel, paymentMethodColor, monoSizeClass } from '../utils/format.js';
+import { formatRupiah, formatNumber, formatDate, paymentMethodLabel, paymentMethodColor, monoSizeClass, compactRupiahText } from '../utils/format.js';
 
 const PERIODS = [
   { key: 'daily', label: 'Harian' },
@@ -244,10 +244,11 @@ export default function Reports() {
 }
 
 function SummaryCard({ label, value, highlight = false }) {
+  const display = compactRupiahText(value);
   return (
     <div className={`rounded-lg p-4 min-h-[5.5rem] shadow-sm ${highlight ? 'border-2 border-black bg-primary-50' : 'border-2 border-black bg-white'}`}>
       <p className="text-xs text-slate-500 break-words leading-tight">{label}</p>
-      <p className={`mt-1 ${monoSizeClass(value)} font-bold font-mono truncate ${highlight ? 'text-primary-700' : 'text-slate-900'}`} title={String(value ?? '')}>{value}</p>
+      <p className={`mt-1 ${monoSizeClass(display)} font-bold font-mono truncate ${highlight ? 'text-primary-700' : 'text-slate-900'}`} title={String(value ?? '')}>{display}</p>
     </div>
   );
 }

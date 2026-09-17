@@ -5,7 +5,7 @@ import { customersApi, salesApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { DataTable, Card } from '../components/ui/DataTable.jsx';
 import { StatCard, StatusBadge, Skeleton, ErrorState, EmptyState, DebtStatusBadge } from '../components/ui/Feedback.jsx';
-import { formatRupiah, formatDateTime, paymentMethodLabel } from '../utils/format.js';
+import { formatRupiah, formatDateTime, compactRupiahText, paymentMethodLabel } from '../utils/format.js';
 
 export default function CustomerDetail() {
   const { id } = useParams();
@@ -131,6 +131,7 @@ export default function CustomerDetail() {
 }
 
 function SummaryBox({ label, value, intent = 'default' }) {
+  const display = compactRupiahText(value);
   const tone = {
     danger: 'text-rose-600 bg-rose-100/70',
     success: 'text-emerald-600 bg-emerald-100/70',
@@ -140,7 +141,7 @@ function SummaryBox({ label, value, intent = 'default' }) {
   return (
     <div className={`rounded-lg px-4 py-3 ${tone}`}>
       <p className="text-xs uppercase tracking-wide opacity-70">{label}</p>
-      <p className="mt-0.5 font-mono text-sm font-bold">{value}</p>
+      <p className="mt-0.5 font-mono text-sm font-bold truncate" title={String(value ?? '')}>{display}</p>
     </div>
   );
 }

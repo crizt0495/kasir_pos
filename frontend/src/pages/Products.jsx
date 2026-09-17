@@ -14,7 +14,7 @@ import { Field, Input, Select } from '../components/ui/Form.jsx';
 import { StatusBadge } from '../components/ui/Feedback.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import ProductImage from '../components/ProductImage.jsx';
-import { formatRupiah, formatQty } from '../utils/format.js';
+import { formatRupiah, formatQty, formatRupiahCard } from '../utils/format.js';
 
 export default function Products() {
   const navigate = useNavigate();
@@ -186,8 +186,8 @@ export default function Products() {
               {r.unit?.short_name && <span>{r.unit.short_name}</span>}
               <span>Stok: <b className={Number(r.stock) <= Number(r.min_stock) ? 'text-red-600' : 'text-slate-800'}>{formatQty(r.stock)}</b></span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-sm">{formatRupiah(r.sale_price)}</span>
+            <div className="flex items-center justify-between gap-2 min-w-0">
+              <span className="font-semibold text-sm truncate" title={formatRupiah(r.sale_price)}>{formatRupiahCard(r.sale_price)}</span>
               <div className="flex gap-1">
                 {can('products.update') && (
                    <button onClick={(e) => { e.stopPropagation(); navigate(`/products/${r.id}/edit`); }} className="rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-100 transition-colors">

@@ -13,7 +13,7 @@ import { DataTable, Pagination, Card } from '../components/ui/DataTable.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Field, Input, Textarea, Select } from '../components/ui/Form.jsx';
 import { StatusBadge, Skeleton, ErrorState, EmptyState } from '../components/ui/Feedback.jsx';
-import { formatRupiah, formatDateTime, formatQty, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
+import { formatRupiah, formatDateTime, formatQty, formatRupiahCard, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
 import { usePrinterConnect, DEFAULT_CONNECT_CONFIG } from '../context/PrinterConnectProvider.jsx';
 
@@ -333,7 +333,7 @@ export default function SaleDetail() {
             </Card>
             <Card bodyClassName="p-4">
               <p className="text-xs text-slate-400">Total</p>
-              <p className="mt-1 text-lg font-bold text-primary-700">{formatRupiah(s.total)}</p>
+              <p className="mt-1 text-lg font-bold text-primary-700 truncate" title={formatRupiah(s.total)}>{formatRupiahCard(s.total)}</p>
             </Card>
           </div>
 
@@ -379,18 +379,18 @@ export default function SaleDetail() {
           <div className="flex justify-end">
             <Card bodyClassName="p-4 w-72">
               <div className="space-y-1.5 text-sm">
-                <div className="flex justify-between"><span className="text-slate-500">Subtotal</span><span>{formatRupiah(s.subtotal)}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500">Diskon</span><span>-{formatRupiah(s.discount)}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500">Pajak</span><span>{formatRupiah(s.tax)}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500">Biaya Lain</span><span>{formatRupiah(s.additional_cost)}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500">Laba Transaksi</span><span className="font-medium text-emerald-600">{formatRupiah(s.profit)}</span></div>
-                <div className="flex justify-between border-t-2 border-black pt-2 text-base font-bold">
-                  <span>Total</span><span className="text-primary-700">{formatRupiah(s.total)}</span>
+                <div className="flex justify-between gap-2"><span className="text-slate-500">Subtotal</span><span className="truncate min-w-0 font-mono" title={formatRupiah(s.subtotal)}>{formatRupiahCard(s.subtotal)}</span></div>
+                <div className="flex justify-between gap-2"><span className="text-slate-500">Diskon</span><span className="truncate min-w-0 font-mono" title={`-${formatRupiah(s.discount)}`}>-{formatRupiahCard(s.discount)}</span></div>
+                <div className="flex justify-between gap-2"><span className="text-slate-500">Pajak</span><span className="truncate min-w-0 font-mono" title={formatRupiah(s.tax)}>{formatRupiahCard(s.tax)}</span></div>
+                <div className="flex justify-between gap-2"><span className="text-slate-500">Biaya Lain</span><span className="truncate min-w-0 font-mono" title={formatRupiah(s.additional_cost)}>{formatRupiahCard(s.additional_cost)}</span></div>
+                <div className="flex justify-between gap-2"><span className="text-slate-500">Laba Transaksi</span><span className="truncate min-w-0 font-mono font-medium text-emerald-600" title={formatRupiah(s.profit)}>{formatRupiahCard(s.profit)}</span></div>
+                <div className="flex justify-between gap-2 border-t-2 border-black pt-2 text-base font-bold">
+                  <span>Total</span><span className="truncate min-w-0 text-primary-700" title={formatRupiah(s.total)}>{formatRupiahCard(s.total)}</span>
                 </div>
                 {s.payments?.[0]?.cash_received != null && (
                   <>
-                    <div className="flex justify-between"><span className="text-slate-500">Bayar</span><span>{formatRupiah(s.payments[0].cash_received)}</span></div>
-                    <div className="flex justify-between"><span className="text-slate-500">Kembali</span><span>{formatRupiah(s.payments[0].change_amount)}</span></div>
+                    <div className="flex justify-between gap-2"><span className="text-slate-500">Bayar</span><span className="truncate min-w-0 font-mono" title={formatRupiah(s.payments[0].cash_received)}>{formatRupiahCard(s.payments[0].cash_received)}</span></div>
+                    <div className="flex justify-between gap-2"><span className="text-slate-500">Kembali</span><span className="truncate min-w-0 font-mono" title={formatRupiah(s.payments[0].change_amount)}>{formatRupiahCard(s.payments[0].change_amount)}</span></div>
                   </>
                 )}
                 {debtView.kind === 'cancelled' && (
@@ -405,7 +405,7 @@ export default function SaleDetail() {
                   <>
                     <div className="flex justify-between border-t-2 border-black pt-2">
                       <span className="text-amber-600 font-semibold">Sisa Hutang</span>
-                      <span className="font-bold text-amber-700">{formatRupiah(debtView.sisa)}</span>
+                      <span className="font-bold text-amber-700 truncate" title={formatRupiah(debtView.sisa)}>{formatRupiahCard(debtView.sisa)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-amber-600">Status</span>
@@ -425,7 +425,7 @@ export default function SaleDetail() {
                     <p className="text-sm font-medium text-slate-800">{r.return_number}</p>
                     <p className="text-xs text-slate-400">{formatDateTime(r.created_at)} · {r.reason || '-'}</p>
                   </div>
-                  <p className="text-sm font-semibold text-red-600">-{formatRupiah(r.total_refund)}</p>
+                  <p className="text-sm font-semibold text-red-600 truncate" title={`-${formatRupiah(r.total_refund)}`}>-{formatRupiahCard(r.total_refund)}</p>
                 </div>
               ))}
             </Card>
