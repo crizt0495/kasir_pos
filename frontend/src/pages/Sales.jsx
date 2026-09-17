@@ -8,7 +8,8 @@ import { usePermission } from '../hooks/usePermission.js';
 import { toast } from '../stores/uiStore.js';
 import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
 import { Field, Input, Select } from '../components/ui/Form.jsx';
-import { StatusBadge } from '../components/ui/Feedback.jsx';
+import { SaleStatusBadge } from '../components/ui/SaleStatusBadge.jsx';
+import { pickSaleDebt } from '../utils/saleDebt.js';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { formatRupiah, formatDateTime, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
@@ -116,7 +117,7 @@ export default function Sales() {
             </span>
           )},
           { key: 'total', header: 'Total', align: 'right', sortable: true, hideable: false, render: (r) => <span className="font-semibold">{formatRupiah(r.total)}</span> },
-          { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+          { key: 'status', header: 'Status', render: (r) => <SaleStatusBadge debt={pickSaleDebt(r.debts)} saleStatus={r.status} /> },
           { key: 'actions', header: 'Aksi', align: 'right', hideable: false, render: (r) => (
             <div className="flex gap-1">
               {can('sales.view') && (
@@ -145,11 +146,11 @@ export default function Sales() {
         renderCard={(r) => (
           <div className="space-y-2.5">
             <div className="flex items-start justify-between">
-              <div>
-                <p className="font-medium text-primary-600">{r.invoice_number}</p>
-                <p className="text-xs text-slate-400">{formatDateTime(r.created_at)}</p>
-              </div>
-              <StatusBadge status={r.status} />
+<div>
+              <p className="font-medium text-primary-600">{r.invoice_number}</p>
+              <p className="text-xs text-slate-400">{formatDateTime(r.created_at)}</p>
+            </div>
+            <SaleStatusBadge debt={pickSaleDebt(r.debts)} saleStatus={r.status} />
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
               {r.cashier?.profiles?.full_name && <span>Kasir: {r.cashier.profiles.full_name}</span>}

@@ -82,6 +82,7 @@ export const salesApi = {
   create: (payload) => api.post('/sales', payload).then((r) => r.data),
   edit: (id, payload) => api.put(`/sales/${id}/edit`, payload).then((r) => r.data),
   refund: (id, payload) => api.post(`/sales/${id}/refund`, payload).then((r) => r.data),
+  cancelDebt: (id, payload) => api.post(`/sales/${id}/cancel-debt`, payload).then((r) => r.data),
 };
 
 // ---------- OFFLINE SYNC ----------

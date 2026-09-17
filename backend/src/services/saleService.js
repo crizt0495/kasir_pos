@@ -7,7 +7,8 @@ const SALE_DETAIL_SELECT =
   '*, customer:customers(id, name, phone, email, address), ' +
   'cashier:users!sales_cashier_id_fkey(id, username, profiles(full_name)), ' +
   'items:sale_items(*, product:products(id, name, sku, unit:product_units(short_name))), ' +
-  'payments:sale_payments(*)';
+  'payments:sale_payments(*), ' +
+  'debts:customer_debts(id, amount, paid_amount, remaining_amount, status, due_date, sale_id)';
 
 /** Ambil detail lengkap transaksi (dipakai struk & notifikasi). */
 export async function fetchSaleDetail(id) {

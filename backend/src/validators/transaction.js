@@ -36,6 +36,11 @@ export const editSaleSchema = createSaleSchema.extend({
   reason: z.string().trim().min(3, 'Alasan koreksi wajib diisi (min 3 karakter)').max(1000),
 });
 
+/** Batalkan hutang transaksi dari Detail Penjualan (alasan wajib). */
+export const cancelSaleDebtSchema = z.object({
+  reason: z.string().trim().min(3, 'Alasan pembatalan wajib diisi (min 3 karakter)').max(1000),
+});
+
 export const refundItemSchema = z.object({
   sale_item_id: z.string().uuid('Item tidak valid'),
   quantity: z.coerce

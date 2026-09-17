@@ -1,6 +1,7 @@
 import { supabase } from '../config/supabase.js';
 import { writeAudit } from '../services/auditService.js';
 import { fetchSaleDetail, createSaleRecord, editSaleRecord } from '../services/saleService.js';
+import { cancelPiutang } from '../services/customerDebtService.js';
 import { getPagination, buildPage, fetchPage, countSignature } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, AppError, extractPgMessage } from '../utils/errors.js';
@@ -9,7 +10,8 @@ import { safeSearch } from '../utils/sanitize.js';
 
 const SALE_LIST_SELECT =
   'id, invoice_number, subtotal, discount, tax, additional_cost, total, payment_method, status, notes, created_at, ' +
-  'customer:customers(id, name, phone), cashier:users!sales_cashier_id_fkey(id, username, profiles(full_name)), items:sale_items(count)';
+  'customer:customers(id, name, phone), cashier:users!sales_cashier_id_fkey(id, username, profiles(full_name)), items:sale_items(count), ' +
+  'debts:customer_debts(id, amount, paid_amount, remaining_amount, status, sale_id)';
 
 async function fetchReturnsForSale(saleId) {
   const { data } = await supabase
@@ -75,6 +77,17 @@ export const createSale = asyncHandler(async (req, res) => {
 export const editSale = asyncHandler(async (req, res) => {
   const result = await editSaleRecord(req.user.id, req.params.id, req.body);
   return ok(res, result, 'Transaksi berhasil dikoreksi');
+});
+
+/** Batalkan piutang/hutang transaksi dari Detail Penjualan (single source). */
+export const cancelSaleDebt = asyncHandler(async (req, res) => {
+  const result = await cancelPiutang({
+    saleId: req.params.id,
+    reason: req.body.reason,
+    user: req.user,
+  });
+  const sale = await fetchSaleDetail(req.params.id);
+  return ok(res, { ...result, sale }, 'Hutang transaksi berhasil dibatalkan');
 });
 
 /**

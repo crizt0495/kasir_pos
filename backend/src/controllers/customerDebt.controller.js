@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { writeAudit } from '../services/auditService.js';
+import { cancelPiutang } from '../services/customerDebtService.js';
 import { getPagination, buildPage, fetchPage, countSignature } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, badRequest, AppError, extractPgMessage } from '../utils/errors.js';
@@ -164,31 +165,18 @@ export const getDebtPaymentHistory = asyncHandler(async (req, res) => {
   return ok(res, data);
 });
 
-// Pembatalan/void hutang dengan alasan (spec §20) — hutang tidak dihapus
+// Pembatalan/void hutang dengan alasan (spec §20) — hutang tidak dihapus.
+// Memakai cancelPiutang() yang SAMA dengan Detail Penjualan (single source of
+// truth) — bila hutang tertaut transaksi, transaksi ikut tercatat DIBATALKAN.
 export const cancelDebt = asyncHandler(async (req, res) => {
   const { reason } = req.body;
   if (!reason || reason.trim() === '') {
     throw badRequest('Alasan pembatalan wajib diisi');
   }
 
-  const { data: result, error } = await supabase.rpc('fn_cancel_debt', {
-    p_debt_id: req.params.id,
-    p_reason: reason,
-    p_created_by: req.user.id,
-  });
-  if (error) throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
+  const result = await cancelPiutang({ debtId: req.params.id, reason, user: req.user });
 
   const debt = await getDebtFromId(req.params.id);
-
-  await writeAudit({
-    user: req.user,
-    action: 'DEBT_CANCELLED',
-    module: 'customer_debts',
-    recordId: req.params.id,
-    oldData: { status: req.body.oldStatus },
-    newData: { status: 'cancelled', reason },
-    req,
-  });
 
   return ok(res, { ...result, debt }, 'Hutang berhasil dibatalkan');
 });

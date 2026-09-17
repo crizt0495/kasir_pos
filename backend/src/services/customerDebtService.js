@@ -1,4 +1,8 @@
 import { supabase } from '../config/supabase.js';
+import { writeAudit } from './auditService.js';
+import { AppError, extractPgMessage } from '../utils/errors.js';
+
+const ACTIVE_DEBT_STATUSES = ['pending', 'partial', 'overdue'];
 
 // ============================================================
 // SISA HUTANG — single source of truth.
@@ -109,4 +113,109 @@ export async function recordDebt(customerId, amount, dueDate, notes, userId) {
   }
 
   return data;
+}
+
+/**
+ * BATALKAN PIUTANG — single source of truth.
+ *
+ * Dipakai BAIK dari menu Hutang/Angsuran (via debtId) maupun dari Detail
+ * Penjualan (via saleId). Selalu memakai `fn_cancel_debt` yang sama sehingga
+ * status customer_debts → 'cancelled', customers.total_debt/pending_debt
+ * dihitung ulang oleh trigger, dan audit DEBT_CANCELLED tercatat — satu
+ * transaksi DB per hutang (atomik, tanpa query pembatalan terpisah).
+ *
+ * Tambahan: audit `BATAL_HUTANG` di level transaksi (sales) + nilai agregat
+ * yang dibatalkan, agar riwayat detail penjualan konsisten.
+ */
+export async function cancelPiutang({ saleId = null, debtId = null, reason, user }) {
+  const cleanReason = String(reason || '').trim();
+  if (!cleanReason) {
+    throw new AppError('Alasan pembatalan wajib diisi', { code: 'BAD_REQUEST', status: 400 });
+  }
+
+  let targetSaleId = saleId || null;
+  let anchorDebt = null;
+
+  if (debtId) {
+    const { data, error } = await supabase
+      .from('customer_debts')
+      .select('id, customer_id, amount, paid_amount, remaining_amount, status, sale_id')
+      .eq('id', debtId)
+      .maybeSingle();
+    if (error) throw new Error(`Failed to get debt: ${error.message}`);
+    if (!data) throw new AppError('Hutang tidak ditemukan', { code: 'NOT_FOUND', status: 404 });
+
+    anchorDebt = data;
+    if (!targetSaleId && data.sale_id) targetSaleId = data.sale_id;
+
+    if (data.status === 'cancelled') {
+      throw new AppError('Hutang sudah dibatalkan', { code: 'BAD_REQUEST', status: 400 });
+    }
+    if (data.status === 'paid') {
+      throw new AppError('Hutang sudah lunas', { code: 'BAD_REQUEST', status: 400 });
+    }
+  }
+
+  let debts = [];
+  if (targetSaleId) {
+    const { data, error } = await supabase
+      .from('customer_debts')
+      .select('id, customer_id, amount, paid_amount, remaining_amount, status, sale_id')
+      .eq('sale_id', targetSaleId)
+      .in('status', ACTIVE_DEBT_STATUSES);
+    if (error) throw new Error(`Failed to list sale debts: ${error.message}`);
+    debts = data || [];
+  } else if (anchorDebt && ACTIVE_DEBT_STATUSES.includes(anchorDebt.status)) {
+    debts = [anchorDebt];
+  }
+
+  if (!debts.length) {
+    throw new AppError('Tidak ada hutang aktif untuk dibatalkan', { code: 'BAD_REQUEST', status: 400 });
+  }
+
+  let cancelledAmount = 0;
+  const cancelledIds = [];
+  for (const d of debts) {
+    const { error } = await supabase.rpc('fn_cancel_debt', {
+      p_debt_id: d.id,
+      p_reason: cleanReason,
+      p_created_by: user?.id || null,
+    });
+    if (error) throw new AppError(extractPgMessage(error), { code: 'BAD_REQUEST', status: 400 });
+
+    cancelledAmount += Number(
+      d.remaining_amount ?? Math.max(Number(d.amount || 0) - Number(d.paid_amount || 0), 0)
+    );
+    cancelledIds.push(d.id);
+  }
+
+  const customerId = debts[0]?.customer_id || null;
+
+  if (targetSaleId) {
+    await writeAudit({
+      user: user || {},
+      action: 'BATAL_HUTANG',
+      module: 'sales',
+      recordId: targetSaleId,
+      oldData: {
+        debts: debts.map((d) => ({ id: d.id, status: d.status, remaining_amount: d.remaining_amount })),
+      },
+      newData: {
+        status: 'DIBATALKAN',
+        reason: cleanReason,
+        cancelled_count: debts.length,
+        cancelled_amount: cancelledAmount,
+        customer_id: customerId,
+      },
+    });
+  }
+
+  return {
+    sale_id: targetSaleId,
+    customer_id: customerId,
+    cancelled_debt_ids: cancelledIds,
+    cancelled_count: debts.length,
+    cancelled_amount: cancelledAmount,
+    status: 'DIBATALKAN',
+  };
 }

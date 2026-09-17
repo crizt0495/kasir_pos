@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Printer, RotateCcw, ReceiptText, Plus, Minus, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Printer, RotateCcw, ReceiptText, Plus, Minus, Pencil, Trash2, Ban, CheckCircle2, Wallet } from 'lucide-react';
+import { SaleStatusBadge } from '../components/ui/SaleStatusBadge.jsx';
+import { pickSaleDebt, saleDebtView } from '../utils/saleDebt.js';
 import { salesApi, settingsApi, cashierApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
@@ -40,8 +42,19 @@ export default function SaleDetail() {
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [confirmEdit, setConfirmEdit] = useState(false);
 
+  // ---- Batalkan hutang (single source: cancelPiutang) ----
+  const [showCancelDebt, setShowCancelDebt] = useState(false);
+  const [cancelDebtReason, setCancelDebtReason] = useState('');
+  const [cancelDebtLoading, setCancelDebtLoading] = useState(false);
+
   const detail = useApi(() => salesApi.get(id).then((r) => r.data), [id]);
   const s = detail.data;
+
+  // Status hutang dari customer_debts (single source of truth) — bukan hitung
+  // ulang dari cash_received, agar pembatalan di menu Hutang ikut terlihat.
+  const debt = pickSaleDebt(s?.debts);
+  const debtView = saleDebtView(debt, s?.payments?.[0]?.cash_received ?? null, s?.total);
+  const canCancelDebt = Boolean(debt) && debtView.kind === 'unpaid';
 
   const openEdit = () => {
     if (!s) return;
@@ -59,6 +72,31 @@ export default function SaleDetail() {
     setEditCash(cashReceived == null ? '' : String(cashReceived));
     setEditReason('');
     setShowEdit(true);
+  };
+
+  // ---- Batalkan hutang ----
+  const openCancelDebt = () => {
+    setCancelDebtReason('');
+    setShowCancelDebt(true);
+  };
+
+  const handleCancelDebt = async () => {
+    if (!cancelDebtReason.trim() || cancelDebtReason.trim().length < 3) {
+      toast.error('Alasan pembatalan wajib diisi (min 3 karakter)');
+      return;
+    }
+    setCancelDebtLoading(true);
+    try {
+      await salesApi.cancelDebt(id, { reason: cancelDebtReason });
+      toast.success('Hutang transaksi dibatalkan — sisa menjadi Rp 0');
+      setShowCancelDebt(false);
+      setCancelDebtReason('');
+      detail.reload();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Gagal membatalkan hutang'));
+    } finally {
+      setCancelDebtLoading(false);
+    }
   };
 
   const editSubtotal = (items) =>
@@ -262,6 +300,9 @@ export default function SaleDetail() {
             {can('sales.refund') && s.status === 'completed' && (
               <Button variant="outline" icon={Pencil} onClick={openEdit}>Koreksi</Button>
             )}
+            {can('sales.refund') && canCancelDebt && (
+              <Button variant="outline" icon={Ban} onClick={openCancelDebt}>Batalkan Hutang</Button>
+            )}
             {can('sales.refund') && s.status !== 'cancelled' && (
               <Button variant="outline" icon={RotateCcw} onClick={openRefund}>Retur</Button>
             )}
@@ -278,7 +319,7 @@ export default function SaleDetail() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
             <Card bodyClassName="p-4">
               <p className="text-xs text-slate-400">Status</p>
-              <div className="mt-1"><StatusBadge status={s.status} /></div>
+              <div className="mt-1"><SaleStatusBadge debt={debt} saleStatus={s.status} /></div>
             </Card>
             <Card bodyClassName="p-4">
               <p className="text-xs text-slate-400">Metode Pembayaran</p>
@@ -352,25 +393,26 @@ export default function SaleDetail() {
                     <div className="flex justify-between"><span className="text-slate-500">Kembali</span><span>{formatRupiah(s.payments[0].change_amount)}</span></div>
                   </>
                 )}
-                {(() => {
-                  const cashReceived = Number(s.payments?.[0]?.cash_received);
-                  const total = Number(s.total || 0);
-                  if (s.payments?.[0]?.cash_received != null && cashReceived < total) {
-                    return (
-                      <>
-                        <div className="flex justify-between border-t-2 border-black pt-2">
-                          <span className="text-amber-600 font-semibold">Sisa Hutang</span>
-                          <span className="font-bold text-amber-700">{formatRupiah(total - cashReceived)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-amber-600">Status</span>
-                          <span className="font-medium text-amber-700">BELUM LUNAS</span>
-                        </div>
-                      </>
-                    );
-                  }
-                  return null;
-                })()}
+                {debtView.kind === 'cancelled' && (
+                  <div className="flex justify-between border-t-2 border-black pt-2">
+                    <span className="text-slate-500 font-semibold">Sisa Hutang</span>
+                    <span className="font-bold text-slate-500">
+                      Rp 0 <span className="text-xs font-medium">(Dibatalkan)</span>
+                    </span>
+                  </div>
+                )}
+                {debtView.kind === 'unpaid' && debtView.sisa > 0 && (
+                  <>
+                    <div className="flex justify-between border-t-2 border-black pt-2">
+                      <span className="text-amber-600 font-semibold">Sisa Hutang</span>
+                      <span className="font-bold text-amber-700">{formatRupiah(debtView.sisa)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-amber-600">Status</span>
+                      <span className="font-medium text-amber-700">BELUM LUNAS</span>
+                    </div>
+                  </>
+                )}
               </div>
             </Card>
           </div>
@@ -782,6 +824,44 @@ export default function SaleDetail() {
         message={`Total refund ${formatRupiah(refundRounding(totalRefund))} untuk ${selectedCount} item (${formatQty(totalSelectedQty)} qty) akan diproses. Stok kembali ke gudang dan status transaksi ditandai sebagai retur.`}
         confirmText="Ya, proses retur"
       />
+
+      {/* Modal: Batalkan Hutang */}
+      <Modal
+        open={showCancelDebt}
+        onClose={() => { setShowCancelDebt(false); setCancelDebtReason(''); }}
+        title="Batalkan Hutang Transaksi"
+        size="md"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => { setShowCancelDebt(false); setCancelDebtReason(''); }} disabled={cancelDebtLoading}>Batal</Button>
+            <Button variant="danger" onClick={handleCancelDebt} loading={cancelDebtLoading} disabled={!cancelDebtReason.trim() || cancelDebtReason.trim().length < 3}>Ya, Batalkan</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 rounded-lg bg-rose-50 p-4 text-sm text-rose-700">
+            <Ban className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+            <p>
+              Hutang transaksi <span className="font-semibold">{s?.invoice_number}</span> atas nama{' '}
+              <span className="font-semibold">{s?.customer?.name || 'Umum'}</span> akan ditandai sebagai{' '}
+              <span className="font-semibold">DIBATALKAN</span>. Sisa hutang menjadi <b>Rp 0</b>.
+              Tindakan ini tidak dapat dibatalkan. Alasan akan dicatat di audit log.
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Alasan Pembatalan <span className="text-danger-500">*</span></label>
+            <textarea
+              rows={3}
+              className="w-full rounded-lg border-2 border-black px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              value={cancelDebtReason}
+              onChange={(e) => setCancelDebtReason(e.target.value)}
+              placeholder="Tuliskan alasan pembatalan hutang ini (min 3 karakter, mis. salah catat, pelanggan batal beli)"
+              required
+            />
+            <p className="mt-1 text-xs text-slate-400">Alasan wajib diisi dan akan dicatat di audit log.</p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
