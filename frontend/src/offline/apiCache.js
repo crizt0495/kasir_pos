@@ -17,12 +17,22 @@ const MAX_ENTRIES = 200;
 // ---- Backend penyimpanan: IndexedDB (produksi) / Map (test/SSR) ----
 const useMemory = typeof indexedDB === 'undefined';
 const memoryStore = new Map();
+// Jika IndexedDB ada TAPI `openOfflineDB()` gagal/resolusi null (mis. lingkungan
+// test yang men-stub global indexedDB, private mode, storage penuh), jangan
+// biarkan snapshot hilang — tetap pakai memori per sesi.
+let memoryFallback = useMemory;
 
 async function storeDb() {
-  if (useMemory) return null;
+  if (useMemory || memoryFallback) return null;
   try {
-    return await openOfflineDB();
+    const db = await openOfflineDB();
+    if (!db && !memoryFallback) {
+      memoryFallback = true;
+      console.warn('[apiCache] IndexedDB tidak tersedia — fallback ke memori sesi.');
+    }
+    return db;
   } catch {
+    if (!memoryFallback) memoryFallback = true;
     return null;
   }
 }
@@ -72,7 +82,8 @@ export async function saveApiCache(config, data, status = 200) {
   const now = Date.now();
   const row = { id: buildCacheKey(config), data, status, savedAt: now };
   const familyRow = { id: buildFamilyKey(config), data, status, savedAt: now };
-  if (useMemory) {
+  const useMem = useMemory || memoryFallback;
+  if (useMem) {
     memoryStore.set(row.id, row);
     memoryStore.set(familyRow.id, familyRow);
     pruneMemory();
@@ -94,7 +105,7 @@ export async function loadApiCache(config) {
   if (!isCacheableConfig(config)) return null;
   const exactKey = buildCacheKey(config);
   const familyKey = buildFamilyKey(config);
-  if (useMemory) {
+  if (useMemory || memoryFallback) {
     const row =
       memoryStore.get(exactKey) || memoryStore.get(familyKey) || null;
     return row && typeof row.data !== 'undefined' ? row : null;
@@ -113,7 +124,7 @@ export async function loadApiCache(config) {
 
 /** Hapus seluruh snapshot (dipanggil saat logout / sesi dihapus). */
 export async function clearApiCache() {
-  if (useMemory) {
+  if (useMemory || memoryFallback) {
     memoryStore.clear();
     return;
   }

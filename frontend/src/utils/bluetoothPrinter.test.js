@@ -1,5 +1,18 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { storeDeviceInIDB, loadDeviceFromIDB, clearDeviceFromIDB } from './bluetoothPrinter.js';
+
+// Test ini memanipulasi globalThis.indexedDB. Dengan pool threads singleThread,
+// semua file test berbagi satu worker — global palsu yang tidak dikembalikan
+// bocor ke test file lain (mis. apiCache yang mengecek typeof indexedDB).
+const originalIndexedDB = globalThis.indexedDB;
+
+afterEach(() => {
+  if (typeof originalIndexedDB === 'undefined') {
+    delete globalThis.indexedDB;
+  } else {
+    globalThis.indexedDB = originalIndexedDB;
+  }
+});
 
 describe('bluetoothPrinter IndexedDB', () => {
   it('tidak crash bila indexedDB tidak tersedia (try/catch)', async () => {
