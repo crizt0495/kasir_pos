@@ -29,6 +29,10 @@ pnpm-debug.log*
 coverage/
 .nyc_output/
 
+# Playwright artifacts
+frontend/test-results/
+frontend/playwright-report/
+
 # OS / editor
 .DS_Store
 Thumbs.db

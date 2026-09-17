@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { login } from './helpers.js';
 
 /**
  * Alur E2E minimal (spesifikasi §42):
@@ -9,10 +10,7 @@ import { test, expect } from '@playwright/test';
  */
 test('Alur penjualan lengkap: login → POS → checkout → transaksi sukses', async ({ page }) => {
   // ---------- Login ----------
-  await page.goto('/login');
-  await page.getByPlaceholder('Masukkan username').fill('admin');
-  await page.getByPlaceholder('Masukkan password').fill('Admin2026!x');
-  await page.getByRole('button', { name: 'Login' }).click();
+  await login(page);
   await expect(page).toHaveURL(/dashboard/);
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 

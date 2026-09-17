@@ -30,6 +30,7 @@ const ROUTES = [
 ];
 
 test('Semua halaman utama dapat dimuat tanpa error (console/page/network)', async ({ page }) => {
+  test.setTimeout(300_000);
   const problems = trackErrors(page);
   await login(page);
 

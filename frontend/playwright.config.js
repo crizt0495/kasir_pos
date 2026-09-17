@@ -18,6 +18,12 @@ export default defineConfig({
     baseURL: 'http://localhost:5173',
     headless: true,
     locale: 'id-ID',
+    channel: 'chrome',
+    contextOptions: {
+      // Matikan Service Worker di E2E: reload otomatis saat controllerchange
+      // (update SW) bisa membatalkan navigasi awal → net::ERR_ABORTED flaky.
+      serviceWorkers: 'block',
+    },
   },
   webServer: [
     {
