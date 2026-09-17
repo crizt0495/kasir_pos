@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar.jsx';
 import { MobileNav } from './MobileNav.jsx';
 import { Topbar } from './Topbar.jsx';
 import OfflineBanner from './OfflineBanner.jsx';
+import OnboardingModal, { hasSeenOnboarding } from './OnboardingModal.jsx';
 import { useUiStore } from '../../stores/uiStore.js';
 import { useAuthStore } from '../../stores/authStore.js';
 import { resolvePageTitle } from '../../utils/routeMeta.js';
@@ -15,8 +16,19 @@ let bootSeedStarted = false;
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const location = useLocation();
   const setGlobalSearchOpen = useUiStore((s) => s.setGlobalSearchOpen);
+
+  // Onboarding 3 langkah untuk orang awam — tampil sekali setelah login
+  // (localStorage pos_has_seen_onboarding).
+  useEffect(() => {
+    if (useAuthStore.getState().user && !hasSeenOnboarding()) {
+      const t = setTimeout(() => setShowOnboarding(true), 800);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, []);
 
   // Seed katalog offline otomatis saat boot dalam keadaan online (tidak perlu
   // menunggu user membuka POS) — supaya menu POS punya produk saat offline.
@@ -50,10 +62,6 @@ export default function AppLayout() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setGlobalSearchOpen(true);
-      }
-      if (e.key === 'F1') {
-        e.preventDefault();
-        window.location.href = '/pos';
       }
     };
     window.addEventListener('keydown', handler);
@@ -98,6 +106,7 @@ export default function AppLayout() {
       </div>
       <MobileNav />
       <GlobalSearch />
+      <OnboardingModal open={showOnboarding} onClose={() => setShowOnboarding(false)} />
     </div>
   );
 }

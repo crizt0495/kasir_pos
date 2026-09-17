@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, User, Users, PauseCircle, PlayCircle,
-  Package, ScanLine, Banknote, X, Percent, Camera, AlertTriangle,
+  Package, ScanLine, Banknote, X, Percent, Camera, AlertTriangle, Wallet, HelpCircle,
 } from 'lucide-react';
 import { productsApi, categoriesApi, customersApi, salesApi, settingsApi, cashierApi } from '../api/index.js';
 import { useCartStore } from '../stores/cartStore.js';
@@ -58,6 +58,8 @@ export default function POS() {
   const [categoryId, setCategoryId] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutMode, setCheckoutMode] = useState(null); // 'lunas' | 'hutang' | null
+  const [showBantuan, setShowBantuan] = useState(false);
   const [showHeld, setShowHeld] = useState(false);
   const [showCustomer, setShowCustomer] = useState(false);
   const [customerQuery, setCustomerQuery] = useState('');
@@ -291,19 +293,29 @@ export default function POS() {
     [cart.items, cart.discount, taxAmount, additionalCost]
   );
 
-  // Keyboard shortcuts: F2/F3 fokus kolom pencarian, F4 pelanggan, F8 bayar, +/- ubah qty
+  // Buka checkout dengan mode cepat: 'lunas' (bayar penuh F4) / 'hutang' (F8).
+  const openCheckout = useCallback((mode = null) => {
+    if (!useCartStore.getState().items.length) return;
+    setCheckoutMode(mode);
+    setShowCheckout(true);
+  }, []);
+
+  // Keyboard shortcuts: F2 cari/scan, F4 BAYAR LUNAS, F8 SIMPAN JADI HUTANG,
+  // F1 bantuan, +/- ubah qty. ESC tutup modal (ditangani komponen Modal).
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === 'F2' || e.key === 'F3') {
+      if (e.key === 'F2') {
         e.preventDefault();
         searchRef.current?.focus();
       } else if (e.key === 'F4') {
         e.preventDefault();
-        setShowCustomer(true);
+        openCheckout('lunas');
       } else if (e.key === 'F8') {
         e.preventDefault();
-        const items = useCartStore.getState().items;
-        if (items.length) setShowCheckout(true);
+        openCheckout('hutang');
+      } else if (e.key === 'F1') {
+        e.preventDefault();
+        setShowBantuan(true);
       } else if ((e.key === '+' || e.key === '=') && !(e.target instanceof HTMLElement && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.isContentEditable))) {
         const last = useCartStore.getState().items[useCartStore.getState().items.length - 1];
         if (last) useCartStore.getState().increment(last.product.id);
@@ -314,7 +326,7 @@ export default function POS() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [openCheckout]);
 
   const addToCartIfAvailable = useCallback((product) => {
     if (!product) {
@@ -512,6 +524,19 @@ export default function POS() {
       {/* ================= PRODUCTS SECTION ================= */}
       <div className="flex min-w-0 flex-1 flex-col gap-4 rounded-xl border-2 border-black bg-white p-4 shadow-sm xl:p-5">
         <div className="space-y-3">
+          {/* Kecil—judul & tombol bantuan untuk orang awam */}
+          <div className="flex items-center justify-between">
+            <p className="text-lg font-bold text-slate-800">Kasir</p>
+            <button
+              type="button"
+              onClick={() => setShowBantuan(true)}
+              title="Bantuan (F1)"
+              aria-label="Bantuan"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-black bg-white text-slate-500 shadow-sm transition-all duration-200 hover:bg-primary-50 hover:text-primary-600"
+            >
+              <HelpCircle className="h-5 w-5" />
+            </button>
+          </div>
           {/* Search & Scan Barcode — satu kolom */}
           <div className="relative">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden="true" />
@@ -730,9 +755,11 @@ export default function POS() {
         {/* Info shortcut — di pojok bawah area produk, tidak menutupi grid */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t-2 border-black pt-2 text-xs text-slate-500">
           <span className="font-semibold text-slate-600">Shortcut:</span>
+          <span className="flex items-center gap-1.5"><kbd className="kbd">F1</kbd> Bantuan</span>
           <span className="flex items-center gap-1.5"><kbd className="kbd">F2</kbd> Cari / Scan</span>
-          <span className="flex items-center gap-1.5"><kbd className="kbd">F4</kbd> Pelanggan</span>
-          <span className="flex items-center gap-1.5"><kbd className="kbd">F8</kbd> Bayar</span>
+          <span className="flex items-center gap-1.5"><kbd className="kbd">F4</kbd> Bayar Lunas</span>
+          <span className="flex items-center gap-1.5"><kbd className="kbd">F8</kbd> Simpan Jadi Hutang</span>
+          <span className="flex items-center gap-1.5"><kbd className="kbd">Esc</kbd> Tutup</span>
           <span className="flex items-center gap-1.5"><kbd className="kbd">-</kbd>/<kbd className="kbd">+</kbd> Ubah Qty</span>
         </div>
       </div>
@@ -1022,23 +1049,53 @@ export default function POS() {
             />
           </div>
 
-          {/* Checkout Button */}
-          <Button
-            size="lg"
-            className="w-full bg-primary-500 shadow-md hover:shadow-lg active:scale-[0.98]"
-            disabled={!cart.items.length}
-            onClick={() => setShowCheckout(true)}
-          >
-            <Banknote className="h-5 w-5" />
-            Bayar (F8) - {formatRupiah(totals.total)}
-          </Button>
+          {/* Jumbo actions — BAYAR LUNAS (F4) & SIMPAN JADI HUTANG (F8) */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <Button
+              size="lg"
+              className="w-full h-16 bg-gradient-to-b from-success-500 to-success-600 text-white shadow-md shadow-success-500/25 hover:shadow-lg active:scale-[0.98] text-base font-bold"
+              disabled={!cart.items.length}
+              onClick={() => openCheckout('lunas')}
+            >
+              <Banknote className="h-6 w-6 shrink-0" />
+              <span className="leading-tight">
+                BAYAR LUNAS
+                <span className="block text-xs font-semibold opacity-90">F4</span>
+              </span>
+            </Button>
+            <Button
+              size="lg"
+              className="w-full h-16 bg-gradient-to-b from-warning-500 to-warning-600 text-white shadow-md shadow-warning-500/25 hover:shadow-lg active:scale-[0.98] text-base font-bold"
+              disabled={!cart.items.length || !(cart.customer?.id && !cart.customer?.is_general)}
+              onClick={() => openCheckout('hutang')}
+            >
+              <Wallet className="h-6 w-6 shrink-0" />
+              <span className="leading-tight">
+                SIMPAN JADI HUTANG
+                <span className="block text-xs font-semibold opacity-90">F8</span>
+              </span>
+            </Button>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <button
+              className="text-primary-600 hover:text-primary-700 hover:underline"
+              onClick={() => openCheckout(null)}
+              disabled={!cart.items.length}
+            >
+              Bayar manual / sebagian
+            </button>
+            {cart.items.length > 0 && !(cart.customer?.id && !cart.customer?.is_general) && (
+              <span className="text-slate-400">Pilih pelanggan dulu untuk mencatat hutang</span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* ================= MODALS ================= */}
       <CheckoutModal
         open={showCheckout}
-        onClose={() => setShowCheckout(false)}
+        onClose={() => { setShowCheckout(false); setCheckoutMode(null); }}
+        mode={checkoutMode}
         totals={totals}
         taxEnabled={taxEnabled}
         taxRate={taxRate}
@@ -1095,6 +1152,8 @@ export default function POS() {
         onClose={() => setScannerOpen(false)}
         onScan={handleScan}
       />
+
+      <BantuanModal open={showBantuan} onClose={() => setShowBantuan(false)} />
     </div>
   );
 }
@@ -1102,7 +1161,7 @@ export default function POS() {
 /* ============================================================
    CHECKOUT MODAL - Enhanced Payment Processing
 ============================================================ */
-function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, additionalCost, setAdditionalCost, paymentMethods, onConfirm, customer, debtStats }) {
+function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, additionalCost, setAdditionalCost, paymentMethods, onConfirm, customer, debtStats, mode = null }) {
   const [method, setMethod] = useState('CASH');
   const [paid, setPaid] = useState('');
   const [notes, setNotes] = useState('');
@@ -1134,7 +1193,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
   useEffect(() => {
     if (open) {
       setMethod('CASH');
-      setPaid(String(totals.total));
+      setPaid(mode === 'hutang' ? '0' : String(totals.total));
       setNotes('');
       setError(null);
       const d = new Date();
@@ -1142,7 +1201,7 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
       setDebtDueDate(d.toISOString().split('T')[0]);
       setDebtNotes('');
     }
-  }, [open, customer?.id]);
+  }, [open, customer?.id, mode, totals.total]);
 
   // Tombol bisa diklik jika:
   // - CASH: bayar cukup ATAU pelanggan terdaftar (rekam hutang)
@@ -1257,7 +1316,11 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
                 {isCash && canRecordDebt ? `Bayar ${formatRupiah(paidNum)} · Hutang ${formatRupiah(debtAmount)}` : 'Proses Pembayaran'}
               </Button>
               {isCash && !canSubmit && (
-                <p className="text-xs font-medium text-danger-600">Mohon isi Jumlah Bayar terlebih dahulu</p>
+                <p className="text-xs font-medium text-danger-600">
+                  {mode === 'hutang'
+                    ? 'Pilih pelanggan terdaftar dulu untuk mencatat hutang'
+                    : 'Mohon isi Jumlah Bayar terlebih dahulu'}
+                </p>
               )}
             </div>
           </div>
@@ -1722,6 +1785,57 @@ function HeldCartsModal({ open, onClose, heldCarts, onResume, onRemove }) {
           ))}
         </div>
       )}
+    </Modal>
+  );
+}
+
+/* ============================================================
+   BANTUAN MODAL - panduan singkat untuk kasir awam (F1 / ?)
+============================================================ */
+function BantuanModal({ open, onClose }) {
+  const shortcuts = [
+    ['F1', 'Bantuan'],
+    ['F2', 'Cari produk / scan barcode'],
+    ['F4', 'BAYAR LUNAS (bayar penuh)'],
+    ['F8', 'SIMPAN JADI HUTANG'],
+    ['Esc', 'Tutup jendela'],
+    ['Enter', 'Tambah produk paling atas saat mengetik'],
+    ['- / +', 'Ubah jumlah item terakhir di keranjang'],
+  ];
+  return (
+    <Modal open={open} onClose={onClose} title="Bantuan Cepat" size="md" footer={<Button onClick={onClose}>Tutup</Button>}>
+      <div className="space-y-5">
+        <div className="rounded-lg border-2 border-black bg-slate-50 p-3 text-sm text-slate-600">
+          <p className="font-semibold text-slate-800">Cara cepat berjualan:</p>
+          <ol className="mt-1 list-decimal space-y-1 pl-5 text-[13px]">
+            <li>Klik foto produk — barang masuk keranjang.</li>
+            <li>Pilih pelanggan bila perlu (untuk catat hutang).</li>
+            <li>Tekan hijau <b>BAYAR LUNAS</b> (F4) atau kuning <b>SIMPAN JADI HUTANG</b> (F8).</li>
+            <li>Struk muncul otomatis. Transaksi tercatat, stok berkurang.</li>
+          </ol>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-slate-800">Tombol pintas (shortcut)</p>
+          <div className="mt-2 divide-y divide-slate-100 rounded-lg border-2 border-black">
+            {shortcuts.map(([key, desc]) => (
+              <div key={key} className="flex items-center gap-3 px-4 py-2">
+                <kbd className="kbd shrink-0 w-16 text-center">{key}</kbd>
+                <span className="text-sm text-slate-600">{desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-lg border-2 border-black bg-amber-50 p-3 text-xs text-amber-800">
+          <p className="font-medium">Catatan hutang:</p>
+          <p className="mt-1">
+            Nyutang hanya untuk pelanggan yang terdaftar (bukan &quot;Umum&quot;). Pilih nama pelanggan dulu, lalu
+            tekan tombol kuning <b>SIMPAN JADI HUTANG</b>.
+          </p>
+        </div>
+        <p className="text-xs text-slate-400">
+          Butuh bantuan lainnya? Hubungi admin / pemilik toko Anda.
+        </p>
+      </div>
     </Modal>
   );
 }
