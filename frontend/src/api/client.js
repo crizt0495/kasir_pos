@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { verifyBackendReachable } from '../utils/connectivity.js';
 
 /**
  * Axios instance — cookie httpOnly dipakai untuk autentikasi.
@@ -16,13 +17,15 @@ api.interceptors.response.use(
     try {
       const status = error?.response?.status;
       const path = window?.location?.pathname || '';
-      const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+      const browserOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
 
       // 401 dari jaringan/proxy yang "pura-pura" server (mis. koneksi terputus,
       // captive portal) jangan dianggap sesi kadaluarsa. Logout hanya ketika
-      // browser benar-benar online & server menjawab 401.
-      if (status === 401 && !offline && !path.startsWith('/login') && !path.startsWith('/change-password')) {
-        window.dispatchEvent(new CustomEvent('auth:expired'));
+      // backend BENAR-BENAR terjangkau (ping /api/health sukses) & menjawab 401.
+      if (status === 401 && !browserOffline && !path.startsWith('/login') && !path.startsWith('/change-password')) {
+        verifyBackendReachable().then((reachable) => {
+          if (reachable) window.dispatchEvent(new CustomEvent('auth:expired'));
+        });
       }
     } catch {
       /* swallow errors in interceptor to avoid cascading failures */

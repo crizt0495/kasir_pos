@@ -5,7 +5,6 @@ import { MobileNav } from './MobileNav.jsx';
 import { Topbar } from './Topbar.jsx';
 import { useUiStore } from '../../stores/uiStore.js';
 import { useAuthStore } from '../../stores/authStore.js';
-import { isNetworkError } from '../../api/client.js';
 import { resolvePageTitle } from '../../utils/routeMeta.js';
 import GlobalSearch from '../GlobalSearch.jsx';
 
@@ -13,7 +12,6 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const setGlobalSearchOpen = useUiStore((s) => s.setGlobalSearchOpen);
-  const clear = useAuthStore((s) => s.clear);
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -42,17 +40,18 @@ export default function AppLayout() {
   useEffect(() => {
     const onFocus = () => {
       if (useAuthStore.getState().user) {
+        // Revalidasi sesi saat fokus kembali. Logout ditangani interceptor
+        // (auth:expired) yang sudah memverifikasi backend benar-benar
+        // terjangkau — fokus handler tidak perlu clear() manual (itu yang
+        // bikin logout palsu saat offline / error server 403/500).
         import('../../api/index.js').then(({ authApi }) =>
-          authApi.me().catch((err) => {
-            const offline = isNetworkError(err) || navigator.onLine === false;
-            if (!offline) clear();
-          })
+          authApi.me().catch(() => {})
         );
       }
     };
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
-  }, [clear]);
+  }, []);
 
   const isPOS = location.pathname === '/pos';
 

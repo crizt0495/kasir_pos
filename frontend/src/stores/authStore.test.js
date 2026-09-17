@@ -10,6 +10,13 @@ const memoryStorage = {
 };
 vi.stubGlobal('localStorage', memoryStorage);
 
+vi.stubGlobal(
+  'fetch',
+  vi.fn(() =>
+    Promise.resolve({ ok: true, headers: { get: () => 'application/json' } })
+  )
+);
+
 const listeners = {};
 globalThis.window = {
   location: { pathname: '/pos' },
@@ -102,6 +109,21 @@ describe('bootstrap — tidak logout saat offline', () => {
     vi.mocked(authApi.me).mockRejectedValueOnce({ response: { status: 401 } });
     await useAuthStore.getState().bootstrap();
     expect(useAuthStore.getState().user).toBeNull();
+  });
+
+  it('online + 200 data:null (cookie hilang) → sesi dibersihkan', async () => {
+    givenLoggedIn();
+    vi.mocked(authApi.me).mockResolvedValueOnce({ data: null });
+    await useAuthStore.getState().bootstrap();
+    expect(useAuthStore.getState().user).toBeNull();
+  });
+
+  it('offline + 200 data:null → sesi dipertahankan', async () => {
+    vi.stubGlobal('navigator', { onLine: false });
+    givenLoggedIn();
+    vi.mocked(authApi.me).mockResolvedValueOnce({ data: null });
+    await useAuthStore.getState().bootstrap();
+    expect(useAuthStore.getState().user).toBe(userObj);
   });
 });
 

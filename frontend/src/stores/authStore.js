@@ -2,12 +2,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authApi } from '../api/index.js';
 import { hasPermission, hasAnyPermission } from '../utils/permission.js';
+import { isOffline, startConnectivityMonitor } from '../utils/connectivity.js';
 
 const STORAGE_KEY = 'pos-auth';
-
-function isOffline() {
-  return typeof navigator !== 'undefined' && navigator.onLine === false;
-}
 
 export const useAuthStore = create(
   persist(
@@ -40,7 +37,15 @@ export const useAuthStore = create(
       bootstrap: async () => {
         try {
           const res = await authApi.me();
-          set({ user: res.data, loading: false });
+          // /auth/me bisa balas 200 + data:null (cookie kedaluwarsa/hilang).
+          // Saat offline, jangan hapus sesi — pertahankan user terdahulu.
+          if (res.data) {
+            set({ user: res.data, loading: false });
+          } else if (isOffline()) {
+            set({ user: get().user, loading: false });
+          } else {
+            set({ user: null, loading: false });
+          }
         } catch (error) {
           const isAuth =
             error?.response?.status === 401 && !isOffline();
@@ -86,6 +91,7 @@ export const useAuthStore = create(
 // kita temukan di review.
 // ────────────────────────────────────────────────────────────────
 if (typeof window !== 'undefined') {
+  startConnectivityMonitor();
   let lastUser = useAuthStore.getState().user;
 
   useAuthStore.subscribe((state) => {
