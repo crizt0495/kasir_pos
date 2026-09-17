@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { authApi } from '../api/index.js';
 import { hasPermission, hasAnyPermission } from '../utils/permission.js';
 import { isOffline, startConnectivityMonitor } from '../utils/connectivity.js';
+import { clearApiCache } from '../offline/apiCache.js';
 
 const STORAGE_KEY = 'pos-auth';
 
@@ -39,6 +40,7 @@ export const useAuthStore = create(
       clear: () => {
         if (isOffline()) return;
         set({ user: null, loading: false });
+        clearApiCache().catch(() => {});
       },
 
       /**
@@ -47,6 +49,7 @@ export const useAuthStore = create(
        */
       forceClear: () => {
         set({ user: null, loading: false, _skipRestore: true });
+        clearApiCache().catch(() => {});
       },
 
       /**

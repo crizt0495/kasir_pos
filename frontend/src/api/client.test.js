@@ -13,6 +13,7 @@ globalThis.window = {
 };
 
 const { api } = await import('./client.js');
+const { saveApiCache, clearApiCache } = await import('../offline/apiCache.js');
 
 const rejected = api.interceptors.response.handlers[0].rejected;
 
@@ -71,5 +72,49 @@ describe('Axios interceptor — auth:expired tidak di-dispatch saat offline', ()
     await flush();
     expect(window.dispatchEvent).not.toHaveBeenCalled();
     window.location.pathname = '/pos';
+  });
+});
+
+describe('Axios interceptor — snapshot offline untuk GET', () => {
+  beforeEach(() => {
+    vi.stubGlobal('navigator', { onLine: true });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(healthOkResponse));
+    window.dispatchEvent.mockClear();
+  });
+
+  afterEach(async () => {
+    vi.unstubAllGlobals();
+    await clearApiCache();
+  });
+
+  const getConfig = (url) => ({ method: 'get', baseURL: '/api', url, params: null });
+
+  it('network error + snapshot tersedia → resolusi dengan data cache', async () => {
+    const config = getConfig('/products');
+    await saveApiCache(config, { success: true, data: { items: [{ id: 'p1' }] } }, 200);
+    const result = await rejected({ config, code: 'ERR_NETWORK', message: 'Network Error' });
+    expect(result).not.toBeNull();
+    expect(result.config).toBe(config);
+    expect(result.status).toBe(200);
+    expect(result.data.data.items).toHaveLength(1);
+  });
+
+  it('gateway 503 + snapshot tersedia → resolusi dengan data cache', async () => {
+    const config = getConfig('/dashboard/summary');
+    await saveApiCache(config, { success: true, data: { total_sales: 5 } }, 200);
+    const result = await rejected({ config, response: { status: 503 } });
+    expect(result.data.data.total_sales).toBe(5);
+  });
+
+  it('network error + TANPA snapshot → tetap reject', async () => {
+    await expect(
+      rejected({ config: getConfig('/belum-pernah-dibuka'), code: 'ERR_NETWORK' })
+    ).rejects.toBeDefined();
+  });
+
+  it('mutasi (POST) + snapshot tersedia → TETAP reject (tidak disajikan)', async () => {
+    const config = { method: 'post', baseURL: '/api', url: '/products', params: null };
+    await saveApiCache(config, { success: true, data: { id: 'x' } }, 201);
+    await expect(rejected({ config, code: 'ERR_NETWORK' })).rejects.toBeDefined();
   });
 });

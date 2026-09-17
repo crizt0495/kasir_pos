@@ -7,13 +7,14 @@
 //   - categories     (keyPath id)       → kategori (filter offline)
 //   - customers      (keyPath id)       → daftar pelanggan utk pemilih pelanggan offline
 //   - pending_sales  (keyPath offline_id) → antrian transaksi yang disimpan offline
+//   - api_cache      (keyPath id)       → snapshot respons API GET utk baca halaman offline
 //   - meta           (key key)          → nilai tambahan ({ key, value })
 //
 
 const DB_NAME = 'pos_offline_db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
-const STORES = ['products', 'categories', 'customers', 'pending_sales', 'meta'];
+const STORES = ['products', 'categories', 'customers', 'pending_sales', 'api_cache', 'meta'];
 
 let dbPromise = null;
 
@@ -78,6 +79,11 @@ export function putAll(name, rows) {
 /** Ambil semua baris sebuah object store. */
 export function getAll(name) {
   return withStore(name, 'readonly', (store) => store.getAll());
+}
+
+/** Ambil satu baris berdasarkan key. */
+export function getOne(name, key) {
+  return withStore(name, 'readonly', (store) => store.get(key));
 }
 
 /** Simpan satu baris. */
