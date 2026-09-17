@@ -53,4 +53,38 @@ describe('Sisa Hutang — single source of truth (getSisaHutang)', () => {
     assert.equal(res.body.data.pending_debt, 110000);
     assert.equal(res.body.data.total_debt, 150000);
   });
+
+  it('angka sisa hutang SAMA di semua endpoint (customers vs customer-debts stats)', async () => {
+    const agent = await loginAgent('admin', ADMIN_PASSWORD);
+    const [list, detail, stats] = await Promise.all([
+      agent.get('/api/customers'),
+      agent.get(`/api/customers/${CUSTOMER_1}`),
+      agent.get(`/api/customer-debts/stats/${CUSTOMER_1}`),
+    ]);
+    assert.equal(list.status, 200);
+    assert.equal(detail.status, 200);
+    assert.equal(stats.status, 200);
+    const fromList = list.body.data.items.find((c) => c.id === CUSTOMER_1).sisa_hutang;
+    assert.equal(fromList, detail.body.data.sisa_hutang);
+    assert.equal(fromList, Number(stats.body.data.pending_debt));
+  });
+
+  it('alias /api/pelanggan & /api/pos/pelanggan memakai angka yang sama persis', async () => {
+    const agent = await loginAgent('admin', ADMIN_PASSWORD);
+    const [pelanggan, pelangganHutang, posPelanggan, posHutang] = await Promise.all([
+      agent.get('/api/pelanggan'),
+      agent.get(`/api/pelanggan/${CUSTOMER_1}/hutang`),
+      agent.get('/api/pos/pelanggan'),
+      agent.get(`/api/pos/pelanggan/${CUSTOMER_1}/hutang`),
+    ]);
+    assert.equal(pelanggan.status, 200);
+    assert.equal(pelangganHutang.status, 200);
+    assert.equal(posPelanggan.status, 200);
+    assert.equal(posHutang.status, 200);
+    assert.equal(pelangganHutang.body.data.sisa_hutang, 110000);
+    assert.equal(posHutang.body.data.sisa_hutang, 110000);
+    assert.equal(pelangganHutang.body.data.is_lunas, false);
+    const fromList = pelanggan.body.data.items.find((c) => c.id === CUSTOMER_1).sisa_hutang;
+    assert.equal(fromList, posHutang.body.data.sisa_hutang);
+  });
 });

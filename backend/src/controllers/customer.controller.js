@@ -116,6 +116,28 @@ export const getCustomer = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * Sisa hutang SATU pelanggan — memakai fungsi single source of truth
+ * (getSisaHutang) yang sama dengan daftar/detail pelanggan, agar angka
+ * tidak pernah berbeda antar endpoint.
+ */
+export const getCustomerDebt = asyncHandler(async (req, res) => {
+  const { data, error } = await supabase.from('customers').select('id, name').eq('id', req.params.id).maybeSingle();
+  if (error) throw error;
+  if (!data) throw notFound('Pelanggan tidak ditemukan');
+  const map = await getSisaHutangMap([req.params.id]);
+  const debt = map[req.params.id] || { sisa: 0, total: 0 };
+  const sisa = Math.round(debt.sisa * 100) / 100;
+  return ok(res, {
+    customer_id: data.id,
+    name: data.name,
+    sisa_hutang: sisa,
+    pending_debt: sisa,
+    total_debt: Math.round((debt.total || 0) * 100) / 100,
+    is_lunas: sisa <= 0,
+  });
+});
+
 export const createCustomer = asyncHandler(async (req, res) => {
   const { data: customer, error } = await supabase
     .from('customers')

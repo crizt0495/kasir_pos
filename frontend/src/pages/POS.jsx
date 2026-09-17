@@ -17,7 +17,7 @@ import { Button } from '../components/ui/Button.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Input, Select, Field, Textarea } from '../components/ui/Form.jsx';
 import CurrencyInput from '../components/ui/CurrencyInput.jsx';
-import { Skeleton, EmptyState, ErrorState, Badge } from '../components/ui/Feedback.jsx';
+import { Skeleton, EmptyState, ErrorState, Badge, DebtStatusBadge } from '../components/ui/Feedback.jsx';
 import BarcodeScanner from '../components/ui/BarcodeScanner.jsx';
 import ReceiptModal from '../components/pos/ReceiptModal.jsx';
 import ProductImage from '../components/ProductImage.jsx';
@@ -100,6 +100,16 @@ export default function POS() {
   useEffect(() => {
     refreshCached();
   }, [refreshCached]);
+
+  // Saat membuka POS dalam keadaan online: tarik ulang data pelanggan dari API
+  // ke IndexedDB (clear + bulkPut) supaya sisa hutang di popup POS tidak pernah
+  // basi (penyebab angka POS beda dengan Menu Pelanggan).
+  useEffect(() => {
+    if (!online) return;
+    refreshPelangganCache()
+      .then(() => refreshCached())
+      .catch(() => {});
+  }, [online, refreshCached]);
 
   const products = useApi(
     () => {
@@ -765,9 +775,9 @@ export default function POS() {
                 <span className="block font-semibold text-slate-800 truncate">
                   {cart.customer ? cart.customer.name : 'Pelanggan umum'}
                 </span>
-                {cart.customer && !cart.customer.is_general && debtStats && Number(debtStats.pending_debt || 0) > 0 && (
-                  <span className="block text-xs font-medium text-amber-600 mt-0.5">
-                    Hutang: {formatRupiah(debtStats.pending_debt)}
+                {cart.customer && !cart.customer.is_general && debtStats && (
+                  <span className="mt-1 block">
+                    <DebtStatusBadge sisa={debtStats.pending_debt} size="sm" />
                   </span>
                 )}
               </span>
@@ -1509,17 +1519,7 @@ function CustomerModal({ open, onClose, query, setQuery, results, generalCustome
                     <p className="text-sm text-slate-500 truncate">{c.phone || '-'}</p>
                     {(() => {
                       const sisa = getSisaHutangOf(c);
-                      return sisa > 0 ? (
-                        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-danger-50 px-2 py-0.5 text-xs font-medium text-danger-600">
-                          <span className="h-1.5 w-1.5 rounded-full bg-danger-500" />
-                          Hutang: {formatRupiah(sisa)}
-                        </span>
-                      ) : (
-                        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          LUNAS - {formatRupiah(0)}
-                        </span>
-                      );
+                      return <DebtStatusBadge sisa={sisa} size="sm" className="mt-1" />;
                     })()}
                   </div>
                 </div>

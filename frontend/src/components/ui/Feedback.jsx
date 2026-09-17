@@ -1,7 +1,7 @@
-import { CheckCircle2, Info, Inbox, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { CheckCircle2, Info, Inbox, XCircle, AlertTriangle, Loader2, Wallet } from 'lucide-react';
 import { useUiStore } from '../../stores/uiStore.js';
 import { Button } from './Button.jsx';
-import { monoSizeClass } from '../../utils/format.js';
+import { monoSizeClass, formatRupiah } from '../../utils/format.js';
 
 export function Badge({ color = 'bg-white text-slate-900', children, className = '', variant, dot = false }) {
   const variantStyles = {
@@ -17,6 +17,28 @@ export function Badge({ color = 'bg-white text-slate-900', children, className =
     <span className={`inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-xs font-extrabold uppercase tracking-wider ${variant ? variantStyles[variant] : color} ${className}`}>
       {dot && <span className="h-1.5 w-1.5 rounded-full bg-current pulse-dot" aria-hidden="true" />}
       {children}
+    </span>
+  );
+}
+
+/**
+ * Badge status hutang pelanggan — SATU format di seluruh aplikasi.
+ * Dipakai di Menu Pelanggan, Popup POS, dan Detail Pelanggan agar angka
+ * "sisa hutang" selalu tampil sama (bukan total hutang vs sisa yang beda).
+ */
+export function DebtStatusBadge({ sisa = 0, className = '', size = 'md' }) {
+  const value = Number(sisa) || 0;
+  const lunas = value <= 0;
+  const sizeClass = size === 'sm' ? 'gap-1 px-2 py-0.5 text-[0.65rem]' : 'gap-1.5 px-2.5 py-1 text-xs';
+  const Icon = lunas ? CheckCircle2 : Wallet;
+  return (
+    <span
+      className={`inline-flex items-center rounded-md font-extrabold ${
+        lunas ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-700'
+      } ${sizeClass} ${className}`}
+    >
+      <Icon className={size === 'sm' ? 'h-3.5 w-3.5 shrink-0' : 'h-4 w-4 shrink-0'} aria-hidden="true" />
+      {lunas ? 'SUDAH LUNAS' : `MASIH ADA HUTANG ${formatRupiah(value)}`}
     </span>
   );
 }

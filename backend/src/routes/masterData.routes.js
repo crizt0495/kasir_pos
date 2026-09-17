@@ -35,6 +35,14 @@ router.post('/customers', requirePermission('customers.create'), validate(custom
 router.put('/customers/:id', requirePermission('customers.update'), validate(customerSchema), asyncHandler(customer.updateCustomer));
 router.delete('/customers/:id', requirePermission('customers.delete'), asyncHandler(customer.deleteCustomer));
 
+// Alias bahasa Indonesia + namespace POS — memakai handler & fungsi sisa hutang
+// yang SAMA (single source of truth) supaya angka tidak pernah berbeda.
+router.get('/pelanggan', requirePermission('customers.view'), asyncHandler(customer.listCustomers));
+router.get('/pelanggan/:id', requirePermission('customers.view'), asyncHandler(customer.getCustomer));
+router.get('/pelanggan/:id/hutang', requirePermission('customers.view'), asyncHandler(customer.getCustomerDebt));
+router.get('/pos/pelanggan', requirePermission('customers.view'), asyncHandler(customer.listCustomers));
+router.get('/pos/pelanggan/:id/hutang', requirePermission('customers.view'), asyncHandler(customer.getCustomerDebt));
+
 // Suppliers
 router.get('/suppliers', requirePermission('suppliers.view'), asyncHandler(customer.listSuppliers));
 router.get('/suppliers/:id', requirePermission('suppliers.view'), asyncHandler(customer.getSupplier));

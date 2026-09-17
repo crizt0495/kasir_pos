@@ -14,7 +14,7 @@ import { DataTable, SearchInput } from '../components/ui/DataTable.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
 import { Field, Input, Textarea } from '../components/ui/Form.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
-import { Badge } from '../components/ui/Feedback.jsx';
+import { DebtStatusBadge } from '../components/ui/Feedback.jsx';
 import { formatRupiah, formatNumber } from '../utils/format.js';
 import { getSisaHutangOf } from '../offline/pure.js';
 
@@ -113,24 +113,8 @@ export default function Customers() {
           { key: 'total_transactions', header: 'Transaksi', render: (r) => formatNumber(r.total_transactions) },
           { key: 'total_spend', header: 'Total Belanja', render: (r) => <span className="font-semibold">{formatRupiah(r.total_spend)}</span> },
           {
-            key: 'total_debt', header: 'Total Hutang',
-            render: (r) => {
-              const { total } = debtMode(r);
-              return total > 0
-                ? <span className="font-semibold font-mono text-slate-800">{formatRupiah(total)}</span>
-                : <span className="text-slate-300 font-mono">-</span>;
-            },
-          },
-          {
-            key: 'pending_debt', header: 'Piutang',
-            render: (r) => {
-              const { pending } = debtMode(r);
-              return pending > 0 ? (
-                <Badge variant="danger" dot>Hutang: {formatRupiah(pending)}</Badge>
-              ) : (
-                <Badge variant="success">LUNAS - {formatRupiah(0)}</Badge>
-              );
-            },
+            key: 'sisa_hutang', header: 'Sisa Hutang',
+            render: (r) => <DebtStatusBadge sisa={debtMode(r).pending} />,
           },
           { key: 'actions', header: 'Aksi', render: (r) => (
             <div className="flex gap-1">
@@ -161,7 +145,7 @@ export default function Customers() {
         onPageChange={setPage}
         onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
         renderCard={(r) => {
-          const { pending, hasDebt, total } = debtMode(r);
+          const { pending } = debtMode(r);
           return (
             <div className="space-y-2.5">
               <div className="flex items-start justify-between">
@@ -170,22 +154,12 @@ export default function Customers() {
                   {r.phone && <p className="text-xs text-slate-400">{r.phone}</p>}
                   {r.email && <p className="text-xs text-slate-400">{r.email}</p>}
                 </div>
-                {hasDebt ? (
-                  <Badge variant="danger" dot>Hutang: {formatRupiah(pending)}</Badge>
-                ) : (
-                  <Badge variant="success">LUNAS - {formatRupiah(0)}</Badge>
-                )}
+                <DebtStatusBadge sisa={pending} size="sm" />
               </div>
               <div className="flex items-center gap-4 text-xs text-slate-500">
                 <span>Transaksi: <b>{formatNumber(r.total_transactions)}</b></span>
                 <span>Total: <b className="text-slate-800">{formatRupiah(r.total_spend)}</b></span>
               </div>
-              {total > 0 && (
-                <div className="flex items-center gap-4 text-xs text-slate-500">
-                  <span>Total Hutang: <b className="font-mono text-slate-800">{formatRupiah(total)}</b></span>
-                  <span>Sisa: <b className="font-mono text-rose-600">{formatRupiah(pending)}</b></span>
-                </div>
-              )}
               <div className="flex justify-end gap-1">
                   <button onClick={(e) => { e.stopPropagation(); navigate(`/customers/${r.id}`); }} className="rounded-md bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-100 transition-colors">
                   Detail

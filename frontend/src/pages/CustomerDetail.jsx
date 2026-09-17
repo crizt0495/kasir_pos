@@ -4,7 +4,7 @@ import { ArrowLeft, Users, ReceiptText, Banknote, Wallet } from 'lucide-react';
 import { customersApi, salesApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { DataTable, Card } from '../components/ui/DataTable.jsx';
-import { StatCard, StatusBadge, Skeleton, ErrorState, EmptyState } from '../components/ui/Feedback.jsx';
+import { StatCard, StatusBadge, Skeleton, ErrorState, EmptyState, DebtStatusBadge } from '../components/ui/Feedback.jsx';
 import { formatRupiah, formatDateTime, paymentMethodLabel } from '../utils/format.js';
 
 export default function CustomerDetail() {
@@ -48,17 +48,21 @@ export default function CustomerDetail() {
             <StatCard label="Total Transaksi" value={c.total_transactions} icon={ReceiptText} color="border-2 border-black bg-primary-400 text-white shadow-[3px_3px_0_0_#0A0A0A]" />
             <StatCard label="Total Belanja" value={formatRupiah(c.total_spend)} icon={Banknote} color="border-2 border-black bg-emerald-400 text-white shadow-[3px_3px_0_0_#0A0A0A]" />
             <StatCard
-              label="Total Hutang"
-              value={formatRupiah(totalDebt)}
+              label="Sisa Hutang"
+              value={formatRupiah(pendingDebt)}
               icon={Wallet}
-              color={totalDebt > 0 ? 'border-2 border-black bg-danger-400 text-white shadow-[3px_3px_0_0_#0A0A0A]' : 'border-2 border-black bg-slate-400 text-white shadow-[3px_3px_0_0_#0A0A0A]'}
+              color={pendingDebt > 0 ? 'border-2 border-black bg-rose-500 text-white shadow-[3px_3px_0_0_#0A0A0A]' : 'border-2 border-black bg-emerald-500 text-white shadow-[3px_3px_0_0_#0A0A0A]'}
             />
             <StatCard
-              label="Piutang (Sisa)"
-              value={formatRupiah(pendingDebt)}
+              label="Total Pernah Ngutang"
+              value={formatRupiah(totalDebt)}
               icon={Users}
-              color={pendingDebt > 0 ? 'border-2 border-black bg-rose-500 text-white shadow-[3px_3px_0_0_#0A0A0A]' : 'border-2 border-black bg-slate-400 text-white shadow-[3px_3px_0_0_#0A0A0A]'}
+              color="border-2 border-black bg-slate-400 text-white shadow-[3px_3px_0_0_#0A0A0A]"
             />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <DebtStatusBadge sisa={pendingDebt} />
           </div>
 
           {hadDebt && (
@@ -68,8 +72,8 @@ export default function CustomerDetail() {
                 <Link to="/debts" className="text-xs font-medium text-rose-600 hover:underline">Kelola Hutang →</Link>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-4">
-                <SummaryBox label="Total Hutang" value={formatRupiah(totalDebt)} />
-                <SummaryBox label="Piutang Aktif" value={formatRupiah(pendingDebt)} intent={pendingDebt > 0 ? 'danger' : 'success'} />
+                <SummaryBox label="Sisa Hutang" value={formatRupiah(pendingDebt)} intent={pendingDebt > 0 ? 'danger' : 'success'} />
+                <SummaryBox label="Total Pernah Ngutang" value={formatRupiah(totalDebt)} />
                 <SummaryBox
                   label="Jatuh Tempo"
                   value={overdue > 0 || overdueCount > 0 ? `${overdueCount} catatan · ${formatRupiah(overdue)}` : '-'}
