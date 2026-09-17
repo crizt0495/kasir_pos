@@ -58,7 +58,7 @@ export default function ConnectionStatus({ compact = false }) {
       }`}
     >
       <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${online ? 'bg-green-500' : 'bg-red-500'}`} />
-      {online ? 'ONLINE' : pending > 0 ? `OFFLINE · ${pending} tertunda` : 'OFFLINE'}
+      {online ? 'ONLINE' : pending > 0 ? `OFFLINE - ${pending} Tertunda` : 'OFFLINE'}
     </span>
   );
 }

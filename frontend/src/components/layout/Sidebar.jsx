@@ -204,7 +204,7 @@ export function Sidebar({ open, onClose }) {
                           onClick={(e) => {
                             if (item.to !== '/pos' && !online) {
                               e.preventDefault();
-                              toast.error('Fitur ini membutuhkan internet — Anda sedang offline');
+                              toast.error(`Fitur ${item.label} butuh internet — Anda sedang offline`);
                               return;
                             }
                             onClose();
