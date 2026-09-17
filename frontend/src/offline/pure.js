@@ -65,6 +65,20 @@ export function filterCustomersLocal(customers, { search, limit = 10 } = {}) {
   return items.slice(0, limit);
 }
 
+/** Sisa hutang pelanggan: preferensi field live `sisa_hutang`, fallback `pending_debt`. */
+export function getSisaHutangOf(customer) {
+  const value = Number(customer?.sisa_hutang ?? customer?.pending_debt ?? 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
+/** Label umur cache pelanggan utk tampilan "Data: Offline (update X menit lalu)". */
+export function cacheAgeMinutes(syncedAtIso, now = Date.now()) {
+  if (!syncedAtIso) return null;
+  const synced = new Date(syncedAtIso).getTime();
+  if (Number.isNaN(synced)) return null;
+  return Math.max(1, Math.floor((now - synced) / 60000));
+}
+
 const pad2 = (n) => String(n).padStart(2, '0');
 
 /** Nomor struk sementara utk transaksi offline (diganti nomor asli saat sync). */

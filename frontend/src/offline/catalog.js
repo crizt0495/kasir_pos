@@ -3,13 +3,14 @@
 // saat internet tersedia, lalu menyediakan pembacaan offline.
 //
 import { productsApi, categoriesApi, customersApi } from '../api/index.js';
-import { putAll, getAll, setMeta, clearStore } from './db.js';
+import { putAll, getAll, setMeta, clearStore, getMeta } from './db.js';
 import { filterProductsLocal, findProductByCodeLocal, filterCustomersLocal } from './pure.js';
 
 const PAGE_SIZE = 250;
 const MAX_PRODUCT_PAGES = 20;
 const MAX_CUSTOMER_PAGES = 10;
 const KEY_SEEDED = 'catalog_seeded_at';
+const KEY_CUSTOMERS_SYNCED = 'customers_synced_at';
 
 async function fetchAllProducts() {
   const out = [];
@@ -67,10 +68,36 @@ export async function seedOfflineCatalog() {
       clearStore('customers').then(() => putAll('customers', customerRows)),
     ]);
     await setMeta(KEY_SEEDED, new Date().toISOString());
+    await setMeta(KEY_CUSTOMERS_SYNCED, new Date().toISOString());
     return { products: products.length, categories: categories.length, customers: customerRows.length };
   } catch (error) {
     return { error };
   }
+}
+
+/**
+ * Sinkronkan ulang tabel pelanggan di IndexedDB dari API.
+ * Dipesan dipanggil saat: buka POS dalam keadaan online, setelah transaksi
+ * hutang baru berhasil, dan setelah sinkronisasi offline berhasil — supaya
+ * sisa hutang di cache TIDAK PERNAH basi.
+ */
+export async function refreshPelangganCache() {
+  try {
+    const customerRows = await fetchAllCustomers();
+    const generalRes = await customersApi.list({ is_general: 'true', pageSize: 1 });
+    const generalCustomers = generalRes?.data?.items?.[0] || null;
+    const rows = generalCustomers ? [...customerRows, generalCustomers] : customerRows;
+    await clearStore('customers').then(() => putAll('customers', rows));
+    await setMeta(KEY_CUSTOMERS_SYNCED, new Date().toISOString());
+    return { customers: rows.length };
+  } catch (error) {
+    return { error };
+  }
+}
+
+/** Kapan terakhir cache pelanggan disinkronkan dari server (ISO) atau null. */
+export async function getPelangganSyncedAt() {
+  return getMeta(KEY_CUSTOMERS_SYNCED);
 }
 
 export function loadProductsOffline() {

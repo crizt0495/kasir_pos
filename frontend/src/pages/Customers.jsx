@@ -16,6 +16,7 @@ import { Field, Input, Textarea } from '../components/ui/Form.jsx';
 import { PageHeader } from '../components/ui/PageHeader.jsx';
 import { Badge } from '../components/ui/Feedback.jsx';
 import { formatRupiah, formatNumber } from '../utils/format.js';
+import { getSisaHutangOf } from '../offline/pure.js';
 
 const emptyForm = { name: '', phone: '', email: '', address: '', birth_date: '', notes: '' };
 
@@ -90,7 +91,7 @@ export default function Customers() {
   const d = list.data;
 
   const debtMode = (r) => {
-    const pending = Number(r.pending_debt || 0);
+    const pending = getSisaHutangOf(r);
     const total = Number(r.total_debt || 0);
     return { pending, total, hasDebt: pending > 0 };
   };
@@ -123,11 +124,11 @@ export default function Customers() {
           {
             key: 'pending_debt', header: 'Piutang',
             render: (r) => {
-              const { pending, hasDebt } = debtMode(r);
-              return hasDebt ? (
-                <Badge variant="danger" dot>{formatRupiah(pending)}</Badge>
+              const { pending } = debtMode(r);
+              return pending > 0 ? (
+                <Badge variant="danger" dot>Hutang: {formatRupiah(pending)}</Badge>
               ) : (
-                <Badge variant="success">Lunas</Badge>
+                <Badge variant="success">LUNAS - {formatRupiah(0)}</Badge>
               );
             },
           },
@@ -170,9 +171,9 @@ export default function Customers() {
                   {r.email && <p className="text-xs text-slate-400">{r.email}</p>}
                 </div>
                 {hasDebt ? (
-                  <Badge variant="danger" dot>Piutang {formatRupiah(pending)}</Badge>
+                  <Badge variant="danger" dot>Hutang: {formatRupiah(pending)}</Badge>
                 ) : (
-                  <Badge variant="success">Lunas</Badge>
+                  <Badge variant="success">LUNAS - {formatRupiah(0)}</Badge>
                 )}
               </div>
               <div className="flex items-center gap-4 text-xs text-slate-500">

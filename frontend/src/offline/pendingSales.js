@@ -4,6 +4,7 @@
 //
 import { getAll, putOne, deleteOne, countAll, clearStore } from './db.js';
 import { syncApi } from '../api/index.js';
+import { refreshPelangganCache } from './catalog.js';
 
 /** Id unik untuk transaksi offline (UUID bila tersedia). */
 export function generateOfflineId() {
@@ -76,6 +77,12 @@ export async function syncPendingSales() {
       failed += 1;
       break;
     }
+  }
+
+  // Sinkronkan ulang cache pelanggan supaya sisa hutang tidak basi
+  // (transaksi hutang offline bisa mengubah hutang pelanggan di server).
+  if (synced > 0) {
+    await refreshPelangganCache().catch(() => {});
   }
 
   return { total: pending.length, synced, failed, networkError };

@@ -6,6 +6,8 @@ import {
   filterCustomersLocal,
   buildOfflineInvoiceNumber,
   buildPendingSale,
+  getSisaHutangOf,
+  cacheAgeMinutes,
 } from './pure.js';
 
 describe('isNetworkError', () => {
@@ -168,5 +170,35 @@ describe('buildPendingSale', () => {
 
   it('invoice number offline (bukan nomor server)', () => {
     expect(record.sale.invoice_number).toMatch(/^INV-OFF-\d{8}-\d{6}$/);
+  });
+});
+
+describe('getSisaHutangOf', () => {
+  it('prioritaskan sisa_hutang live dari server', () => {
+    expect(getSisaHutangOf({ sisa_hutang: 550000, pending_debt: 500000 })).toBe(550000);
+  });
+
+  it('fallback ke pending_debt bila sisa_hutang tidak ada', () => {
+    expect(getSisaHutangOf({ pending_debt: 203500 })).toBe(203500);
+  });
+
+  it('0 untuk pelanggan tanpa hutang / data kosong', () => {
+    expect(getSisaHutangOf({ pending_debt: 0 })).toBe(0);
+    expect(getSisaHutangOf({})).toBe(0);
+    expect(getSisaHutangOf(null)).toBe(0);
+  });
+});
+
+describe('cacheAgeMinutes', () => {
+  it('menghitung umur cache dalam menit', () => {
+    const now = Date.parse('2026-09-17T10:00:00Z');
+    expect(cacheAgeMinutes('2026-09-17T09:55:00Z', now)).toBe(5);
+    expect(cacheAgeMinutes('2026-09-17T09:59:30Z', now)).toBe(1);
+  });
+
+  it('minimal 1 menit & null untuk data tidak valid', () => {
+    expect(cacheAgeMinutes('2026-09-17T10:00:00Z', Date.parse('2026-09-17T10:00:00Z'))).toBe(1);
+    expect(cacheAgeMinutes(null)).toBe(null);
+    expect(cacheAgeMinutes('not-a-date')).toBe(null);
   });
 });

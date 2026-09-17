@@ -30,6 +30,8 @@ import {
   loadCustomersOffline,
   loadGeneralCustomerOffline,
   searchProductsOffline,
+  refreshPelangganCache,
+  getPelangganSyncedAt,
 } from '../offline/catalog.js';
 import {
   savePendingSale,
@@ -43,6 +45,8 @@ import {
   filterProductsLocal,
   filterCustomersLocal,
   findProductByCodeLocal,
+  getSisaHutangOf,
+  cacheAgeMinutes,
 } from '../offline/pure.js';
 
 const PAYMENT_METHODS = ['CASH', 'QRIS', 'DEBIT', 'CREDIT', 'TRANSFER', 'E_WALLET'];
@@ -83,12 +87,14 @@ export default function POS() {
   const [cachedCategories, setCachedCategories] = useState([]);
   const [cachedCustomers, setCachedCustomers] = useState([]);
   const [cachedGeneral, setCachedGeneral] = useState(null);
+  const [pelangganSyncedAt, setPelangganSyncedAt] = useState(null);
 
   const refreshCached = useCallback(() => {
     loadProductsOffline().then(setCachedProducts).catch(() => {});
     loadCategoriesOffline().then(setCachedCategories).catch(() => {});
     loadCustomersOffline().then(setCachedCustomers).catch(() => {});
     loadGeneralCustomerOffline().then(setCachedGeneral).catch(() => {});
+    getPelangganSyncedAt().then(setPelangganSyncedAt).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -440,7 +446,8 @@ export default function POS() {
     try {
       const res = await salesApi.create(fullPayload);
       // Hutang dicatat atomik di dalam fn_create_sale (server) dari record_debt
-      if (payload.record_debt && cart.customer?.id) {
+      const saleCustomerId = cart.customer?.id;
+      if (payload.record_debt && saleCustomerId) {
         toast.success(`Hutang ${formatRupiah(payload.record_debt.amount)} berhasil dicatat`);
       }
       setLastSale(res.data.sale);
@@ -450,6 +457,12 @@ export default function POS() {
       // Refresh data hutang & daftar pelanggan agar info hutang selalu terbaru
       loadDebtStats();
       customerResults.reload();
+      // Transaksi hutang baru sukses → sinkronkan ulang cache pelanggan lokal
+      // agar sisa hutang di IndexedDB tidak basi
+      if (payload.record_debt && saleCustomerId) {
+        await refreshPelangganCache();
+        await refreshCached();
+      }
       printStrukAfterSale(res.data.sale);
     } catch (error) {
       // Jaringan putus di tengah proses → alihkan ke penyimpanan offline
@@ -1003,6 +1016,8 @@ export default function POS() {
         setQuery={setCustomerQuery}
         results={displayCustomerResults}
         generalCustomer={online ? generalCustomer.data : cachedGeneral}
+        online={online}
+        pelangganSyncedAt={pelangganSyncedAt}
         onSelect={(c) => { cart.setCustomer(c); setShowCustomer(false); }}
       />
 
@@ -1408,7 +1423,20 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
 /* ============================================================
    CUSTOMER SELECTION MODAL
 ============================================================ */
-function CustomerModal({ open, onClose, query, setQuery, results, generalCustomer, onSelect }) {
+function CustomerModal({ open, onClose, query, setQuery, results, generalCustomer, onSelect, online, pelangganSyncedAt }) {
+  // Label sumber data: online = live dari server, offline = cache lokal + umur terakhir sinkron
+  const dataLabel = online ? (
+    <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium">
+      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Data: Online
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 font-medium">
+      <span className="h-1.5 w-1.5 rounded-full bg-slate-300" /> Data: Offline{' '}
+      {pelangganSyncedAt
+        ? `(update ${cacheAgeMinutes(pelangganSyncedAt)} menit lalu)`
+        : '(belum tersinkron)'}
+    </span>
+  );
   return (
     <Modal open={open} onClose={onClose} title="Pilih Pelanggan" size="md">
       <div className="space-y-4">
@@ -1422,6 +1450,11 @@ function CustomerModal({ open, onClose, query, setQuery, results, generalCustome
             className="pl-10"
             autoFocus
           />
+        </div>
+
+        {/* Data Source Indicator */}
+        <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">
+          {dataLabel}
         </div>
 
         {/* Customer List */}
@@ -1474,11 +1507,20 @@ function CustomerModal({ open, onClose, query, setQuery, results, generalCustome
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-slate-800 truncate">{c.name}</p>
                     <p className="text-sm text-slate-500 truncate">{c.phone || '-'}</p>
-                    {(c.pending_debt || c.total_debt) && (
-                      <p className="text-xs text-amber-600 font-medium mt-0.5">
-                        Hutang: {formatRupiah(c.pending_debt || c.total_debt)}
-                      </p>
-                    )}
+                    {(() => {
+                      const sisa = getSisaHutangOf(c);
+                      return sisa > 0 ? (
+                        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-danger-50 px-2 py-0.5 text-xs font-medium text-danger-600">
+                          <span className="h-1.5 w-1.5 rounded-full bg-danger-500" />
+                          Hutang: {formatRupiah(sisa)}
+                        </span>
+                      ) : (
+                        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          LUNAS - {formatRupiah(0)}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div className="text-xs text-slate-400">Pilih</div>

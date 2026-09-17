@@ -5,15 +5,16 @@ import { ok, created } from '../utils/response.js';
 import { notFound, AppError } from '../utils/errors.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { safeSearch } from '../utils/sanitize.js';
+import { getSisaHutangMap } from '../services/customerDebtService.js';
 
 // ============================================================
 // CUSTOMERS
 // ============================================================
 
 const CUSTOMER_SELECT = '*, sales: sales(status, total, returns: returns(total_refund))';
-// Daftar: kolom minimal — agregat transaksi dihitung via fn_customers_stats
-// (jangan embed seluruh riwayat sales per pelanggan di daftar)
-const CUSTOMER_LIST_SELECT = 'id, name, phone, email, is_general, created_at, pending_debt, total_debt';
+// Daftar: kolom minimal — agregat transaksi dihitung via fn_customers_stats,
+// sisa hutang dihitung LIVE via getSisaHutangMap (jangan pakai field statis)
+const CUSTOMER_LIST_SELECT = 'id, name, phone, email, is_general, created_at';
 
 export const listCustomers = asyncHandler(async (req, res) => {
   const { page, pageSize } = getPagination(req.query);
@@ -36,6 +37,7 @@ export const listCustomers = asyncHandler(async (req, res) => {
 
   const ids = result.items.map((c) => c.id);
   let statsMap = {};
+  let debtMap = {};
   if (ids.length) {
     try {
       const { data: stats } = await supabase.rpc('fn_customers_stats', { p_ids: ids });
@@ -45,13 +47,25 @@ export const listCustomers = asyncHandler(async (req, res) => {
     } catch (err) {
       // ignore jika RPC belum ada (migration belum di-apply)
     }
+    try {
+      // Sisa hutang LIVE dari customer_debts (single source of truth)
+      debtMap = await getSisaHutangMap(ids);
+    } catch (err) {
+      // ignore — nilai fallback 0
+    }
   }
 
-  const items = result.items.map((c) => ({
-    ...c,
-    total_transactions: statsMap[c.id]?.total_transactions ?? 0,
-    total_spend: statsMap[c.id]?.total_spend ?? 0,
-  }));
+  const items = result.items.map((c) => {
+    const debt = debtMap[c.id] || { sisa: 0, total: 0 };
+    return {
+      ...c,
+      sisa_hutang: Math.round(debt.sisa * 100) / 100,
+      pending_debt: Math.round(debt.sisa * 100) / 100,
+      total_debt: Math.round(debt.total * 100) / 100,
+      total_transactions: statsMap[c.id]?.total_transactions ?? 0,
+      total_spend: statsMap[c.id]?.total_spend ?? 0,
+    };
+  });
 
   return ok(res, { ...result, items });
 });
@@ -72,16 +86,30 @@ export const getCustomer = asyncHandler(async (req, res) => {
   );
 
   let debtStats = null;
+  let sisaHutang = 0;
+  let totalDebt = 0;
   try {
     const { data: stats } = await supabase.rpc('fn_get_customer_debt_stats', { p_customer_id: req.params.id });
     debtStats = stats;
   } catch (err) {
     // ignore kalau kolom/RPC belum ada di DB (misal migration belum di-apply)
   }
+  try {
+    // Sisa hutang LIVE dari customer_debts (single source of truth)
+    const map = await getSisaHutangMap([req.params.id]);
+    const debt = map[req.params.id] || { sisa: 0, total: 0 };
+    sisaHutang = debt.sisa;
+    totalDebt = debt.total;
+  } catch (err) {
+    // ignore — fallback ke debtStats bila ada
+  }
 
   return ok(res, {
     ...data,
     sales: undefined,
+    sisa_hutang: Math.round(sisaHutang * 100) / 100,
+    pending_debt: Math.round(sisaHutang * 100) / 100,
+    total_debt: Math.round(totalDebt * 100) / 100,
     total_transactions: validSales.length,
     total_spend: totalSpend,
     debt_stats: debtStats,
