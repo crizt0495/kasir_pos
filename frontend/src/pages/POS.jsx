@@ -1075,6 +1075,8 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
     return d.toISOString().split('T')[0];
   });
   const [debtNotes, setDebtNotes] = useState('');
+  const [pendingDebt, setPendingDebt] = useState(null);
+  const [confirmDebtOpen, setConfirmDebtOpen] = useState(false);
 
   const paidNum = Number(paid) || 0;
   const change = computeChange(paidNum, totals.total);
@@ -1132,13 +1134,20 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
         tax: taxAmount,
         additional_cost: additionalCost || 0,
       };
-      // Otomatis catat hutang jika bayar kurang & pelanggan terdaftar
-      if (canRecordDebt && paidNum < totals.total) {
+      // Bayar kurang & pelanggan terdaftar → POTENSI hutang.
+      // Punya pelanggan yang belum lunas juga dapat memilih hutang penuh.
+      if (isCash && validDebtCustomer && paidNum < totals.total) {
         payload.record_debt = {
           amount: debtAmount,
           due_date: debtDueDate,
           notes: debtNotes || null,
         };
+      }
+      // 2-step anti salah pencet: konfirmasi WAJIB sebelum piutang bertambah.
+      if (payload.record_debt) {
+        setPendingDebt(payload);
+        setConfirmDebtOpen(true);
+        return;
       }
       await onConfirm(payload);
     } catch (e) {
@@ -1148,7 +1157,41 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
     }
   };
 
+  // "Ya, Simpan Hutang" — konfirmasi => catat hutang benar-benar.
+  const confirmSaveDebt = async () => {
+    if (!pendingDebt) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onConfirm(pendingDebt);
+      setConfirmDebtOpen(false);
+      setPendingDebt(null);
+    } catch (e) {
+      setError(getErrorMessage(e, 'Transaksi gagal'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // "Batal, Bayar Lunas" — transaksi jadi LUNAS CASH, sisa hutang TIDAK bertambah.
+  const cancelDebtAsLunas = async () => {
+    if (!pendingDebt) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const { record_debt: _drop, ...rest } = pendingDebt;
+      await onConfirm({ ...rest, cash_received: totals.total || null, payment_method: 'CASH' });
+      setConfirmDebtOpen(false);
+      setPendingDebt(null);
+    } catch (e) {
+      setError(getErrorMessage(e, 'Transaksi gagal'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
+    <>
     <Modal
       open={open}
       onClose={onClose}
@@ -1426,7 +1469,64 @@ function CheckoutModal({ open, onClose, totals, taxEnabled, taxRate, taxAmount, 
           </div>
         )}
       </div>
-    </Modal>
+      </Modal>
+
+      {/* ==== Poin 4: Konfirmasi 2-step — Simpan sebagai hutang? ==== */}
+      <Modal
+        open={confirmDebtOpen}
+        onClose={() => {
+          setConfirmDebtOpen(false);
+          setPendingDebt(null);
+        }}
+        title="Simpan sebagai hutang?"
+        size="sm"
+        closeOnOverlayClick={false}
+        footer={
+          <div className="flex w-full gap-2">
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onClick={cancelDebtAsLunas}
+              loading={submitting}
+              disabled={submitting}
+            >
+              Batal, Bayar Lunas
+            </Button>
+            <Button
+              className="flex-1 bg-gradient-to-b from-orange-500 to-orange-600"
+              onClick={confirmSaveDebt}
+              loading={submitting}
+              disabled={submitting}
+            >
+              Ya, Simpan Hutang
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">
+            Simpan <b>{formatRupiah(pendingDebt?.record_debt?.amount || debtAmount)}</b> sebagai hutang a/n{' '}
+            <b>{customer?.name || '-'}</b>?
+          </p>
+          {customer?.id && !customer?.is_general && (
+            <p className="text-sm text-slate-600">
+              Total hutang <b>{customer?.name}</b> nanti jadi{' '}
+              <b>
+                {formatRupiah(
+                  Math.round(
+                    ((Number(debtStats?.pending_debt) || 0) + Number(pendingDebt?.record_debt?.amount || debtAmount)) * 100
+                  ) / 100
+                )}
+              </b>
+              .
+            </p>
+          )}
+          <p className="text-xs text-slate-400">
+            Jika salah pencet, pilih <b>Batal, Bayar Lunas</b> — transaksi tetap tercatat sebagai LUNAS CASH dan hutang pelanggan tidak bertambah.
+          </p>
+        </div>
+      </Modal>
+    </>
   );
 }
 
