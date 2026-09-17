@@ -91,24 +91,29 @@ export async function createSaleRecord(cashierUserId, body, { offlineId } = {}) 
     p_allow_partial: hasDebt,
   };
 
-  // Versi fungsional: 0036 (14-arg, idempoten offline) → 0030/0014 (13-arg)
-  // → 0013 (12-arg). Fallback otomatis bila migrasi belum di-apply.
-  let rpcArgs = { ...baseArgs, p_record_debt: body.record_debt ?? null };
-  if (offlineId) rpcArgs.p_offline_id = offlineId;
-
-  let { data: result, error } = await supabase.rpc('fn_create_sale', rpcArgs);
+  // Selalu kirim p_offline_id (null saat online) supaya panggilan tak ambigu
+  // antara overload 13-arg (0030) & 14-arg (0036). Tanpa itu, saat kedua
+  // migrasi ter-apply, Postgres balas `42725 could not choose the best
+  // candidate function` untuk setiap penjualan ONLINE. DB tanpa 0036 tetap
+  // terlayani via fallback PGRST202 di bawah.
+  let { data: result, error } = await supabase.rpc('fn_create_sale', {
+    ...baseArgs,
+    p_record_debt: body.record_debt ?? null,
+    p_offline_id: offlineId ?? null,
+  });
 
   if (isFunctionNotFound(error)) {
-    if (offlineId) {
-      console.warn('[createSale] fn_create_sale 14-arg (0036) tidak ditemukan, retry ke 13-arg (tanpa p_offline_id)');
-      ({ data: result, error } = await supabase.rpc('fn_create_sale', { ...baseArgs, p_record_debt: body.record_debt ?? null }));
-    } else {
-      console.warn('[createSale] fn_create_sale 13-arg (0030/0014) tidak ditemukan, retry ke 12-arg (0013)');
-    }
+    // 14-arg (0036) belum ter-apply → coba 13-arg (0030)
+    console.warn('[createSale] fn_create_sale 14-arg (0036) tidak ditemukan, retry ke 13-arg');
+    ({ data: result, error } = await supabase.rpc('fn_create_sale', {
+      ...baseArgs,
+      p_record_debt: body.record_debt ?? null,
+    }));
   }
 
   // Fallback: jika migration 0013 belum di-apply, tanpa p_allow_partial
   if (isFunctionNotFound(error)) {
+    console.warn('[createSale] fn_create_sale 13-arg (0030) tidak ditemukan, retry ke 12-arg (0013)');
     ({ data: result, error } = await supabase.rpc('fn_create_sale', baseArgs));
   }
 
