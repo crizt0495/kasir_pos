@@ -104,18 +104,30 @@ describe('bootstrap — tidak logout saat offline', () => {
     expect(useAuthStore.getState().user).toBe(userObj);
   });
 
-  it('online + 401 asli → sesi dibersihkan', async () => {
+  it('online + 401 asli → sesi tetap dipertahankan (logout ditangani interceptor)', async () => {
     givenLoggedIn();
     vi.mocked(authApi.me).mockRejectedValueOnce({ response: { status: 401 } });
     await useAuthStore.getState().bootstrap();
-    expect(useAuthStore.getState().user).toBeNull();
+    expect(useAuthStore.getState().user).toBe(userObj);
   });
 
-  it('online + 200 data:null (cookie hilang) → sesi dibersihkan', async () => {
+  it('online + 200 data:null (cookie hilang) → sesi tetap dipertahankan', async () => {
     givenLoggedIn();
     vi.mocked(authApi.me).mockResolvedValueOnce({ data: null });
     await useAuthStore.getState().bootstrap();
-    expect(useAuthStore.getState().user).toBeNull();
+    expect(useAuthStore.getState().user).toBe(userObj);
+  });
+
+  it('store kosong + /auth/me gagal → pulihkan user dari localStorage', async () => {
+    useAuthStore.setState({ user: null, loading: true });
+    memoryStorage.setItem(
+      'pos-auth',
+      JSON.stringify({ state: { user: userObj }, version: 0 })
+    );
+    vi.mocked(authApi.me).mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    await useAuthStore.getState().bootstrap();
+    expect(useAuthStore.getState().user).toEqual(userObj);
+    memoryStorage.removeItem('pos-auth');
   });
 
   it('offline + 200 data:null → sesi dipertahankan', async () => {

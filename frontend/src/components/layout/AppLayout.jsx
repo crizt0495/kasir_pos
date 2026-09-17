@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar.jsx';
 import { MobileNav } from './MobileNav.jsx';
 import { Topbar } from './Topbar.jsx';
+import OfflineBanner from './OfflineBanner.jsx';
 import { useUiStore } from '../../stores/uiStore.js';
 import { useAuthStore } from '../../stores/authStore.js';
 import { resolvePageTitle } from '../../utils/routeMeta.js';
@@ -65,6 +66,7 @@ export default function AppLayout() {
       </a>
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
+        <OfflineBanner />
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
         <main id="main-content" className={`bg-slate-100 flex-1 overflow-y-auto p-4 pb-20 lg:p-6 lg:pb-6 ${isPOS ? 'p-0 pb-0 lg:p-0 lg:pb-0' : ''}`}>
           <div key={location.pathname} className="page-enter">

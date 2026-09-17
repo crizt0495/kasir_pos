@@ -5,7 +5,7 @@
    - Versi: v13 — bump untuk paksa invalidate cache chunk lama
    - Di server dev (localhost:5173) SW tetap terdaftar untuk Web Push,
      tapi TIDAK meng-cache apa pun agar HMR Vite tidak terganggu. */
-const CACHE = 'pos-shell-v13';
+const CACHE = 'pos-shell-v14';
 const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 const isDevServer =

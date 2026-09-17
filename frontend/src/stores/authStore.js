@@ -6,6 +6,22 @@ import { isOffline, startConnectivityMonitor } from '../utils/connectivity.js';
 
 const STORAGE_KEY = 'pos-auth';
 
+/**
+ * Baca user yang tersimpan di localStorage sebagai jaring pengaman saat
+ * rehidrasi Zustand belum sempat jalan (mis. aplikasi dibuka lagi offline).
+ */
+function loadPersistedUser() {
+  try {
+    const storage = typeof window !== 'undefined' ? window.localStorage : undefined;
+    if (!storage) return null;
+    const raw = storage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw)?.state?.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export const useAuthStore = create(
   persist(
     (set, get) => ({
@@ -33,27 +49,26 @@ export const useAuthStore = create(
         set({ user: null, loading: false, _skipRestore: true });
       },
 
-      /** Muat ulang sesi dari /auth/me saat aplikasi dibuka */
+      /**
+       * Muat ulang sesi dari /auth/me saat aplikasi dibuka.
+       *
+       * PENTING: bootstrap TIDAK PERNAH menghapus sesi. Baik saat request
+       * gagal (offline) maupun saat /auth/me balas 200 + data:null (cookie
+       * hilang/kedaluwarsa), user yang tersimpan tetap dipertahankan supaya
+       * POS tetap jalan — terutama saat refresh/buka ulang dalam kondisi
+       * offline. Logout sesungguhnya hanya terjadi lewat 401 dari endpoint
+       * terautentikasi (interceptor `auth:expired`) atau logout manual.
+       */
       bootstrap: async () => {
         try {
           const res = await authApi.me();
-          // /auth/me bisa balas 200 + data:null (cookie kedaluwarsa/hilang).
-          // Saat offline, jangan hapus sesi — pertahankan user terdahulu.
           if (res.data) {
             set({ user: res.data, loading: false });
-          } else if (isOffline()) {
-            set({ user: get().user, loading: false });
           } else {
-            set({ user: null, loading: false });
+            set({ user: get().user || loadPersistedUser(), loading: false });
           }
-        } catch (error) {
-          const isAuth =
-            error?.response?.status === 401 && !isOffline();
-          if (isAuth) {
-            set({ user: null, loading: false });
-          } else {
-            set({ user: get().user, loading: false });
-          }
+        } catch {
+          set({ user: get().user || loadPersistedUser(), loading: false });
         }
       },
 
@@ -92,7 +107,7 @@ export const useAuthStore = create(
 // ────────────────────────────────────────────────────────────────
 if (typeof window !== 'undefined') {
   startConnectivityMonitor();
-  let lastUser = useAuthStore.getState().user;
+  let lastUser = useAuthStore.getState().user || loadPersistedUser();
 
   useAuthStore.subscribe((state) => {
     if (state._skipRestore) {
