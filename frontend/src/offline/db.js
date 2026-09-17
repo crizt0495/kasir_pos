@@ -25,6 +25,12 @@ export function openOfflineDB() {
     return dbPromise;
   }
   dbPromise = new Promise((resolve) => {
+    const fail = () => {
+      // Jangan biarkan kegagalan tersimpan permanen — reset agar panggilan
+      // berikutnya mencoba lagi (mis. upgrade diblokir koneksi lama).
+      dbPromise = null;
+      resolve(null);
+    };
     try {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = () => {
@@ -36,9 +42,12 @@ export function openOfflineDB() {
         }
       };
       req.onsuccess = () => resolve(req.result);
-      req.onerror = () => resolve(null);
+      req.onerror = fail;
+      // Upgrade bisa tertunda/diblokir oleh koneksi lama (mis. tab lain masih
+      // membuka versi DB sebelumnya) — jangan biarkan promise menggantung.
+      req.onblocked = fail;
     } catch {
-      resolve(null);
+      fail();
     }
   });
   return dbPromise;

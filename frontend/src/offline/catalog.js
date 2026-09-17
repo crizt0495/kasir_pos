@@ -4,6 +4,7 @@
 //
 import { productsApi, categoriesApi, customersApi } from '../api/index.js';
 import { putAll, getAll, setMeta, clearStore, getMeta } from './db.js';
+import { loadApiCache } from './apiCache.js';
 import { filterProductsLocal, findProductByCodeLocal, filterCustomersLocal } from './pure.js';
 
 const PAGE_SIZE = 250;
@@ -62,14 +63,23 @@ export async function seedOfflineCatalog() {
     const categories = categoriesRes?.data?.items || [];
     const generalCustomers = generalRes?.data?.items?.[0] || null;
     const customerRows = generalCustomers ? [...customers, generalCustomers] : customers;
-    await Promise.all([
-      clearStore('products').then(() => putAll('products', products)),
-      clearStore('categories').then(() => putAll('categories', categories)),
-      clearStore('customers').then(() => putAll('customers', customerRows)),
-    ]);
+    // JANGAN timpa cache yang sudah ada dengan data kosong/parsial — itu yang
+    // bikin produk hilang saat offline. Jika hasilnya kosong, biarkan cache
+    // lama tetap tersaji (fallback api_cache juga siap).
+    const writes = [];
+    if (Array.isArray(products) && products.length) {
+      writes.push(clearStore('products').then(() => putAll('products', products)));
+    }
+    if (Array.isArray(categories) && categories.length) {
+      writes.push(clearStore('categories').then(() => putAll('categories', categories)));
+    }
+    if (Array.isArray(customerRows) && customerRows.length) {
+      writes.push(clearStore('customers').then(() => putAll('customers', customerRows)));
+    }
+    await Promise.all(writes);
     await setMeta(KEY_SEEDED, new Date().toISOString());
     await setMeta(KEY_CUSTOMERS_SYNCED, new Date().toISOString());
-    return { products: products.length, categories: categories.length, customers: customerRows.length };
+    return { products: products?.length || 0, categories: categories.length, customers: customerRows.length };
   } catch (error) {
     return { error };
   }
@@ -100,16 +110,38 @@ export async function getPelangganSyncedAt() {
   return getMeta(KEY_CUSTOMERS_SYNCED);
 }
 
-export function loadProductsOffline() {
-  return getAll('products').then((rows) => rows || []);
+/**
+ * Baca katalog offline. JIka store IndexedDB kosong (belum pernah seed,
+ * atau seed gagal/tidak sempat jalan), fallback ke snapshot api_cache —
+ * snapshot produk tersimpan dari kunjungan online sehingga POS tetap isi.
+ */
+async function fallbackFromSnapshot({ url, configCustom }) {
+  try {
+    const config = { baseURL: import.meta.env.VITE_API_BASE_URL || '/api', url, method: 'get', ...configCustom };
+    const row = await loadApiCache(config);
+    const items = row?.data?.data?.items || row?.data?.items || [];
+    return Array.isArray(items) ? items : [];
+  } catch {
+    return [];
+  }
 }
 
-export function loadCategoriesOffline() {
-  return getAll('categories').then((rows) => rows || []);
+export async function loadProductsOffline() {
+  const rows = (await getAll('products')) || [];
+  if (rows.length) return rows;
+  return fallbackFromSnapshot({ url: '/products' });
 }
 
-export function loadCustomersOffline() {
-  return getAll('customers').then((rows) => rows || []);
+export async function loadCategoriesOffline() {
+  const rows = (await getAll('categories')) || [];
+  if (rows.length) return rows;
+  return fallbackFromSnapshot({ url: '/categories', configCustom: { params: { status: 'active' } } });
+}
+
+export async function loadCustomersOffline() {
+  const rows = (await getAll('customers')) || [];
+  if (rows.length) return rows;
+  return fallbackFromSnapshot({ url: '/customers' });
 }
 
 export async function loadGeneralCustomerOffline() {

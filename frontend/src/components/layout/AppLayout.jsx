@@ -9,10 +9,32 @@ import { useAuthStore } from '../../stores/authStore.js';
 import { resolvePageTitle } from '../../utils/routeMeta.js';
 import GlobalSearch from '../GlobalSearch.jsx';
 
+// Seed katalog offline hanya sekali per muat halaman (aman dari StrictMode
+// double-effect + tidak ada spam panggilan API).
+let bootSeedStarted = false;
+
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const setGlobalSearchOpen = useUiStore((s) => s.setGlobalSearchOpen);
+
+  // Seed katalog offline otomatis saat boot dalam keadaan online (tidak perlu
+  // menunggu user membuka POS) — supaya menu POS punya produk saat offline.
+  useEffect(() => {
+    if (bootSeedStarted) return;
+    const user = useAuthStore.getState().user;
+    if (!user) return;
+    bootSeedStarted = true;
+    const timeout = setTimeout(() => {
+      import('../../utils/connectivity.js').then(({ isOnline }) => {
+        if (!isOnline()) return;
+        import('../../offline/catalog.js')
+          .then(({ seedOfflineCatalog }) => seedOfflineCatalog())
+          .catch(() => {});
+      });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     setSidebarOpen(false);
