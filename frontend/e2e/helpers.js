@@ -8,6 +8,17 @@ async function closeWhatsNewModal(page) {
   }
 }
 
+async function closeOnboarding(page) {
+  const dismiss = page.getByRole('button', { name: /Selesai, Mulai|Lewati|Mengerti/ }).first();
+  try {
+    await dismiss.waitFor({ state: 'visible', timeout: 2000 });
+    await dismiss.click();
+    await dismiss.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
+  } catch {
+    // Onboarding tidak muncul (sudah pernah dilihat) — abaikan.
+  }
+}
+
 export async function login(page, dismissChangelog = true) {
   await page.goto('/login');
   await page.getByPlaceholder('Masukkan username').fill('admin');
@@ -16,6 +27,7 @@ export async function login(page, dismissChangelog = true) {
   await page.waitForURL(/\/dashboard/);
   await page.getByRole('heading', { name: 'Dashboard' }).waitFor({ state: 'visible' });
   if (dismissChangelog) await closeWhatsNewModal(page);
+  await closeOnboarding(page);
 }
 
 export function trackErrors(page) {
