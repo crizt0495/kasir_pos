@@ -78,11 +78,26 @@ export default function Customers() {
   };
 
   const confirmDelete = async () => {
+    const back = toDelete;
     try {
-      await customersApi.remove(toDelete.id);
-      toast.success('Pelanggan berhasil dihapus');
+      await customersApi.remove(back.id);
       setToDelete(null);
       list.reload();
+      toast.success('Pelanggan berhasil dihapus', {
+        label: 'Urungkan',
+        onClick: async () => {
+          try {
+            await customersApi.create({
+              name: back.name, phone: back.phone || '', email: back.email || '',
+              address: back.address || '', birth_date: back.birth_date || '', notes: back.notes || '',
+            });
+            toast.success('Pelanggan berhasil dipulihkan');
+            list.reload();
+          } catch (e) {
+            toast.error('Gagal memulihkan pelanggan');
+          }
+        },
+      });
     } catch (error) {
       toast.error(getErrorMessage(error, 'Gagal menghapus pelanggan'));
     }

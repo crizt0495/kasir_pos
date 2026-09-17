@@ -8,13 +8,14 @@
 //   - customers      (keyPath id)       → daftar pelanggan utk pemilih pelanggan offline
 //   - pending_sales  (keyPath offline_id) → antrian transaksi yang disimpan offline
 //   - api_cache      (keyPath id)       → snapshot respons API GET utk baca halaman offline
+//   - keranjang_draft(key key)          → draft keranjang POS (auto-save tiap perubahan)
 //   - meta           (key key)          → nilai tambahan ({ key, value })
 //
 
 const DB_NAME = 'pos_offline_db';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
-const STORES = ['products', 'categories', 'customers', 'pending_sales', 'api_cache', 'meta'];
+const STORES = ['products', 'categories', 'customers', 'pending_sales', 'api_cache', 'keranjang_draft', 'meta'];
 
 let dbPromise = null;
 
@@ -37,7 +38,7 @@ export function openOfflineDB() {
         const db = req.result;
         for (const name of STORES) {
           if (!db.objectStoreNames.contains(name)) {
-            db.createObjectStore(name, { keyPath: name === 'meta' ? 'key' : (name === 'pending_sales' ? 'offline_id' : 'id') });
+            db.createObjectStore(name, { keyPath: name === 'meta' || name === 'keranjang_draft' ? 'key' : (name === 'pending_sales' ? 'offline_id' : 'id') });
           }
         }
       };

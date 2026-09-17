@@ -242,6 +242,26 @@ export default function POS() {
 
   useEffect(() => () => clearTimeout(syncTimerRef.current), []);
 
+  // Pulihkan draft keranjang dari IndexedDB saat halaman dimuat
+  // (misal user salah klik menu / refresh — keranjang tidak hilang).
+  useEffect(() => {
+    let cancelled = false;
+    if (cart.items.length > 0) return undefined;
+    import('../offline/cartDraft.js')
+      .then(({ loadCartDraft }) => loadCartDraft())
+      .then((draft) => {
+        if (cancelled || !draft) return;
+        if (useCartStore.getState().items.length > 0) return;
+        useCartStore.getState().restoreDraft(draft);
+        if (draft.items?.length > 0) toast.info('Keranjang dipulihkan dari draft');
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Muat statistik hutang pelanggan terdaftar (bukan Umum)
   const loadDebtStats = useCallback(async () => {
     if (cart.customer?.id && !cart.customer?.is_general) {
@@ -838,7 +858,19 @@ export default function POS() {
                         </div>
                       </div>
                       <button
-                        onClick={() => cart.remove(item.product.id)}
+                        onClick={() => {
+                          cart.remove(item.product.id);
+                          toast.info(`${item.product.name} dihapus dari keranjang`, {
+                            label: 'Urungkan',
+                            onClick: () => {
+                              if (cart.add(item.product, item.quantity)) {
+                                cart.setItemDiscount(item.product.id, item.discount || 0);
+                              } else {
+                                toast.error(`Stok ${item.product.name} tidak cukup`);
+                              }
+                            },
+                          });
+                        }}
                         className="flex-shrink-0 rounded-md p-1.5 text-slate-300 hover:bg-danger-50 hover:text-danger-600 transition-colors"
                         aria-label="Hapus item"
                       >
@@ -1042,7 +1074,15 @@ export default function POS() {
       <ConfirmDialog
         open={confirmClear}
         onClose={() => setConfirmClear(false)}
-        onConfirm={() => { cart.clear(); setConfirmClear(false); }}
+        onConfirm={() => {
+        const snapshot = { items: cart.items, discount: cart.discount, customer: cart.customer };
+        cart.clear();
+        setConfirmClear(false);
+        toast.info('Keranjang dikosongkan', {
+          label: 'Urungkan',
+          onClick: () => cart.restoreDraft(snapshot),
+        });
+      }}
         title="Kosongkan keranjang?"
         message="Semua item di keranjang akan dihapus."
         confirmText="Ya, kosongkan"
@@ -1637,6 +1677,7 @@ function CustomerModal({ open, onClose, query, setQuery, results, generalCustome
    HELD CARTS MODAL
 ============================================================ */
 function HeldCartsModal({ open, onClose, heldCarts, onResume, onRemove }) {
+  const cart = useCartStore();
   return (
     <Modal open={open} onClose={onClose} title="Transaksi Ditahan" size="md">
       {heldCarts.length === 0 ? (
@@ -1665,7 +1706,13 @@ function HeldCartsModal({ open, onClose, heldCarts, onResume, onRemove }) {
                   Lanjutkan
                 </Button>
                 <button
-                  onClick={() => onRemove(h.id)}
+                  onClick={() => {
+                    onRemove(h.id);
+                    toast.info('Transaksi ditahan dibatalkan', {
+                      label: 'Urungkan',
+                      onClick: () => cart.restoreHeld(h),
+                    });
+                  }}
                   className="rounded-md p-1.5 text-danger-500 hover:bg-danger-50 hover:text-danger-700 transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />

@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { writeAudit } from '../services/auditService.js';
-import { fetchSaleDetail, createSaleRecord } from '../services/saleService.js';
+import { fetchSaleDetail, createSaleRecord, editSaleRecord } from '../services/saleService.js';
 import { getPagination, buildPage, fetchPage, countSignature } from '../utils/pagination.js';
 import { ok, created } from '../utils/response.js';
 import { notFound, AppError, extractPgMessage } from '../utils/errors.js';
@@ -69,6 +69,12 @@ export const getSale = asyncHandler(async (req, res) => {
 export const createSale = asyncHandler(async (req, res) => {
   const result = await createSaleRecord(req.user.id, req.body);
   return created(res, result, 'Transaksi berhasil');
+});
+
+/** Koreksi transaksi (Poin 5): stok, hutang, dan nilai transaksi diperbaiki. */
+export const editSale = asyncHandler(async (req, res) => {
+  const result = await editSaleRecord(req.user.id, req.params.id, req.body);
+  return ok(res, result, 'Transaksi berhasil dikoreksi');
 });
 
 /**

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Printer, RotateCcw, ReceiptText, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, Printer, RotateCcw, ReceiptText, Plus, Minus, Pencil, Trash2 } from 'lucide-react';
 import { salesApi, settingsApi, cashierApi } from '../api/index.js';
 import { useApi } from '../hooks/useApi.js';
 import { usePermission } from '../hooks/usePermission.js';
@@ -9,11 +9,14 @@ import { getErrorMessage } from '../api/client.js';
 import { Button } from '../components/ui/Button.jsx';
 import { DataTable, Pagination, Card } from '../components/ui/DataTable.jsx';
 import { Modal, ConfirmDialog } from '../components/ui/Modal.jsx';
-import { Field, Input, Textarea } from '../components/ui/Form.jsx';
+import { Field, Input, Textarea, Select } from '../components/ui/Form.jsx';
 import { StatusBadge, Skeleton, ErrorState, EmptyState } from '../components/ui/Feedback.jsx';
 import { formatRupiah, formatDateTime, formatQty, paymentMethodLabel, paymentMethodColor } from '../utils/format.js';
 import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
 import { usePrinterConnect, DEFAULT_CONNECT_CONFIG } from '../context/PrinterConnectProvider.jsx';
+
+const EDIT_REASONS = ['Salah jumlah (qty)', 'Salah harga', 'Salah pelanggan', 'Salah metode bayar', 'Barang dikembalikan / ganti barang'];
+const EDIT_PAYMENT_METHODS = ['CASH', 'QRIS', 'DEBIT', 'CREDIT', 'TRANSFER', 'E_WALLET'];
 
 export default function SaleDetail() {
   const { id } = useParams();
@@ -28,8 +31,86 @@ export default function SaleDetail() {
   const [confirmRefund, setConfirmRefund] = useState(false);
   const [itemsPage, setItemsPage] = useState(1);
 
+  // ---- Koreksi transaksi (Poin 5) ----
+  const [showEdit, setShowEdit] = useState(false);
+  const [editItems, setEditItems] = useState([]);
+  const [editPayment, setEditPayment] = useState('CASH');
+  const [editCash, setEditCash] = useState('');
+  const [editReason, setEditReason] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [confirmEdit, setConfirmEdit] = useState(false);
+
   const detail = useApi(() => salesApi.get(id).then((r) => r.data), [id]);
   const s = detail.data;
+
+  const openEdit = () => {
+    if (!s) return;
+    setEditItems(
+      (s.items || []).map((i) => ({
+        product_id: i.product_id,
+        name: i.product?.name || '-',
+        quantity: Number(i.quantity),
+        price: Number(i.price),
+        discount: Number(i.discount || 0),
+      }))
+    );
+    setEditPayment(s.payment_method || 'CASH');
+    const cashReceived = s.payments?.[0]?.cash_received;
+    setEditCash(cashReceived == null ? '' : String(cashReceived));
+    setEditReason('');
+    setShowEdit(true);
+  };
+
+  const editSubtotal = (items) =>
+    items.reduce((sum, i) => sum + Math.max(Number(i.price || 0), 0) * Math.max(Number(i.quantity || 0), 0) - Number(i.discount || 0), 0);
+
+  const editTotal = useMemo(
+    () => (s ? editSubtotal(editItems) - Number(s.discount || 0) + Number(s.tax || 0) + Number(s.additional_cost || 0) : 0),
+    [editItems, s]
+  );
+
+  const editCashNum = editCash === '' ? null : Number(editCash) || null;
+  const editSisaHutang = editCashNum == null ? 0 : Math.max(editTotal - editCashNum, 0);
+
+  const editValidation = useMemo(() => {
+    const errors = { items: '', reason: '' };
+    if (!editItems.length) errors.items = 'Minimal satu item harus diisi';
+    else if (editItems.some((i) => Number(i.quantity) <= 0)) errors.items = 'Jumlah (qty) harus lebih dari 0';
+    else if (editItems.some((i) => Number(i.price) < 0)) errors.items = 'Harga tidak boleh negatif';
+    if (editReason.trim().length < 3) errors.reason = 'Pilih alasan koreksi';
+    return { isValid: !errors.items && !errors.reason, errors };
+  }, [editItems, editReason]);
+
+  const stepEditQty = (idx, delta) => {
+    setEditItems((prev) =>
+      prev.map((it, i) => (i === idx ? { ...it, quantity: Math.max(1, Number(it.quantity || 0) + delta) } : it))
+    );
+  };
+
+  const doEdit = async () => {
+    if (!editValidation.isValid) {
+      toast.error(editValidation.errors.items || editValidation.errors.reason);
+      return;
+    }
+    setEditSubmitting(true);
+    try {
+      await salesApi.edit(id, {
+        items: editItems.map((i) => ({ product_id: i.product_id, quantity: Number(i.quantity), price: Number(i.price), discount: Number(i.discount || 0) })),
+        reason: editReason,
+        customer_id: s.customer_id,
+        payment_method: editPayment,
+        cash_received: editPayment === 'CASH' ? editCashNum : null,
+      });
+      toast.success('Transaksi berhasil dikoreksi — stok & hutang diperbarui');
+      setShowEdit(false);
+      setConfirmEdit(false);
+      detail.reload();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Gagal mengoreksi transaksi'));
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
 
   const remaining = (item) => {
     const returned = (s?.returns || []).reduce(
@@ -178,6 +259,9 @@ export default function SaleDetail() {
         {s && (
           <div className="flex gap-2">
             <Button variant="secondary" icon={Printer} onClick={printReceipt}>Cetak Struk</Button>
+            {can('sales.refund') && s.status === 'completed' && (
+              <Button variant="outline" icon={Pencil} onClick={openEdit}>Koreksi</Button>
+            )}
             {can('sales.refund') && s.status !== 'cancelled' && (
               <Button variant="outline" icon={RotateCcw} onClick={openRefund}>Retur</Button>
             )}
@@ -307,6 +391,185 @@ export default function SaleDetail() {
         </>
       )}
 
+      {/* Modal koreksi transaksi */}
+      <Modal
+        open={showEdit}
+        onClose={() => setShowEdit(false)}
+        title="Koreksi Transaksi"
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowEdit(false)}>Batal</Button>
+            <Button onClick={() => setConfirmEdit(true)} disabled={!editValidation.isValid || editSubmitting}>
+              <Pencil className="h-4 w-4" />
+              {editSisaHutang > 0 ? `Simpan · Hutang ${formatRupiah(editSisaHutang)}` : 'Simpan Koreksi'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="rounded-lg border-2 border-black bg-amber-50 p-3 text-sm text-amber-800">
+            <p className="font-medium">Cara koreksi:</p>
+            <ol className="mt-1 list-decimal space-y-0.5 pl-5 text-xs">
+              <li>Ubah jumlah (qty) atau harga item yang salah.</li>
+              <li>Pilih alasan koreksi (wajib).</li>
+              <li>Stok & hutang pelanggan diperbarui otomatis sesuai perubahan.</li>
+            </ol>
+          </div>
+
+          {editValidation.errors.items && (
+            <p className="text-xs text-danger-600" role="alert">{editValidation.errors.items}</p>
+          )}
+
+          <div className="overflow-hidden rounded-lg border-2 border-black">
+            <div className="hidden border-b-2 border-black bg-slate-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:grid sm:grid-cols-[1fr_6rem_6.5rem_6rem_2.5rem] sm:gap-3">
+              <span>Produk</span>
+              <span className="text-center">Jumlah</span>
+              <span className="text-center">Harga</span>
+              <span className="text-right">Subtotal</span>
+              <span className="text-right" />
+            </div>
+            <ul className="divide-y divide-slate-100">
+              {editItems.map((item, idx) => {
+                const lineTotal = Math.max(Number(item.price || 0), 0) * Math.max(Number(item.quantity || 0), 0) - Number(item.discount || 0);
+                return (
+                  <li key={item.product_id} className="grid grid-cols-1 gap-2 px-4 py-3 sm:grid-cols-[1fr_6rem_6.5rem_6rem_2.5rem] sm:items-center sm:gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-800">{item.name}</p>
+                      {item.discount > 0 && <p className="text-xs text-emerald-600">diskon {formatRupiah(item.discount)}</p>}
+                    </div>
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => stepEditQty(idx, -1)}
+                        disabled={Number(item.quantity) <= 1}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-black bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        aria-label={`Kurangi jumlah ${item.name}`}
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={item.quantity}
+                        onChange={(e) => {
+                          const q = Number(e.target.value);
+                          setEditItems((prev) => prev.map((it, i) => (i === idx ? { ...it, quantity: Number.isFinite(q) && q > 0 ? q : 1 } : it)));
+                        }}
+                        className="w-16 text-center"
+                        aria-label={`Jumlah ${item.name}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => stepEditQty(idx, +1)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-black bg-white text-slate-600 transition-colors hover:bg-slate-50"
+                        aria-label={`Tambah jumlah ${item.name}`}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={item.price}
+                      onChange={(e) => {
+                        const p = Number(e.target.value);
+                        setEditItems((prev) => prev.map((it, i) => (i === idx ? { ...it, price: Number.isFinite(p) && p >= 0 ? p : 0 } : it)));
+                      }}
+                      className="w-full text-right font-mono"
+                      aria-label={`Harga ${item.name}`}
+                    />
+                    <div className="text-right font-mono text-sm font-semibold text-emerald-700">{formatRupiah(lineTotal)}</div>
+                    <div className="text-right">
+                      <button
+                        type="button"
+                        onClick={() => setEditItems((prev) => prev.filter((_, i) => i !== idx))}
+                        className="rounded-md p-1.5 text-slate-300 hover:bg-danger-50 hover:text-danger-600 transition-colors"
+                        aria-label={`Hapus ${item.name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label="Alasan Koreksi" required error={editValidation.errors.reason}>
+              <Select
+                value={editReason}
+                onChange={(e) => setEditReason(e.target.value)}
+                error={!!editValidation.errors.reason}
+              >
+                <option value="">-- Pilih alasan --</option>
+                {EDIT_REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
+              </Select>
+            </Field>
+            <Field label="Metode Pembayaran">
+              <Select value={editPayment} onChange={(e) => setEditPayment(e.target.value)}>
+                {EDIT_PAYMENT_METHODS.map((m) => <option key={m} value={m}>{paymentMethodLabel(m)}</option>)}
+              </Select>
+            </Field>
+          </div>
+
+          {editPayment === 'CASH' && (
+            <Field label="Uang Diterima (Rp)" hint={editSisaHutang > 0 ? `Sisa ${formatRupiah(editSisaHutang)} menjadi hutang pelanggan` : 'Transaksi lunas'}>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={0}
+                  value={editCash}
+                  onChange={(e) => setEditCash(e.target.value)}
+                  placeholder="0"
+                  className="font-mono"
+                />
+                {editCashNum != null && editCashNum < editTotal && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditCash(String(editTotal))}
+                    className="shrink-0 whitespace-nowrap"
+                  >
+                    Bayar Lunas
+                  </Button>
+                )}
+              </div>
+            </Field>
+          )}
+
+          <div className="overflow-hidden rounded-lg border-2 border-black">
+            <div className="space-y-1.5 px-4 py-3 text-sm">
+              <div className="flex justify-between text-slate-500"><span>Subtotal</span><span>{formatRupiah(editSubtotal(editItems))}</span></div>
+              <div className="flex justify-between text-slate-500"><span>Diskon</span><span>-{formatRupiah(s?.discount || 0)}</span></div>
+              <div className="flex justify-between text-slate-500"><span>Pajak</span><span>{formatRupiah(s?.tax || 0)}</span></div>
+              <div className="flex justify-between text-slate-500"><span>Biaya Lain</span><span>{formatRupiah(s?.additional_cost || 0)}</span></div>
+              <div className="flex items-center justify-between border-t-2 border-black pt-2">
+                <span className="text-sm font-semibold text-slate-700">Total Baru</span>
+                <span className="font-mono text-lg font-bold text-primary-700">{formatRupiah(editTotal)}</span>
+              </div>
+              {editSisaHutang > 0 && (
+                <div className="flex justify-between border-t-2 border-black pt-2 text-amber-700">
+                  <span className="font-semibold">Sisa Jadi Hutang</span>
+                  <span className="font-bold">{formatRupiah(editSisaHutang)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      <ConfirmDialog
+        open={confirmEdit}
+        onClose={() => setConfirmEdit(false)}
+        onConfirm={doEdit}
+        loading={editSubmitting}
+        title="Simpan koreksi transaksi?"
+        message={`Transaksi ${s?.invoice_number} akan diubah. Stok dan hutang pelanggan akan disesuaikan otomatis. Aksi ini tercatat di log audit.`}
+        confirmText="Ya, simpan koreksi"
+      />
       {/* Modal retur */}
       <Modal
         open={showRefund}

@@ -80,6 +80,7 @@ export const salesApi = {
   list: (params) => api.get('/sales', { params }).then((r) => r.data),
   get: (id) => api.get(`/sales/${id}`).then((r) => r.data),
   create: (payload) => api.post('/sales', payload).then((r) => r.data),
+  edit: (id, payload) => api.put(`/sales/${id}/edit`, payload).then((r) => r.data),
   refund: (id, payload) => api.post(`/sales/${id}/refund`, payload).then((r) => r.data),
 };
 

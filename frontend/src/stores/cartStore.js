@@ -92,6 +92,13 @@ export const useCartStore = create(
 
       removeHeld: (heldId) => set({ heldCarts: get().heldCarts.filter((h) => h.id !== heldId) }),
 
+      // Urungkan penghapusan transaksi ditahan (UNDO bar 10 detik).
+      restoreHeld: (held) => set({ heldCarts: [...get().heldCarts, held] }),
+
+      // Pulihkan draft keranjang (dari IndexedDB) ke store.
+      restoreDraft: ({ items = [], discount = 0, customer = null }) =>
+        set({ items, discount, customer }),
+
       totals: () => computeTotals(get().items, get().discount),
       itemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
     }),
@@ -100,3 +107,26 @@ export const useCartStore = create(
     }
   )
 );
+
+// ==== Auto-save draft keranjang ke IndexedDB (Poin 5) ====
+// Setiap perubahan keranjang (tambah/kurang/hapus item, diskon, pelanggan)
+// langsung ditulis ke IndexedDB agar saat salah klik menu / refresh browser,
+// keranjang tidak hilang. Draft dibersihkan saat keranjang kosong.
+if (typeof window !== 'undefined' && typeof indexedDB !== 'undefined') {
+  let saveTimer = null;
+  useCartStore.subscribe((state) => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      import('../offline/cartDraft.js')
+        .then(({ saveCartDraft, clearCartDraft }) => {
+          const { items, discount, customer } = useCartStore.getState();
+          if (Array.isArray(items) && items.length > 0) {
+            saveCartDraft({ items, discount, customer }).catch(() => {});
+          } else {
+            clearCartDraft().catch(() => {});
+          }
+        })
+        .catch(() => {});
+    }, 300);
+  });
+}
