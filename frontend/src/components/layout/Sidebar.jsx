@@ -7,6 +7,9 @@ import {
   ChevronLeft, ChevronRight, Coins, BanknoteArrowDown,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore.js';
+import { toast } from '../../stores/uiStore.js';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus.js';
+import ConnectionStatus from '../pos/ConnectionStatus.jsx';
 import { APP_VERSION } from '../../data/changelog.js';
 
 const MENU = [
@@ -84,6 +87,7 @@ export function Sidebar({ open, onClose }) {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const permissions = new Set(user?.permissions || []);
+  const online = useOnlineStatus();
 
   const has = (perm) => (Array.isArray(perm) ? perm.some((p) => permissions.has(p)) : permissions.has(perm));
 
@@ -140,12 +144,20 @@ export function Sidebar({ open, onClose }) {
 
         <div className={`flex shrink-0 items-center border-b-2 border-black py-4 ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
           <div className={`flex min-w-0 items-center gap-3 ${collapsed ? 'justify-center' : 'flex-1'}`}>
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 border-black bg-primary-500 text-white shadow-[3px_3px_0_0_#0A0A0A]">
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 border-black bg-primary-500 text-white shadow-[3px_3px_0_0_#0A0A0A]">
               <Store className="h-5 w-5" aria-hidden="true" />
+              {collapsed && (
+                <span className="absolute -bottom-1.5 -right-1.5">
+                  <ConnectionStatus compact />
+                </span>
+              )}
             </div>
             {showLabels && (
-              <div className="overflow-hidden">
-                <p className="truncate text-sm font-extrabold text-slate-900 tracking-tight font-display uppercase">POS Kasir</p>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="flex items-center gap-1.5">
+                  <p className="truncate text-sm font-extrabold text-slate-900 tracking-tight font-display uppercase">POS Kasir</p>
+                  <ConnectionStatus />
+                </div>
                 <p className="truncate text-[0.65rem] font-bold text-slate-400">Point of Sale</p>
               </div>
             )}
@@ -189,14 +201,22 @@ export function Sidebar({ open, onClose }) {
                       <li key={item.to}>
                         <Link
                           to={item.to}
-                          onClick={onClose}
+                          onClick={(e) => {
+                            if (item.to !== '/pos' && !online) {
+                              e.preventDefault();
+                              toast.error('Fitur ini membutuhkan internet — Anda sedang offline');
+                              return;
+                            }
+                            onClose();
+                          }}
+                          aria-disabled={item.to !== '/pos' && !online ? true : undefined}
                           className={`relative flex items-center gap-3 rounded-lg py-2.5 text-sm font-bold transition-all duration-100 ${
                             collapsed ? 'justify-center px-0' : 'px-3'
                           } ${
                             active
                               ? 'bg-primary-500 text-white border-2 border-black shadow-[3px_3px_0_0_#372C14]'
                               : 'border-2 border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900'
-                          }`}
+                          } ${item.to !== '/pos' && !online ? 'opacity-40' : ''}`}
                           aria-current={active ? 'page' : undefined}
                           title={showLabels ? undefined : item.label}
                         >

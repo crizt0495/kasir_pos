@@ -20,7 +20,6 @@ import CurrencyInput from '../components/ui/CurrencyInput.jsx';
 import { Skeleton, EmptyState, ErrorState, Badge } from '../components/ui/Feedback.jsx';
 import BarcodeScanner from '../components/ui/BarcodeScanner.jsx';
 import ReceiptModal from '../components/pos/ReceiptModal.jsx';
-import OfflineStatusBar from '../components/pos/OfflineStatusBar.jsx';
 import ProductImage from '../components/ProductImage.jsx';
 import { useBluetoothPrinter } from '../hooks/useBluetoothPrinter.js';
 import { usePrinterConnect } from '../context/PrinterConnectProvider.jsx';
@@ -80,7 +79,6 @@ export default function POS() {
   const wasOnlineRef = useRef(false);
   const syncingRef = useRef(false);
   const syncTimerRef = useRef(null);
-  const [pendingCount, setPendingCount] = useState(0);
   const [cachedProducts, setCachedProducts] = useState([]);
   const [cachedCategories, setCachedCategories] = useState([]);
   const [cachedCustomers, setCachedCustomers] = useState([]);
@@ -94,7 +92,6 @@ export default function POS() {
   }, []);
 
   useEffect(() => {
-    countPendingSales().then(setPendingCount).catch(() => {});
     refreshCached();
   }, [refreshCached]);
 
@@ -205,7 +202,7 @@ export default function POS() {
       if (hasPending) toast.info('Internet terhubung, menyinkronkan data...');
       const result = hasPending ? await syncPendingSales() : { synced: 0, failed: 0, networkError: false };
       if (result.synced > 0) toast.success(`${result.synced} transaksi offline berhasil disinkronkan`);
-      setPendingCount(await countPendingSales());
+      window.dispatchEvent(new CustomEvent('pos:pending-changed'));
       await seedAndRefresh();
       if (result.networkError || result.failed > 0) scheduleSyncRetry();
     } catch {
@@ -404,7 +401,7 @@ export default function POS() {
     const offlineId = generateOfflineId();
     const record = buildPendingSale({ cart, payload: fullPayload, totals, user, offlineId });
     await savePendingSale(record);
-    setPendingCount((c) => Number(c) + 1);
+    window.dispatchEvent(new CustomEvent('pos:pending-changed'));
     toast.success('Transaksi disimpan secara offline');
     setLastSale(record.sale);
     cart.clear();
@@ -469,9 +466,6 @@ export default function POS() {
 
   return (
     <div className="relative flex h-full flex-col gap-4 xl:h-[calc(100vh-6.5rem)] xl:flex-row">
-      {/* Status koneksi & transaksi tertunda (mode offline) */}
-      <OfflineStatusBar online={online} pendingCount={pendingCount} />
-
       {/* ================= PRODUCTS SECTION ================= */}
       <div className="flex min-w-0 flex-1 flex-col gap-4 rounded-xl border-2 border-black bg-white p-4 shadow-sm xl:p-5">
         <div className="space-y-3">

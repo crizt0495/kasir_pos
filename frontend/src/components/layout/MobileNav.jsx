@@ -7,6 +7,8 @@ import {
   ScrollText, HandCoins, BookUser, Coins, BanknoteArrowDown,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore.js';
+import { toast } from '../../stores/uiStore.js';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus.js';
 
 const MAIN_ITEMS = [
   { label: 'Beranda', to: '/dashboard', icon: LayoutDashboard, perm: 'dashboard.view' },
@@ -52,8 +54,16 @@ export function MobileNav() {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const permissions = new Set(user?.permissions || []);
+  const online = useOnlineStatus();
 
   const has = (perm) => (Array.isArray(perm) ? perm.some((p) => permissions.has(p)) : permissions.has(perm));
+
+  const handleNavClick = (e, to) => {
+    if (to !== '/pos' && !online) {
+      e.preventDefault();
+      toast.error('Fitur ini membutuhkan internet — Anda sedang offline');
+    }
+  };
 
   useEffect(() => {
     setMoreOpen(false);
@@ -82,9 +92,10 @@ export function MobileNav() {
               <Link
                 key={item.to}
                 to={item.to}
+                onClick={(e) => handleNavClick(e, item.to)}
                 className={`flex flex-1 flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-center transition-colors ${
                   active ? 'text-primary-600' : 'text-slate-400'
-                }`}
+                } ${item.to !== '/pos' && !online ? 'opacity-40' : ''}`}
                 aria-current={active ? 'page' : undefined}
               >
                 <div className={`relative flex h-7 w-7 items-center justify-center rounded-md transition-all ${
@@ -158,11 +169,12 @@ export function MobileNav() {
                           <Link
                             key={item.to}
                             to={item.to}
+                            onClick={(e) => handleNavClick(e, item.to)}
                             className={`flex items-center gap-3 rounded-lg border-2 px-3 py-2.5 text-sm font-bold transition-colors ${
                               active
                                 ? 'bg-primary-500 text-white border-black shadow-[3px_3px_0_0_#0A0A0A]'
                                 : 'border-transparent text-slate-600 hover:bg-slate-100 hover:border-black'
-                            }`}
+                            } ${item.to !== '/pos' && !online ? 'opacity-40' : ''}`}
                             aria-current={active ? 'page' : undefined}
                           >
                             <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
