@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Store, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Store, Eye, EyeOff, ShieldCheck, Info, LogIn } from 'lucide-react';
 import { loginSchema } from '../schemas/index.js';
 import { authApi } from '../api/index.js';
 import { useAuthStore } from '../stores/authStore.js';
@@ -11,6 +11,11 @@ import { toast } from '../stores/uiStore.js';
 import { getErrorMessage } from '../api/client.js';
 import { Button } from '../components/ui/Button.jsx';
 import { Field, Input, Checkbox } from '../components/ui/Form.jsx';
+
+const DEMO_ACCOUNTS = [
+  { role: 'Owner', username: 'admin', password: 'Admin2026!x', description: 'Akses penuh semua fitur' },
+  { role: 'Kasir', username: 'kasir', password: 'Kasir123!', description: 'POS, penjualan & pelanggan' },
+];
 
 export default function Login() {
   const navigate = useNavigate();
@@ -23,6 +28,7 @@ export default function Login() {
     register,
     handleSubmit,
     trigger,
+    setValue,
     formState: { errors, isSubmitting, isValid },
   } = useForm({
     resolver: zodResolver(loginSchema),
@@ -33,6 +39,13 @@ export default function Login() {
   useEffect(() => {
     trigger();
   }, [trigger]);
+
+  const fillAccount = (username, password) => {
+    setValue('username', username);
+    setValue('password', password);
+    trigger();
+    toast.success(`Kredensial akun ${username} diisi`);
+  };
 
   const onSubmit = async (values) => {
     setSubmitting(true);
@@ -106,6 +119,40 @@ export default function Login() {
             Sesi Anda aman & terenkripsi
           </div>
         </form>
+
+        <div className="mt-4 rounded-xl border-2 border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center gap-2">
+            <Info className="h-4 w-4 text-primary-600" />
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Akun Demo</p>
+            <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+              Klik untuk mengisi
+            </span>
+          </div>
+          <div className="space-y-2">
+            {DEMO_ACCOUNTS.map((acc) => (
+              <button
+                key={acc.username}
+                type="button"
+                onClick={() => fillAccount(acc.username, acc.password)}
+                className="group flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:border-primary-300 hover:bg-primary-50"
+              >
+                <span
+                  className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                    acc.role === 'Owner' ? 'bg-primary-100 text-primary-700' : 'bg-success-100 text-success-700'
+                  }`}
+                >
+                  {acc.role}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-slate-800">{acc.username}</span>
+                  <span className="block text-xs text-slate-500">{acc.password}</span>
+                </span>
+                <span className="hidden sm:block text-xs text-slate-400 group-hover:text-slate-600">{acc.description}</span>
+                <LogIn className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-primary-500" />
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
